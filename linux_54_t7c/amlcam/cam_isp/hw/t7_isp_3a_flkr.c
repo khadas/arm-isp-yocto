@@ -391,6 +391,8 @@ static void ae_cfg_stat_blk_weight(struct isp_dev_t *isp_dev, void *mode)
 
 	cnt = sizeof(expo->ae_stat_blk_weight) / (8 * sizeof(u32));
 
+	isp_hw_lut_wstart(isp_dev, AE_WEIGHT_LUT_CFG);
+
 	isp_reg_write(isp_dev, ISP_AE_BLK_WT_ADDR, 0);
 	for (i = 0; i < cnt; i++) {
 		val = ((expo->ae_stat_blk_weight[i * 8 + 0]&0xf) << 0);
@@ -411,6 +413,8 @@ static void ae_cfg_stat_blk_weight(struct isp_dev_t *isp_dev, void *mode)
 	}
 
 	isp_reg_write(isp_dev, ISP_AE_BLK_WT_DATA, val);
+
+	isp_hw_lut_wend(isp_dev);
 }
 
 static void ae_req_info(struct isp_dev_t *isp_dev, void *info)
@@ -505,7 +509,7 @@ static void awb_init(struct isp_dev_t *isp_dev)
 
 	val = ((yuvlimit[3] & 0xfff) << 16) |(yuvlimit[2] & 0xfff);
 	isp_reg_write(isp_dev, ISP_AWB_STAT_ROI23, val);
-	
+
 	val = ((yuvlimit[5] & 0xfff) << 16) |(yuvlimit[4] & 0xfff);
 	isp_reg_write(isp_dev, ISP_AWB_STAT_ROI45, val);
 
@@ -631,6 +635,8 @@ static void awb_cfg_stat_blk_weight(struct isp_dev_t *isp_dev, void *mode)
 
 	cnt = sizeof(awb->awb_stat_blk_weight) / (8 * sizeof(u32));
 
+	isp_hw_lut_wstart(isp_dev, AWB_WEIGHT_LUT_CFG);
+
 	isp_reg_write(isp_dev, ISP_AWB_BLK_WT_ADDR, 0);
 	for (i = 0; i < cnt; i++) {
 		val = ((awb->awb_stat_blk_weight[i * 8 + 0]&0xf) << 0);
@@ -644,6 +650,8 @@ static void awb_cfg_stat_blk_weight(struct isp_dev_t *isp_dev, void *mode)
 
 		isp_reg_write(isp_dev, ISP_AWB_BLK_WT_DATA, val);
 	}
+
+	isp_hw_lut_wend(isp_dev);
 }
 
 static void awb_req_info(struct isp_dev_t *isp_dev, void *info)
@@ -677,6 +685,9 @@ static void awb_req_info(struct isp_dev_t *isp_dev, void *info)
 
 void isp_3a_flkr_enable(struct isp_dev_t *isp_dev)
 {
+	if ((isp_dev->fmt.code == MEDIA_BUS_FMT_YVYU8_2X8) || (isp_dev->fmt.code == MEDIA_BUS_FMT_YUYV8_2X8))
+		return;
+
 	isp_reg_update_bits(isp_dev, ISP_TOP_3A_STAT_CRTL, 0x7, 0, 3);
 	isp_reg_update_bits(isp_dev, ISP_TOP_FED_CTRL, 0x1, 3, 1);
 	isp_reg_update_bits(isp_dev, ISP_POST_STA_GLB_MISC, 1, 0, 1);

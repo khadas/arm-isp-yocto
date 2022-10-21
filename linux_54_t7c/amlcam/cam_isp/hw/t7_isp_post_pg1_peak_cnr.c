@@ -66,6 +66,12 @@ static void pk_cfg_cnr(struct isp_dev_t *isp_dev, void *cnr)
 	val = c_cfg->cnr2_luma_osat_thd;
 	isp_reg_update_bits(isp_dev, CNR_CTRST_FRG_ALP, val, 8, 8);
 
+	val = c_cfg->cnr2_fin_alp_mode;
+	isp_reg_update_bits(isp_dev, CNR_HS_DBG_MISC, val, 8, 2);
+
+	val = c_cfg->cnr2_ctrst_xthd;
+	isp_reg_update_bits(isp_dev, CNR_CTRST_XTH_K, val, 16, 8);
+
 	val = c_cfg->cnr2_adp_desat_vrt;
 	isp_reg_update_bits(isp_dev, CNR_HS_DBG_MISC, val, 20, 2);
 
@@ -103,6 +109,7 @@ static void pk_cfg_peaking(struct isp_dev_t *isp_dev, void *peaking)
 	u32 val = 0;
 	aisp_peaking_cfg_t *p_cfg = peaking;
 
+	isp_reg_update_bits(isp_dev, ISP_POST_PK_DEBUG, p_cfg->pk_debug_edge, 20, 8);
 	isp_reg_update_bits(isp_dev, ISP_POST_DRT_EN_CTL, p_cfg->drtlpf_theta_min_idx_replace, 16, 1);
 	isp_reg_update_bits(isp_dev, ISP_PK_MOTION_ADP_CTRL, p_cfg->pk_motion_adp_en, 0, 1);
 
@@ -368,7 +375,7 @@ void isp_pk_init(struct isp_dev_t *isp_dev)
 
 	isp_reg_update_bits(isp_dev, ISP_PST_PRE_CTRL, 1, 0, 1);
 	isp_reg_update_bits(isp_dev, ISP_PST_PRE_CTRL, 1, 12, 1);
-	isp_reg_update_bits(isp_dev, ISP_PST_PRE_CTRL, 0, 4, 1);
+	isp_reg_update_bits(isp_dev, ISP_PST_PRE_CTRL, 1, 4, 1);
 	isp_reg_update_bits(isp_dev, ISP_PK_MOTION_ADP_CTRL, 0, 0, 1); // keke.li
 
 	isp_reg_update_bits(isp_dev, ISP_PST_PRE_BPC_THRD_MARGIN, 32, 0, 10);
@@ -383,4 +390,25 @@ void isp_pk_init(struct isp_dev_t *isp_dev)
 
 	val = (32 << 0) | (48 << 8) | (56 << 16) | (63 << 24);
 	isp_reg_write(isp_dev, ISP_POST_PK_ADA_GIAN_LUT_0, val);
+
+	isp_reg_update_bits(isp_dev, CNR_ADPT_PRCT, 1, 0, 1);
+
+	isp_reg_update_bits(isp_dev, CNR_CTRST_FRG_ALP, 1, 0, 3);
+	isp_reg_update_bits(isp_dev, CNR_CTRST_FRG_ALP, 1, 4, 3);
+	isp_reg_update_bits(isp_dev, CNR_CTRST_FRG_ALP, 1, 7, 1);
+
+	isp_reg_update_bits(isp_dev, CNR_CTRST_XTH_K, 128, 0, 16);
+
+	val = 48 | (32 << 8) | (16 << 16) | (16 << 24);
+	isp_reg_write(isp_dev, CNR_HUE_PRT_LUT_1, val);
+
+	val = 16 | (16 << 8) | (16 << 16) | (16 << 24);
+	isp_reg_write(isp_dev, CNR_HUE_PRT_LUT_2, val);
+	isp_reg_write(isp_dev, CNR_HUE_PRT_LUT_3, val);
+	isp_reg_write(isp_dev, CNR_HUE_PRT_LUT_4, val);
+	isp_reg_write(isp_dev, CNR_HUE_PRT_LUT_5, val);
+
+	val = 32 | (48 << 8);
+	isp_reg_update_bits(isp_dev, CNR_HUE_PRT_LUT_6, val, 0, 14);
+
 }

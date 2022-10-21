@@ -52,7 +52,11 @@ static const struct aml_format adap_support_formats[] = {
 	{0, 0, 0, 0, MEDIA_BUS_FMT_SGBRG14_1X14, 0, 1, 14},
 	{0, 0, 0, 0, MEDIA_BUS_FMT_SGRBG14_1X14, 0, 1, 14},
 	{0, 0, 0, 0, MEDIA_BUS_FMT_SRGGB14_1X14, 0, 1, 14},
+	{0, 0, 0, 0, MEDIA_BUS_FMT_YUYV8_2X8, 0, 1, 8},
+	{0, 0, 0, 0, MEDIA_BUS_FMT_YVYU8_2X8, 0, 1, 8},
 };
+
+
 
 struct adapter_dev_t *adap_get_dev(int index)
 {
@@ -152,7 +156,8 @@ static int adap_alloc_raw_buffs(struct adapter_dev_t *a_dev)
 	struct adapter_global_info *g_info = aml_adap_global_get_info();
 
 	if ((param->mode == MODE_MIPI_RAW_SDR_DDR) ||
-		(param->mode == MODE_MIPI_RAW_HDR_DDR_DIRCT))
+		(param->mode == MODE_MIPI_RAW_HDR_DDR_DIRCT) ||
+		(param->mode == MODE_MIPI_YUV_SDR_DDR))
 		pr_info("ddr mode, alloc buffer.\n");
 	else
 		return rtn;
@@ -164,12 +169,18 @@ static int adap_alloc_raw_buffs(struct adapter_dev_t *a_dev)
 	case ADAP_RAW12:
 		fsize = param->width * param->height * 12 / 8;
 	break;
+	case ADAP_YUV422_8BIT:
+		fsize = param->width * param->height * 16 / 8;
+	break;
 	default:
 		fsize = param->width * param->height * 10 / 8;
 	break;
 	}
 
-	fsize = ISP_SIZE_ALIGN(fsize, 1 << 12);
+	if (HDR_LOOPBACK_MODE)
+		fsize = ISP_SIZE_ALIGN(fsize, 1 << 12) / param->height * 60;
+	else
+		fsize = ISP_SIZE_ALIGN(fsize, 1 << 12);
 
 	fcnt = sizeof(param->ddr_buf) /sizeof(param->ddr_buf[0]);
 
@@ -221,7 +232,8 @@ static void adap_free_raw_buffs(struct adapter_dev_t *a_dev)
 	void *page = NULL;
 
 	if ((param->mode == MODE_MIPI_RAW_SDR_DDR) ||
-		(param->mode == MODE_MIPI_RAW_HDR_DDR_DIRCT))
+		(param->mode == MODE_MIPI_RAW_HDR_DDR_DIRCT) ||
+		(param->mode == MODE_MIPI_YUV_SDR_DDR))
 		pr_info("ddr mode, free buffer\n");
 	else
 		return;
@@ -238,7 +250,7 @@ static void adap_free_raw_buffs(struct adapter_dev_t *a_dev)
 
 	aml_subdev_unmap_vaddr(a_dev->param.ddr_buf[0].vaddr[AML_PLANE_A]);
 
-	if ((param->ddr_buf[0].addr[0] != 0) && (param->ddr_buf[0].vaddr[0] != NULL)) {
+	if ((param->ddr_buf[0].addr != 0) && (param->ddr_buf[0].vaddr != NULL)) {
 		for (i = 0; i < fcnt; i++) {
 			param->ddr_buf[i].addr[AML_PLANE_A] = 0;
 			param->ddr_buf[i].vaddr[AML_PLANE_A] = NULL;
@@ -255,7 +267,8 @@ int adap_wdr_cfg_buf(struct adapter_dev_t *a_dev)
 	struct adapter_dev_param *param = &a_dev->param;
 
 	if ((param->mode == MODE_MIPI_RAW_SDR_DDR) ||
-			(param->mode == MODE_MIPI_RAW_HDR_DDR_DIRCT)) {
+			(param->mode == MODE_MIPI_RAW_HDR_DDR_DIRCT) ||
+			(param->mode == MODE_MIPI_YUV_SDR_DDR)) {
 		a_dev->ops->hw_wdr_cfg_buf(a_dev);
 	}
 
@@ -271,7 +284,9 @@ int adap_fe_cfg_buf(struct adapter_dev_t *a_dev)
 	if (a_dev->wstatus != STATUS_START)
 		return -1;
 
-	if (param->mode != MODE_MIPI_RAW_SDR_DDR)
+	if ((param->mode == MODE_MIPI_RAW_SDR_DIRCT) ||
+		(param->mode == MODE_MIPI_RAW_HDR_DDR_DIRCT) ||
+		(param->mode == MODE_MIPI_YUV_SDR_DIRCT))
 		return -1;
 
 	spin_lock_irqsave(&param->ddr_lock, flags);
@@ -310,7 +325,9 @@ int adap_fe_done_buf(struct adapter_dev_t *a_dev)
 	if (a_dev->wstatus != STATUS_START)
 		return -1;
 
-	if (param->mode != MODE_MIPI_RAW_SDR_DDR)
+	if ((param->mode == MODE_MIPI_RAW_SDR_DIRCT) ||
+		(param->mode == MODE_MIPI_RAW_HDR_DDR_DIRCT) ||
+		(param->mode == MODE_MIPI_YUV_SDR_DIRCT))
 		return -1;
 
 	spin_lock_irqsave(&g_info->list_lock, flags);
@@ -544,6 +561,9 @@ static int adap_subdev_convert_fmt(struct adapter_dev_t *adap_dev,
 	break;
 	}
 
+	if ((format->code == MEDIA_BUS_FMT_YVYU8_2X8) || (format->code == MEDIA_BUS_FMT_YUYV8_2X8))
+		fmt = ADAP_YUV422_8BIT;
+
 	return fmt;
 }
 
@@ -572,8 +592,15 @@ static int adap_subdev_hw_init(struct adapter_dev_t *adap_dev,
 		param->mode = MODE_MIPI_RAW_SDR_DDR;
 		param->dol_type = ADAP_DOL_NONE;
 		aml_adap_global_mode(MODE_MIPI_RAW_SDR_DDR);
+	} else if (adap_dev->enWDRMode == ISP_SDR_DCAM_MODE) {
+		param->mode = MODE_MIPI_RAW_SDR_DDR;
+		param->dol_type = ADAP_DOL_NONE;
+		aml_adap_global_mode(MODE_MIPI_RAW_SDR_DDR);
+		pr_err("dcam mode\n");
 	} else {
 		param->mode = MODE_MIPI_RAW_SDR_DIRCT;
+		if (param->format == ADAP_YUV422_8BIT)
+			param->mode = MODE_MIPI_YUV_SDR_DIRCT;
 		param->dol_type = ADAP_DOL_NONE;
 	}
 	param->offset.offset_x = 0;
@@ -647,6 +674,7 @@ static struct v4l2_ctrl_config mode_cfg = {
 	.id = V4L2_CID_AML_MODE,
 	.name = "adap mode",
 	.type = V4L2_CTRL_TYPE_INTEGER,
+	.flags = V4L2_CTRL_FLAG_EXECUTE_ON_WRITE,
 	.min = 0,
 	.max = 5,
 	.step = 1,
@@ -786,7 +814,6 @@ int aml_adap_subdev_init(void *c_dev)
 	}
 
 	aml_adap_global_init();
-
 #if 0
 	rtn = adap_request_irq_offline(adap_dev);
 	if (rtn)

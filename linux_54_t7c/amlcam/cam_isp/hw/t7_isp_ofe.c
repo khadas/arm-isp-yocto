@@ -403,6 +403,22 @@ void isp_ofe_cfg_size(struct isp_dev_t *isp_dev, struct aml_format *fmt)
 	isp_reg_update_bits(isp_dev, ISP_INPFMT_SPLT, 0, 4, 2);
 }
 
+void isp_ofe_cfg_slice_size(struct isp_dev_t *isp_dev, struct aml_format *fmt)
+{
+	u32 val = 0;
+	u32 xsize = fmt->width;
+	u32 ysize = fmt->height;
+
+	val = (fmt->xstart << 16) | (fmt->ystart << 0);
+	isp_hwreg_write(isp_dev, ISP_CROP_START, val);
+
+	val = (xsize << 16) | (ysize & 0xffff);
+	isp_hwreg_write(isp_dev, ISP_CROP_SIZE, val);
+
+	isp_hwreg_update_bits(isp_dev, ISP_BIN_BAC_CTRL, 0, 16, 2);
+	isp_hwreg_update_bits(isp_dev, ISP_INPFMT_SPLT, 0, 4, 2);
+}
+
 void isp_ofe_cfg_param(struct isp_dev_t *isp_dev, struct aml_buffer *buff)
 {
 	aisp_param_t *param = buff->vaddr[AML_PLANE_A];

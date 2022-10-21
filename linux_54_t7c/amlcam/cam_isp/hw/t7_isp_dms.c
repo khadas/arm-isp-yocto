@@ -85,7 +85,7 @@ void isp_dms_init(struct isp_dev_t *isp_dev)
 
 	isp_reg_update_bits(isp_dev, ISP_DMS_COMMON_PARAM0, 1, 4, 1);
 
-	isp_reg_update_bits(isp_dev, ISP_DMS_COMMON_PARAM1, 1, 24, 1);
+	isp_reg_update_bits(isp_dev, ISP_DMS_COMMON_PARAM1, 0, 24, 1);
 	isp_reg_update_bits(isp_dev, ISP_DMS_COMMON_PARAM1, 0, 23, 1);
 	isp_reg_update_bits(isp_dev, ISP_DMS_COMMON_PARAM1, 0, 19, 4);
 	isp_reg_update_bits(isp_dev, ISP_DMS_COMMON_PARAM1, 24, 9, 6);

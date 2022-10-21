@@ -146,7 +146,7 @@ typedef struct exps_stats_info_s{
 		isp_exps_stats_pack1_t stats1;
 		isp_exps_stats_pack2_t stats2;
 	};
-	
+
 	//Need not provid by driver
 	exps_zone_info_t  zones[AE_STAT_BLKH_NUM*AE_STAT_BLKV_NUM];/**< all of exposure statistic info */
 	u32  zones_rows;/**< valid rows of the exposure statistic table */
@@ -702,11 +702,17 @@ typedef struct aisp_base_cfg_s {
 /********************** correction **********************/
 typedef struct aisp_ccm_cfg_s {
 	u32 ccm_4x3matrix[3][4];
+	u32 csc3_en;
+	u32 csc1_offset_inp[3];
+	u32 csc1_offset_oup[3];
+	u32 csc1_3x3mtrx_rs;
+	u32 csc1_3x3matrix[3][3];
 } aisp_ccm_cfg_t;
 
 typedef struct aisp_csc_cfg_s {
 	u32 cm0_offset_inp[3];
 	u32 cm0_offset_oup[3];
+	u32 cm0_3x3mtrx_rs;
 	u32 cm0_3x3matrix[3][3];
 } aisp_csc_cfg_t;
 typedef struct aisp_mesh_crt_cfg_s {
@@ -904,6 +910,7 @@ typedef struct aisp_dhz_enhc_cfg_s {
 } aisp_dhz_enhc_cfg_t;
 
 typedef struct aisp_peaking_cfg_s{
+	u32 pk_debug_edge;
 	u32 drtlpf_theta_min_idx_replace;
 	u32 pk_motion_adp_en;
 	u32 bp_final_gain;
@@ -970,6 +977,14 @@ typedef struct aisp_dpc_cfg_s {
 	u32 dpc_std_diff_gain[2];
 	u32 dpc_std_gain[2];
 	u32 dpc_avg_dev_offset[2];
+
+	u32 dpc_cor_en[2];
+	u32 dpc_avg_dev_mode[2];
+	u32 dpc_avg_mode[2];
+	u32 dpc_avg_thd2_en[2];
+	u32 dpc_highlight_en[2];
+	u32 dpc_correct_mode[2];
+	u32 dpc_write_to_lut[2];
 } aisp_dpc_cfg_t;
 
 typedef struct aisp_tnr_cfg_s {
@@ -1002,6 +1017,16 @@ typedef struct aisp_tnr_cfg_s {
 	u32 ma_mix_h_th_gain[4];
 	u32 lut_meta_sad_2alpha[64];
 	u32 mc_meta2alpha[8][8];
+	u32 ma_sad_var_th_x0;
+	u32 ma_sad_var_th_x1;
+	u32 ma_sad_var_th_x2;
+	u32 ma_sad_var_th_y_0;
+	u32 ma_sad_var_th_y_1;
+	u32 ma_sad_var_th_y_2;
+	u32 me_meta_sad_th0[3];
+	u32 me_meta_sad_th1[3];
+	u32 ma_sad_luma_adj_x[4];
+	u32 ma_sad_luma_adj_y[5];
 } aisp_tnr_cfg_t;
 
 typedef struct aisp_snr_cfg_s {
@@ -1066,6 +1091,8 @@ typedef struct aisp_cnr_cfg_s {
 	u32 cnr2_vmargin_up;
 	u32 cnr2_vmargin_dw;
 	u32 cnr2_luma_osat_thd;
+	u32 cnr2_fin_alp_mode;
+	u32 cnr2_ctrst_xthd;
 	u32 cnr2_adp_desat_vrt;
 	u32 cnr2_adp_desat_hrz;
 } aisp_cnr_cfg_t;
@@ -1099,6 +1126,18 @@ typedef struct aisp_nr_cfg_s {
 typedef struct aisp_misc_cfg_s{
 	aisp_pat_cfg_t pat_cfg;
 } aisp_misc_cfg_t;
+
+typedef struct _isp_hwreg_t {
+	u32 addr;
+	u32 val;
+	u32 mask;
+	u32 len;
+} isp_hwreg_t;
+
+typedef struct aisp_custom_cfg_s {
+	isp_hwreg_t settings[200];
+} aisp_custom_cfg_t;
+
 
 typedef union {
 	u64  key;
@@ -1136,7 +1175,8 @@ typedef union {
 		u64  aisp_dhz_enhc    : 1;
 		u64  aisp_peaking     : 1;
 		u64  aisp_misc        : 1;
-		u64  bitRsv           : 30; /* H  ; [34:63] */
+		u64  aisp_custom      : 1 ;
+		u64  bitRsv           : 29; /* H  ; [35:63] */
 	};
 }  aisp_param_ctrl;
 
@@ -1180,6 +1220,7 @@ typedef struct aisp_param_s{
 	aisp_peaking_cfg_t        peaking_cfg;
 
 	aisp_misc_cfg_t           misc_cfg;
+	aisp_custom_cfg_t         custom_cfg;
 } aisp_param_t;
 
 #endif // __AML_ISP_CFG_H__

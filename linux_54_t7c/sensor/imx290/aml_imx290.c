@@ -87,6 +87,7 @@ struct imx290 {
 	struct v4l2_ctrl *link_freq;
 	struct v4l2_ctrl *pixel_rate;
 	struct v4l2_ctrl *wdr;
+	struct v4l2_ctrl *fps;
 
 	int status;
 	struct mutex lock;
@@ -126,7 +127,7 @@ static const struct imx290_regval imx290_global_init_settings[] = {
 	{0x3010, 0x21},
 	{0x3012, 0x64},
 	{0x3013, 0x00},
-	{0x3014, 0x00},//Gain
+	{0x3014, 0x02},//Gain
 	{0x3016, 0x09},
 	{0x3018, 0x85}, /* VMAX[7:0] */
 	{0x3019, 0x04}, /* VMAX[15:8] */
@@ -258,9 +259,9 @@ static struct imx290_regval dol_1080p_30fps_4lane_10bits[] = {
 	{0x300f, 0x00 },
 	{0x3010, 0x21 },
 	{0x3012, 0x64 },
-	{0x3014, 0x00 },
+	{0x3014, 0x02 },
 	{0x3016, 0x09 },
-	{0x3018, 0x85 },//VMAX change from 0465 to 04C4
+	{0x3018, 0xC4 },//VMAX change from 0465 to 04C4
 	{0x3019, 0x04 },//VMAX
 
 	{0x301c, 0xEC },//* HMAX */ change from 0898 to 07EC
@@ -701,9 +702,12 @@ static int imx290_set_exposure(struct imx290 *imx290, u32 value)
 {
 	int ret;
 
-	ret = imx290_write_buffered_reg(imx290, IMX290_EXPOSURE, 2, value);
+	ret = imx290_write_buffered_reg(imx290, IMX290_EXPOSURE, 2, value & 0xFFFF);
 	if (ret)
 		dev_err(imx290->dev, "Unable to write gain\n");
+
+	if (imx290->enWDRMode)
+		ret = imx290_write_buffered_reg(imx290, 0x3024, 2, (value >> 16) & 0xFFFF);
 
 	return ret;
 }
@@ -745,6 +749,8 @@ static int imx290_set_ctrl(struct v4l2_ctrl *ctrl)
 		break;
 	case V4L2_CID_AML_MODE:
 		imx290->enWDRMode = ctrl->val;
+		break;
+	case V4L2_CID_AML_USER_FPS:
 		break;
 	default:
 		dev_err(imx290->dev, "Error ctrl->id %u, flag 0x%lx\n",
@@ -1146,7 +1152,7 @@ int imx290_sbdev_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh) {
 }
 int imx290_sbdev_close(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh) {
 	struct imx290 *imx290 = to_imx290(sd);
-	imx290_stop_streaming(imx290);
+	imx290_set_stream(sd, 0);
 	imx290_power_off(imx290);
 	return 0;
 }
@@ -1192,10 +1198,22 @@ static struct v4l2_ctrl_config wdr_cfg = {
 	.id = V4L2_CID_AML_MODE,
 	.name = "wdr mode",
 	.type = V4L2_CTRL_TYPE_INTEGER,
+	.flags = V4L2_CTRL_FLAG_EXECUTE_ON_WRITE,
 	.min = 0,
 	.max = 2,
 	.step = 1,
 	.def = 0,
+};
+
+static struct v4l2_ctrl_config v4l2_ctrl_output_fps = {
+	.ops = &imx290_ctrl_ops,
+	.id = V4L2_CID_AML_USER_FPS,
+	.name = "Sensor output fps",
+	.type = V4L2_CTRL_TYPE_INTEGER,
+	.min = 0,
+	.max = 120,
+	.step = 1,
+	.def = 30,
 };
 
 static int imx290_ctrls_init(struct imx290 *imx290)
@@ -1208,7 +1226,7 @@ static int imx290_ctrls_init(struct imx290 *imx290)
 				V4L2_CID_GAIN, 0, 0xF0, 1, 0);
 
 	v4l2_ctrl_new_std(&imx290->ctrls, &imx290_ctrl_ops,
-				V4L2_CID_EXPOSURE, 0, 0xffff, 1, 0);
+				V4L2_CID_EXPOSURE, 0, 0x7fffffff, 1, 0);
 
 	imx290->link_freq = v4l2_ctrl_new_int_menu(&imx290->ctrls,
 					       &imx290_ctrl_ops,
@@ -1226,6 +1244,7 @@ static int imx290_ctrls_init(struct imx290 *imx290)
 					       imx290_calc_pixel_rate(imx290));
 
 	imx290->wdr = v4l2_ctrl_new_custom(&imx290->ctrls, &wdr_cfg, NULL);
+	imx290->fps = v4l2_ctrl_new_custom(&imx290->ctrls, &v4l2_ctrl_output_fps, NULL);
 
 	imx290->sd.ctrl_handler = &imx290->ctrls;
 

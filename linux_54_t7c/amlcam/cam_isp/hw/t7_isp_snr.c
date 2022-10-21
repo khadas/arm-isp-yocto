@@ -231,7 +231,6 @@ static void snr_cfg_nr(struct isp_dev_t *isp_dev, void *nr)
 
 	if (nr_cfg->pvalid.aisp_snr)
 		snr_cfg_param(isp_dev, &nr_cfg->snr_cfg);
-
 }
 
 void isp_snr_cfg_fmt(struct isp_dev_t *isp_dev, struct aml_format *fmt)

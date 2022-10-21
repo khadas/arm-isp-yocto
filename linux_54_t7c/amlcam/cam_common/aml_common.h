@@ -82,6 +82,7 @@ struct aml_format {
 	u32 fourcc;
 	u32 nplanes;
 	u32 bpp;
+	u32 size;
 };
 
 struct aml_reg {

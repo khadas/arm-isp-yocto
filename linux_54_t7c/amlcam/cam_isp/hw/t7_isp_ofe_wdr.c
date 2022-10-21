@@ -408,5 +408,7 @@ void isp_ofe_wdr_req_info(struct isp_dev_t *isp_dev, struct aml_buffer *buff)
 
 void isp_ofe_wdr_init(struct isp_dev_t *isp_dev)
 {
+	isp_reg_update_bits(isp_dev, ISP_WDR_EXPCOMB_MAXRATIO, (1 << 20) - 1, 1, 22);
+
 	return;
 }

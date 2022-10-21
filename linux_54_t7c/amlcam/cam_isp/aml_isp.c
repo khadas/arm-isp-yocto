@@ -53,6 +53,8 @@ static const struct aml_format isp_subdev_formats[] = {
 	{0, 0, 0, 0, MEDIA_BUS_FMT_SGBRG14_1X14, 0, 1, 14},
 	{0, 0, 0, 0, MEDIA_BUS_FMT_SGRBG14_1X14, 0, 1, 14},
 	{0, 0, 0, 0, MEDIA_BUS_FMT_SRGGB14_1X14, 0, 1, 14},
+	{0, 0, 0, 0, MEDIA_BUS_FMT_YUYV8_2X8, 0, 1, 8},
+	{0, 0, 0, 0, MEDIA_BUS_FMT_YVYU8_2X8, 0, 1, 8},
 };
 
 struct isp_dev_t *isp_subdrv_get_dev(int index)
@@ -266,6 +268,7 @@ int isp_subdev_start_manual_dma(struct isp_dev_t *isp_dev)
 	struct isp_global_info *g_info = isp_global_get_info();
 
 	if ((isp_dev->apb_dma == 0) ||
+		(isp_dev->twreg_cnt == 0) ||
 		(g_info->user > 1))
 		return 0;
 
@@ -305,7 +308,7 @@ int isp_subdev_update_auto_dma(struct isp_dev_t *isp_dev)
 	if (g_info->mode != AML_ISP_SCAM)
 		return 0;
 
-	if (isp_dev->apb_dma == 0)
+	if ((isp_dev->apb_dma == 0) || (isp_dev->twreg_cnt == 0))
 		return 0;
 
 	dma_sync_single_for_device(isp_dev->dev,isp_dev->wreg_buff.addr[AML_PLANE_A], isp_dev->wreg_buff.bsize, DMA_TO_DEVICE);
@@ -477,8 +480,9 @@ static struct v4l2_ctrl_config mode_cfg = {
 	.id = V4L2_CID_AML_MODE,
 	.name = "isp mode",
 	.type = V4L2_CTRL_TYPE_INTEGER,
+	.flags = V4L2_CTRL_FLAG_EXECUTE_ON_WRITE,
 	.min = 0,
-	.max = 2,
+	.max = 5,
 	.step = 1,
 	.def = 0,
 };
@@ -503,8 +507,7 @@ int isp_subdev_ctrls_init(struct isp_dev_t *isp_dev)
 
 static irqreturn_t isp_subdev_irq_handler(int irq, void *dev)
 {
-	int status = 0;
-	int id = 0;
+	int status = 0, id = 0;
 	unsigned long flags;
 	struct isp_dev_t *isp_dev = dev;
 	struct aml_video *video;
