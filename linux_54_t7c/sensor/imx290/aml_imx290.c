@@ -87,6 +87,7 @@ struct imx290 {
 	struct v4l2_ctrl *link_freq;
 	struct v4l2_ctrl *pixel_rate;
 	struct v4l2_ctrl *wdr;
+	struct v4l2_ctrl *fps;
 
 	int status;
 	struct mutex lock;
@@ -746,6 +747,8 @@ static int imx290_set_ctrl(struct v4l2_ctrl *ctrl)
 	case V4L2_CID_AML_MODE:
 		imx290->enWDRMode = ctrl->val;
 		break;
+	case V4L2_CID_AML_USER_FPS:
+		break;
 	default:
 		dev_err(imx290->dev, "Error ctrl->id %u, flag 0x%lx\n",
 			ctrl->id, ctrl->flags);
@@ -1198,6 +1201,17 @@ static struct v4l2_ctrl_config wdr_cfg = {
 	.def = 0,
 };
 
+static struct v4l2_ctrl_config v4l2_ctrl_output_fps = {
+	.ops = &imx290_ctrl_ops,
+	.id = V4L2_CID_AML_USER_FPS,
+	.name = "Sensor output fps",
+	.type = V4L2_CTRL_TYPE_INTEGER,
+	.min = 0,
+	.max = 120,
+	.step = 1,
+	.def = 30,
+};
+
 static int imx290_ctrls_init(struct imx290 *imx290)
 {
 	int rtn = 0;
@@ -1226,6 +1240,7 @@ static int imx290_ctrls_init(struct imx290 *imx290)
 					       imx290_calc_pixel_rate(imx290));
 
 	imx290->wdr = v4l2_ctrl_new_custom(&imx290->ctrls, &wdr_cfg, NULL);
+	imx290->fps = v4l2_ctrl_new_custom(&imx290->ctrls, &v4l2_ctrl_output_fps, NULL);
 
 	imx290->sd.ctrl_handler = &imx290->ctrls;
 
