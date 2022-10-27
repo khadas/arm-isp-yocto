@@ -123,7 +123,7 @@ static int32_t _CALIBRATION_AE_CTL[29] = {
     0,  //ae exposure strategy, 0: none mode, 1: outdoor mode, 2:indoor mode
     0,  // ae route strategy, 0: exposure priority, 1: gain priority 2: external ae route
     0,  //ae route deflicker mode, 0: none, 1: anti-50hz, 2: anti-60hz, 3: auto detected
-    30,   //exposure convergance speed [0, 128]
+    30,   //exposure convergence speed [0, 128]
     128,  //ae global luma target compensation
     100,  //ae luma target srgb curve
     60,   //ae luma wdr target
@@ -319,7 +319,7 @@ static int32_t _CALIBRATION_WDR_CTL[37] = {
     0,                              // s8, user defined bg saturation margin for motion detection
     0,                              // s8, user defined ir saturation margin for motion detection
     // fw regs for forcelong
-    1,                              // u1,flong1 mode;0: used defined,1: firmware calclation
+    1,                              // u1,flong1 mode;0: used defined,1: firmware calculation
     800,                            // u14,threshold of day scene discrimination
     500,                            // u14,threshold of night scene discrimination
     1000,                           // u14,low threshold for day scene discrimination

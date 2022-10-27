@@ -253,7 +253,7 @@ const char *v4l2_subdev_pixelcode_to_string(enum v4l2_mbus_pixelcode code);
 /**
  * @brief Parse string to media bus pixel code.
  * @param string - input string
- * @param lenght - length of the string
+ * @param length - length of the string
  *
  * Parse human readable string @a string to an media bus pixel code.
  *
