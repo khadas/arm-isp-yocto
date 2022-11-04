@@ -142,6 +142,7 @@ static int isp_cap_irq_handler(void *video, int status)
 	struct isp_dev_t *isp_dev = vd->priv;
 	const struct isp_dev_ops *ops = isp_dev->ops;
 	struct aml_buffer *t_current = NULL;
+	struct isp_global_info *g_info = isp_global_get_info();
 
 	spin_lock_irqsave(&vd->buff_list_lock, flags);
 
@@ -152,11 +153,15 @@ static int isp_cap_irq_handler(void *video, int status)
 
 	if (b_current) {
 		vd->frm_cnt++;
-		if (vd->id != AML_ISP_STREAM_PARAM)
+		if (g_info->mode == AML_ISP_SCAM) {
 			isp_cap_stream_bilateral_cfg(vd, b_current);
+		} else {
+			if (vd->id != AML_ISP_STREAM_PARAM)
+				isp_cap_stream_bilateral_cfg(vd, b_current);
+		}
 		t_current = list_first_entry_or_null(&vd->head, struct aml_buffer, list);
 		if ((t_current == NULL) && (vd->id > AML_ISP_STREAM_PARAM)) {
-			pr_debug("ISP%d video%d no buf %x %x\n", isp_dev->index, vd->id, b_current->addr[0], b_current->bsize);
+			pr_err("ISP%d video%d no buf %x %x\n", isp_dev->index, vd->id, b_current->addr[0], b_current->bsize);
 			ops->hw_stream_cfg_buf(vd, b_current);
 			spin_unlock_irqrestore(&vd->buff_list_lock, flags);
 			return 0;
@@ -209,21 +214,25 @@ void isp_drv_convert_format(struct aml_video *vd, struct aml_format *fmt)
 		fmt->bpp = 8;
 		fmt->nplanes = 2;
 		fmt->fourcc = AML_FMT_YUV420;
+		fmt->size = fmt->width * fmt->height * 3 / 2;
 	break;
 	case V4L2_PIX_FMT_GREY:
 		fmt->bpp = 8;
 		fmt->nplanes = 1;
 		fmt->fourcc = AML_FMT_YUV400;
+		fmt->size = fmt->width * fmt->height;
 	break;
 	case V4L2_PIX_FMT_RGB24:
 		fmt->bpp = 24;
 		fmt->nplanes = 1;
 		fmt->fourcc = AML_FMT_YUV444;
+		fmt->size = fmt->width * fmt->height * 3;
 	break;
 	case V4L2_PIX_FMT_YUYV:
 		fmt->bpp = 16;
 		fmt->nplanes = 1;
 		fmt->fourcc = AML_FMT_YUV422;
+		fmt->size = fmt->width * fmt->height * 2;
 	break;
 	case V4L2_META_AML_ISP_CONFIG:
 	case V4L2_META_AML_ISP_STATS:
@@ -241,6 +250,7 @@ void isp_drv_convert_format(struct aml_video *vd, struct aml_format *fmt)
 		fmt->bpp = 16;
 		fmt->nplanes = 1;
 		fmt->fourcc = AML_FMT_RAW;
+		fmt->size = fmt->width * fmt->height * 2;
 	break;
 	case V4L2_PIX_FMT_SBGGR8:
 	case V4L2_PIX_FMT_SGBRG8:
@@ -249,6 +259,7 @@ void isp_drv_convert_format(struct aml_video *vd, struct aml_format *fmt)
 		fmt->bpp = 8;
 		fmt->nplanes = 1;
 		fmt->fourcc = AML_FMT_RAW;
+		fmt->size = fmt->width * fmt->height;
 	break;
 	case V4L2_PIX_FMT_RGBX32:
 		if (isp_dev->enWDRMode == 0)
@@ -256,6 +267,7 @@ void isp_drv_convert_format(struct aml_video *vd, struct aml_format *fmt)
 		fmt->bpp = 16;
 		fmt->nplanes = 2;
 		fmt->fourcc = AML_FMT_HDR_RAW;
+		fmt->size = fmt->width * fmt->height * 4;
 	break;
 	default:
 		pr_err("Error to support this format, %x\n", vd->f_current.fmt.pix.pixelformat);
@@ -274,7 +286,10 @@ static int isp_cap_set_format(void *video)
 
 	isp_drv_convert_format(vd, fmt);
 
-	if ((fmt->fourcc == AML_FMT_RAW) || (fmt->fourcc == AML_FMT_HDR_RAW))
+	if ((fmt->fourcc == AML_FMT_RAW) ||
+		(fmt->fourcc == AML_FMT_HDR_RAW) ||
+		(isp_dev->fmt.code == MEDIA_BUS_FMT_YUYV8_2X8) ||
+		(isp_dev->fmt.code == MEDIA_BUS_FMT_YVYU8_2X8))
 		vd->disp_sel = 2;
 	else
 		vd->disp_sel = 0;
@@ -293,6 +308,7 @@ static int isp_cap_cfg_buffer(void *video, void *buff)
 	struct aml_buffer *buffer = buff;
 	struct isp_dev_t *isp_dev = vd->priv;
 	const struct isp_dev_ops *ops = isp_dev->ops;
+	struct isp_global_info *g_info = isp_global_get_info();
 
 	spin_lock_irqsave(&vd->buff_list_lock, flags);
 
@@ -309,8 +325,15 @@ static int isp_cap_cfg_buffer(void *video, void *buff)
 
 	if (ops && ops->hw_stream_bilateral_cfg) {
 		if (vd->id == AML_ISP_STREAM_PARAM) {
-			isp_cap_stream_bilateral_cfg(video, buff);
-			vd->b_current = buff;
+			if (g_info->mode == AML_ISP_SCAM) {
+				if (isp_dev->isp_status == STATUS_STOP) {
+					isp_cap_stream_bilateral_cfg(video, buff);
+					vd->b_current = buff;
+				}
+			} else {
+				isp_cap_stream_bilateral_cfg(video, buff);
+				vd->b_current = buff;
+			}
 		}
 	}
 

@@ -98,6 +98,10 @@ static void top_cfg_param(struct isp_dev_t *isp_dev, void *param)
 	isp_reg_update_bits(isp_dev, ISP_TOP_FED_CTRL, cfg->cubic_en, 13, 1);
 	//isp_reg_update_bits(isp_dev, ISP_TOP_PATH_EN, cfg->pnrmif_en, 28, 3);
 	//isp_reg_update_bits(isp_dev, ISP_TOP_PATH_EN, cfg->nrmif_en, 20, 8);
+
+	if ((isp_dev->fmt.code == MEDIA_BUS_FMT_YVYU8_2X8) || (isp_dev->fmt.code == MEDIA_BUS_FMT_YUYV8_2X8))
+		return;
+
 	isp_mcnr_mif_enable(isp_dev, cfg->tnr0_en && cfg->mc_tnr_en);
 	isp_ptnr_mif_enable(isp_dev, cfg->pst_tnr_lite_en);
 }
@@ -151,6 +155,7 @@ u32 isp_top_irq_stat(struct isp_dev_t *isp_dev)
 void isp_top_cfg_fmt(struct isp_dev_t *isp_dev, struct aml_format *fmt)
 {
 	u32 val = 0;
+
 	u32 raw_mode = 1;
 	int *raw_phslut = NULL;
 	int mono_phs[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -165,6 +170,17 @@ void isp_top_cfg_fmt(struct isp_dev_t *isp_dev, struct aml_format *fmt)
 
 	val = ((fmt->width & 0xffff) << 16) | (5 << 0);
 	isp_reg_write(isp_dev, ISP_TOP_HOLD_SIZE, val);
+
+	if ((fmt->code == MEDIA_BUS_FMT_YVYU8_2X8) || (fmt->code == MEDIA_BUS_FMT_YUYV8_2X8)) {
+		isp_reg_update_bits(isp_dev, ISP_TOP_PATH_SEL, 2, 0, 2);
+		isp_reg_update_bits(isp_dev, ISP_TOP_PATH_SEL, 0, 16, 3);
+		isp_reg_update_bits(isp_dev, ISP_TOP_PATH_SEL, 1, 19, 1);
+		return;
+	} else {
+		isp_reg_update_bits(isp_dev, ISP_TOP_PATH_SEL, 3, 0, 2);
+		isp_reg_update_bits(isp_dev, ISP_TOP_PATH_SEL, 1, 16, 3);
+		isp_reg_update_bits(isp_dev, ISP_TOP_PATH_SEL, 0, 19, 1);
+	}
 
 	isp_reg_update_bits(isp_dev, ISP_TOP_MODE_CTRL, raw_mode, 0, 3);
 	isp_reg_update_bits(isp_dev, ISP_TOP_MODE_CTRL, 14, 12, 5);
@@ -217,7 +233,9 @@ void isp_top_cfg_wdr(struct isp_dev_t *isp_dev, int wdr_en)
 
 void isp_top_cfg_param(struct isp_dev_t *isp_dev, struct aml_buffer *buff)
 {
+	int i;
 	aisp_param_t *param = buff->vaddr[AML_PLANE_A];
+	isp_hwreg_t *reg = param->custom_cfg.settings;
 
 	if (param->pvalid.aisp_top)
 		top_cfg_param(isp_dev, &param->top_cfg);
@@ -227,6 +245,18 @@ void isp_top_cfg_param(struct isp_dev_t *isp_dev, struct aml_buffer *buff)
 
 	if (param->pvalid.aisp_blc)
 		top_cfg_blc(isp_dev, &param->blc_cfg);
+
+	if (param->pvalid.aisp_custom) {
+		for ( i = 0; i < 200; i++ ) {
+			if ( reg->len ) {
+				//AML_ISP_ERR("DBG: %u, %u, %u, %u\n", reg->addr, reg->val, reg->mask, reg->len);
+				isp_reg_write(isp_dev, reg->addr << 2, reg->val & reg->mask);
+			}
+			else
+				break;
+			reg ++;
+		}
+	}
 }
 
 void isp_top_req_info(struct isp_dev_t *isp_dev, struct aml_buffer *buff)
@@ -255,7 +285,7 @@ void isp_top_init(struct isp_dev_t *isp_dev)
 	val = isp_reg_read(isp_dev, ISP_TOP_FEO_CTRL0);
 	val |= (1 << 6) | (1 << 9) | (1 << 12);
 	isp_reg_write(isp_dev, ISP_TOP_FEO_CTRL0, val);
-	
+
 	isp_reg_update_bits(isp_dev, ISP_TOP_FEO_CTRL1_0, 1, 2, 1);
 	isp_reg_update_bits(isp_dev, ISP_TOP_FEO_CTRL1_0, 1, 3, 1);
 	isp_reg_update_bits(isp_dev, ISP_TOP_FEO_CTRL1_0, 0, 4, 1);
@@ -288,6 +318,8 @@ void isp_top_init(struct isp_dev_t *isp_dev)
 
 	isp_reg_update_bits(isp_dev, ISP_TOP_IRQ_LINE_THRD, 1, 16, 2);
 	isp_reg_update_bits(isp_dev, ISP_TOP_IRQ_LINE_THRD, 1079, 0, 16);
+
+	isp_reg_update_bits(isp_dev, ISP_FRM_CNT_CTRL, 1, 26, 1);
 
 	isp_reg_write(isp_dev, ISP_TOP_IRQ_EN, 0x1);
 

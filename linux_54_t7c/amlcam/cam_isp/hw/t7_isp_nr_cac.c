@@ -61,6 +61,8 @@ static void cubic_cfg_base(struct isp_dev_t *isp_dev, void *base)
 	aisp_base_cfg_t *base_cfg = base;
 	aisp_lut_fixed_cfg_t *lut_cfg = &base_cfg->fxlut_cfg;
 
+	isp_hw_lut_wstart(isp_dev, CAC_TAB_LUT_CFG);
+
 	isp_reg_write(isp_dev, ISP_CAC_TAB_CTRL, 1);
 	isp_reg_write(isp_dev, ISP_CAC_TAB_ADDR, 0);
 	for (i = 0; i < 512; i++) {
@@ -79,6 +81,8 @@ static void cubic_cfg_base(struct isp_dev_t *isp_dev, void *base)
 		isp_reg_write(isp_dev, ISP_CAC_TAB_DATA, val);
 	}
 	isp_reg_write(isp_dev, ISP_CAC_TAB_CTRL, 0);
+
+	isp_hw_lut_wend(isp_dev);
 }
 
 void isp_nr_cac_cfg_fmt(struct isp_dev_t *isp_dev, struct aml_format *fmt)

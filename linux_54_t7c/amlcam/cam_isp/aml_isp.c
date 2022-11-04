@@ -53,6 +53,8 @@ static const struct aml_format isp_subdev_formats[] = {
 	{0, 0, 0, 0, MEDIA_BUS_FMT_SGBRG14_1X14, 0, 1, 14},
 	{0, 0, 0, 0, MEDIA_BUS_FMT_SGRBG14_1X14, 0, 1, 14},
 	{0, 0, 0, 0, MEDIA_BUS_FMT_SRGGB14_1X14, 0, 1, 14},
+	{0, 0, 0, 0, MEDIA_BUS_FMT_YUYV8_2X8, 0, 1, 8},
+	{0, 0, 0, 0, MEDIA_BUS_FMT_YVYU8_2X8, 0, 1, 8},
 };
 
 struct isp_dev_t *isp_subdrv_get_dev(int index)
@@ -266,6 +268,7 @@ int isp_subdev_start_manual_dma(struct isp_dev_t *isp_dev)
 	struct isp_global_info *g_info = isp_global_get_info();
 
 	if ((isp_dev->apb_dma == 0) ||
+		(isp_dev->twreg_cnt == 0) ||
 		(g_info->user > 1))
 		return 0;
 
@@ -305,7 +308,7 @@ int isp_subdev_update_auto_dma(struct isp_dev_t *isp_dev)
 	if (g_info->mode != AML_ISP_SCAM)
 		return 0;
 
-	if (isp_dev->apb_dma == 0)
+	if ((isp_dev->apb_dma == 0) || (isp_dev->twreg_cnt == 0))
 		return 0;
 
 	dma_sync_single_for_device(isp_dev->dev,isp_dev->wreg_buff.addr[AML_PLANE_A], isp_dev->wreg_buff.bsize, DMA_TO_DEVICE);
@@ -454,7 +457,7 @@ static int isp_subdev_set_ctrl(struct v4l2_ctrl *ctrl)
 
 	switch (ctrl->id) {
 	case V4L2_CID_AML_MODE:
-		pr_err("isp_subdev_set_ctrl:%d\n", ctrl->val);
+		pr_info("isp_subdev_set_ctrl:%d\n", ctrl->val);
 		isp_dev->enWDRMode = ctrl->val;
 		g_info->mode = AML_ISP_SCAM;
 		if (isp_dev->enWDRMode == ISP_SDR_DCAM_MODE)
@@ -504,9 +507,10 @@ int isp_subdev_ctrls_init(struct isp_dev_t *isp_dev)
 
 static irqreturn_t isp_subdev_irq_handler(int irq, void *dev)
 {
-	int status = 0;
+	int status = 0, id = 0;
 	unsigned long flags;
 	struct isp_dev_t *isp_dev = dev;
+	struct aml_video *video;
 
 	if (isp_dev->isp_status == STATUS_STOP) {
 		if (aml_adap_global_get_vdev() == isp_dev->index) {
@@ -524,6 +528,11 @@ static irqreturn_t isp_subdev_irq_handler(int irq, void *dev)
 	status = isp_dev->ops->hw_interrupt_status(isp_dev);
 	if (status & 0x1) {
 		isp_dev->frm_cnt ++;
+		for (id = AML_ISP_STREAM_0; id < AML_ISP_STREAM_MAX; id++) {
+			video = &isp_dev->video[id];
+			if (video->ops->cap_irq_handler)
+				video->ops->cap_irq_handler(video, status);
+		}
 		tasklet_schedule(&isp_dev->irq_tasklet);
 	}
 
@@ -538,12 +547,6 @@ static void isp_subdev_irq_tasklet(unsigned long data)
 	int status = 0xff001234;
 	struct aml_video *video;
 	struct isp_dev_t *isp_dev = (struct isp_dev_t *)data;
-
-	for (id = AML_ISP_STREAM_0; id < AML_ISP_STREAM_MAX; id++) {
-		video = &isp_dev->video[id];
-		if (video->ops->cap_irq_handler)
-			video->ops->cap_irq_handler(video, status);
-	}
 
 	for (id = 0; id < AML_ISP_STREAM_0; id++) {
 		video = &isp_dev->video[id];

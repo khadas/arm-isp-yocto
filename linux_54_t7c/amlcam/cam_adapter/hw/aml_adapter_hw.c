@@ -184,6 +184,9 @@ static int adap_get_pixel_depth(void *a_param)
 	case ADAP_RAW14:
 		depth = 14;
 	break;
+	case ADAP_YUV422_8BIT:
+		depth = 16;
+	break;
 	default:
 		pr_err("Error to support format\n");
 	break;
@@ -371,6 +374,22 @@ static int adap_frontend_init(void *a_dev)
 		cfg_line_sup_vs_en	= 0;
 		cfg_line_sup_vs_sel = 0;
 		cfg_line_sup_sel	= 0;
+		break;
+	case MODE_MIPI_RAW_HDR_DDR_DDR:
+		cfg_all_to_mem = 0;
+		pingpong_en = 0;
+		cfg_isp2ddr_enable = 1;
+		cfg_isp2comb_enable = 0;
+		vc_mode = 0x111100f1;
+		mem_addr0_a = param->ddr_buf[0].addr[0];
+		mem_addr0_b = param->ddr_buf[0].addr[0];
+		mem_addr1_a = param->ddr_buf[0].addr[0];
+		mem_addr1_b = param->ddr_buf[0].addr[0];
+		reg_lbuf0_vs_sel = 0;
+		reg_vfifo_vs_out_pre = 0;
+		cfg_line_sup_vs_en = 1;
+		cfg_line_sup_vs_sel = 1;
+		cfg_line_sup_sel = 1;
 		break;
 	case MODE_MIPI_RAW_HDR_DDR_DIRCT:
 		cfg_all_to_mem = 0;
@@ -791,7 +810,7 @@ static int adap_reader_init(void *a_dev)
 	module_reg_write(a_dev, module, MIPI_ADAPT_DDR_RD1_CNTL3, ddr_rd1_pong);
 
 	module_reg_read(a_dev, module, MIPI_ADAPT_DDR_RD1_CNTL0, &val);
-	module_reg_write(a_dev, module, MIPI_ADAPT_DDR_RD1_CNTL0, val | ddr_rden_1  << 0);
+	module_reg_write(a_dev, module, MIPI_ADAPT_DDR_RD1_CNTL0, val | ddr_rden_1  << 0 | HDR_LOOPBACK_MODE << 1);
 
 	return rtn;
 }
@@ -1299,12 +1318,20 @@ static int adap_wdr_cfg_buf(void *a_dev)
 	module_reg_write(a_dev, module, CSI2_DDR_START_OTHER, param->ddr_buf[0].addr[0]);
 	module_reg_write(a_dev, module, CSI2_DDR_START_OTHER_ALT, param->ddr_buf[0].addr[0]);
 
+	if (HDR_LOOPBACK_MODE)
+		module_reg_write(a_dev, module, CSI2_DDR_LOOP_LINES_PIX, 119);
+
 	module = READER_MD;
 
 	module_reg_write(a_dev, module, MIPI_ADAPT_DDR_RD0_CNTL2, param->ddr_buf[0].addr[0]);
 	module_reg_write(a_dev, module, MIPI_ADAPT_DDR_RD0_CNTL3, param->ddr_buf[0].addr[0]);
 	module_reg_write(a_dev, module, MIPI_ADAPT_DDR_RD1_CNTL2, param->ddr_buf[0].addr[0]);
 	module_reg_write(a_dev, module, MIPI_ADAPT_DDR_RD1_CNTL3, param->ddr_buf[0].addr[0]);
+
+	if (HDR_LOOPBACK_MODE) {
+		module_reg_write(a_dev, module, MIPI_ADAPT_DDR_RD1_CNTL5, param->ddr_buf[0].addr[0] + (param->rd_param.rd_mem_line_stride << 4) * 120);
+		module_reg_write(a_dev, module, MIPI_ADAPT_DDR_RD1_CNTL6, param->ddr_buf[0].addr[0] + (param->rd_param.rd_mem_line_stride << 4) * 120);
+	}
 
 	return 0;
 }
@@ -1456,7 +1483,9 @@ static void adap_hw_irq_disable(void *a_dev)
 	struct adapter_dev_t *adap_dev = a_dev;
 	struct adapter_dev_param *param = &adap_dev->param;
 
-	if (param->mode != MODE_MIPI_RAW_SDR_DDR)
+	if ((param->mode == MODE_MIPI_RAW_SDR_DIRCT) ||
+		(param->mode == MODE_MIPI_RAW_HDR_DDR_DIRCT) ||
+		(param->mode == MODE_MIPI_YUV_SDR_DIRCT))
 		return;
 
 	module_update_bits(a_dev, adap_dev->index, CSI2_INTERRUPT_CTRL_STAT, 0, 2, 1); //fe wr done
@@ -1469,7 +1498,9 @@ static void adap_hw_irq_enable(void *a_dev)
 	struct adapter_dev_t *adap_dev = a_dev;
 	struct adapter_dev_param *param = &adap_dev->param;
 
-	if (param->mode != MODE_MIPI_RAW_SDR_DDR)
+	if ((param->mode == MODE_MIPI_RAW_SDR_DIRCT) ||
+		(param->mode == MODE_MIPI_RAW_HDR_DDR_DIRCT) ||
+		(param->mode == MODE_MIPI_YUV_SDR_DIRCT))
 		return;
 
 	module_update_bits(a_dev, adap_dev->index, CSI2_INTERRUPT_CTRL_STAT, 1, 2, 1); //fe wr done
@@ -1498,7 +1529,8 @@ static int adap_hw_start(void *a_dev)
 	struct adapter_dev_t *adap_dev = a_dev;
 
 	if (adap_dev->param.mode == MODE_MIPI_RAW_SDR_DIRCT ||
-		adap_dev->param.mode == MODE_MIPI_RAW_HDR_DDR_DIRCT) {
+		adap_dev->param.mode == MODE_MIPI_RAW_HDR_DDR_DIRCT ||
+		adap_dev->param.mode == MODE_MIPI_YUV_SDR_DIRCT) {
 		adap_align_start(a_dev);
 		adap_pixel_start(a_dev);
 		adap_reader_start(a_dev);

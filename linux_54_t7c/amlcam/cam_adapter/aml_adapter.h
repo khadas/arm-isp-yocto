@@ -31,6 +31,8 @@
 
 #include "aml_common.h"
 
+#define HDR_LOOPBACK_MODE 0
+
 #define ADAP_DDR_BUFF_CNT 4
 #define ADAP_DOL_BUFF_CNT 2
 #define ADAP_ALIGN(data, val) ((data + val - 1) & (~(val - 1)))

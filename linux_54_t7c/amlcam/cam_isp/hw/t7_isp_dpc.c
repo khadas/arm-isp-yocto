@@ -43,6 +43,27 @@ static void dpc_cfg_param(struct isp_dev_t *isp_dev, void *param)
 	val = dpc_cfg->dpc_avg_dev_offset[0];
 	isp_reg_update_bits(isp_dev, ISP_DPC0_AVG_DEV, val, 16, 8);
 
+	val = dpc_cfg->dpc_cor_en[0];
+	isp_reg_update_bits(isp_dev, ISP_DPC0_CNTL, val, 0, 1);
+
+	val = dpc_cfg->dpc_avg_dev_mode[0];
+	isp_reg_update_bits(isp_dev, ISP_DPC0_AVG_DEV, val, 24, 1);
+
+	val = dpc_cfg->dpc_avg_mode[0];
+	isp_reg_update_bits(isp_dev, ISP_DPC0_AVG_MOD, val, 8, 2);
+
+	val = dpc_cfg->dpc_avg_thd2_en[0];
+	isp_reg_update_bits(isp_dev, ISP_DPC0_VAR_GAIN, val, 20, 1);
+
+	val = dpc_cfg->dpc_highlight_en[0];
+	isp_reg_update_bits(isp_dev, ISP_DPC0_COR_CTRL, val, 4, 1);
+
+	val = dpc_cfg->dpc_correct_mode[0];
+	isp_reg_update_bits(isp_dev, ISP_DPC0_COR_CTRL, val, 0, 2);
+
+	val = dpc_cfg->dpc_write_to_lut[0];
+	isp_reg_update_bits(isp_dev, ISP_DPC0_LUT_CTRL, val, 16, 1);
+
 	val = (dpc_cfg->dpc_avg_gain_h0[1] << 16) | (dpc_cfg->dpc_avg_gain_l0[1] << 0);
 	isp_reg_write(isp_dev, ISP_DPC1_AVG_GAIN0, val);
 
@@ -62,6 +83,27 @@ static void dpc_cfg_param(struct isp_dev_t *isp_dev, void *param)
 
 	val = dpc_cfg->dpc_avg_dev_offset[1];
 	isp_reg_update_bits(isp_dev, ISP_DPC1_AVG_DEV, val, 16, 8);
+
+	val = dpc_cfg->dpc_cor_en[1];
+	isp_reg_update_bits(isp_dev, ISP_DPC1_CNTL, val, 0, 1);
+
+	val = dpc_cfg->dpc_avg_dev_mode[1];
+	isp_reg_update_bits(isp_dev, ISP_DPC1_AVG_DEV, val, 24, 1);
+
+	val = dpc_cfg->dpc_avg_mode[1];
+	isp_reg_update_bits(isp_dev, ISP_DPC1_AVG_MOD, val, 8, 2);
+
+	val = dpc_cfg->dpc_avg_thd2_en[1];
+	isp_reg_update_bits(isp_dev, ISP_DPC1_VAR_GAIN, val, 20, 1);
+
+	val = dpc_cfg->dpc_highlight_en[1];
+	isp_reg_update_bits(isp_dev, ISP_DPC1_COR_CTRL, val, 4, 1);
+
+	val = dpc_cfg->dpc_correct_mode[1];
+	isp_reg_update_bits(isp_dev, ISP_DPC1_COR_CTRL, val, 0, 2);
+
+	val = dpc_cfg->dpc_write_to_lut[1];
+	isp_reg_update_bits(isp_dev, ISP_DPC1_LUT_CTRL, val, 16, 1);
 }
 
 void isp_dpc_cfg_fmt(struct isp_dev_t *isp_dev, struct aml_format *fmt)

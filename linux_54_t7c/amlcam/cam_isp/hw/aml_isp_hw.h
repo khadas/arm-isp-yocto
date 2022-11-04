@@ -86,6 +86,7 @@ void isp_top_reset(void *isp_dev);
 void isp_ofe_init(struct isp_dev_t *isp_dev);
 void isp_ofe_cfg_fmt(struct isp_dev_t *isp_dev, struct aml_format *fmt);
 void isp_ofe_cfg_size(struct isp_dev_t *isp_dev, struct aml_format *fmt);
+void isp_ofe_cfg_slice_size(struct isp_dev_t *isp_dev, struct aml_format *fmt);
 void isp_ofe_cfg_param(struct isp_dev_t *isp_dev, struct aml_buffer *buff);
 void isp_ofe_req_info(struct isp_dev_t *isp_dev, struct aml_buffer *buff);
 
@@ -173,6 +174,8 @@ void isp_wrmifx3_mirror_enable(struct isp_dev_t *isp_dev, u32 idx, u32 enable);
 void isp_wrmifx3_flip_enable(struct isp_dev_t *isp_dev, u32 idx, u32 enable);
 void isp_wrmifx3_cfg_frm_size(struct isp_dev_t *isp_dev, u32 idx, struct aml_format *fmt);
 void isp_wrmifx3_cfg_frm_buff(struct isp_dev_t *isp_dev, u32 idx, struct aml_buffer *buff);
+void isp_wrmifx3_autoacc_num(struct isp_dev_t *isp_dev, u32 idx, u32 num);
+void isp_wrmifx3_autoacc_enable(struct isp_dev_t *isp_dev, u32 idx, u32 enable);
 void isp_wrmifx3_module_enable(struct isp_dev_t *isp_dev, u32 idx, u32 enbale, u32 force);
 void isp_wrmifx3_module_stat(struct isp_dev_t *isp_dev, u32 idx, u32* val);
 void isp_wrmifx3_cfg_slice(struct isp_dev_t *isp_dev, u32 idx, struct aml_slice *param);

@@ -62,6 +62,40 @@ static void tnr_cfg_param(struct isp_dev_t *isp_dev, void *param)
 		(tnr_cfg->ma_mix_l_th_y2 << 0);
 	isp_reg_write(isp_dev, ISP_CUBICT_LOW_MIX_THRD_Y, val);
 
+	val = (tnr_cfg->ma_sad_var_th_x0 << 16) |
+		(tnr_cfg->ma_sad_var_th_x1 << 12) |
+		(tnr_cfg->ma_sad_var_th_x2 << 8);
+	isp_reg_write(isp_dev, ISP_CUBICT_SAD_VAR_GAIN_X, val);
+	val = (tnr_cfg->ma_sad_var_th_y_0 << 20) |
+		(tnr_cfg->ma_sad_var_th_y_1 << 14) |
+		(tnr_cfg->ma_sad_var_th_y_2 << 8);
+	isp_reg_write(isp_dev, ISP_CUBICT_SAD_VAR_GAIN_Y, val);
+
+	val = (tnr_cfg->me_meta_sad_th0[0] << 24) |
+		(tnr_cfg->me_meta_sad_th0[1] << 16) |
+		(tnr_cfg->me_meta_sad_th0[2] << 8);
+	isp_reg_update_bits(isp_dev, ISP_MCNR_META_SAD_TH0, val, 8, 24);
+
+	val = (tnr_cfg->me_meta_sad_th1[0] << 24) |
+		(tnr_cfg->me_meta_sad_th1[1] << 16) |
+		(tnr_cfg->me_meta_sad_th1[2] << 8);
+	isp_reg_update_bits(isp_dev, ISP_MCNR_META_SAD_TH1, val, 8, 24);
+
+	val = (tnr_cfg->ma_sad_luma_adj_x[0] << 16) |
+		(tnr_cfg->ma_sad_luma_adj_x[1] << 4);
+	isp_reg_write(isp_dev, ISP_CUBICT_SAD_LUMA_GAIN_X, val);
+
+	val = (tnr_cfg->ma_sad_luma_adj_x[2] << 12) |
+		(tnr_cfg->ma_sad_luma_adj_x[3] << 0);
+	isp_reg_update_bits(isp_dev, ISP_CUBICT_ERR_MIX_RATIO, val, 8, 24);
+
+	val = (tnr_cfg->ma_sad_luma_adj_y[0] << 24) |
+		(tnr_cfg->ma_sad_luma_adj_y[1] << 18) |
+		(tnr_cfg->ma_sad_luma_adj_y[2] << 12) |
+		(tnr_cfg->ma_sad_luma_adj_y[3] << 6) |
+		(tnr_cfg->ma_sad_luma_adj_y[4] << 0);
+	isp_reg_update_bits(isp_dev, ISP_CUBICT_SAD_LUMA_GAIN_Y, val, 0, 30);
+
 	val = (tnr_cfg->ma_sad_pdtl4_x0 << 8) |
 		(tnr_cfg->ma_sad_pdtl4_x1 << 4) |
 		(tnr_cfg->ma_sad_pdtl4_x2 << 0);

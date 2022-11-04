@@ -455,6 +455,19 @@ void isp_lens_cfg_fmt(struct isp_dev_t *isp_dev, struct aml_format *fmt)
 	isp_reg_update_bits(isp_dev, ISP_LSWB_LNS_PHSOFST, yofst, 0, 2);
 }
 
+u16 sqrt32( u32 arg )
+{
+	u32 mask = (u32)1 << 15;
+	u16 res = 0;
+	int i = 0;
+
+	for ( i = 0; i < 16; i++ ) {
+	if ( ( res + ( mask >> i ) ) * ( res + ( mask >> i ) ) <= arg )
+		res = res + ( mask >> i );
+	}
+	return res;
+}
+
 void isp_lens_cfg_size(struct isp_dev_t *isp_dev, struct aml_format *fmt)
 {
 	u32 val = 0;
@@ -466,6 +479,12 @@ void isp_lens_cfg_size(struct isp_dev_t *isp_dev, struct aml_format *fmt)
 	isp_reg_update_bits(isp_dev, ISP_LSWB_RS_XSCALE, val, 0, 16);
 	val = (1 << 24) / (ysize >> 1);
 	isp_reg_update_bits(isp_dev, ISP_LSWB_RS_YSCALE, val, 0, 16);
+
+	val = (1 << 11) * xsize / sqrt32(xsize * xsize + ysize * ysize);
+	isp_reg_update_bits(isp_dev, ISP_LSWB_RS_CENTEROFST_0, val, 0, 12);
+	isp_reg_update_bits(isp_dev, ISP_LSWB_RS_CENTEROFST_1, val, 0, 12);
+	isp_reg_update_bits(isp_dev, ISP_LSWB_RS_CENTEROFST_2, val, 0, 12);
+	isp_reg_update_bits(isp_dev, ISP_LSWB_RS_CENTEROFST_3, val, 0, 12);
 
 	val = (xsize >> 1);
 	isp_reg_update_bits(isp_dev, ISP_LSWB_RS_CENTER, val, 16, 16);

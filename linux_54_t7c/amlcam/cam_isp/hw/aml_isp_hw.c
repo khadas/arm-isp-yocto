@@ -213,6 +213,9 @@ int isp_hw_convert_fmt(struct aml_format *fmt)
 {
 	int isp_fmt = 0;
 
+	if ((fmt->code == MEDIA_BUS_FMT_YVYU8_2X8) || (fmt->code == MEDIA_BUS_FMT_YUYV8_2X8))
+		return isp_fmt;
+
 	switch (fmt->code) {
 	case MEDIA_BUS_FMT_SBGGR8_1X8:
 	case MEDIA_BUS_FMT_SBGGR10_1X10:
@@ -274,6 +277,7 @@ static void isp_hw_init(struct isp_dev_t *isp_dev)
 	isp_ptnr_mif_init(isp_dev);
 	isp_wrmifx3_init(isp_dev);
 	isp_rdmif0_init(isp_dev);
+	isp_ofe_wdr_init(isp_dev);
 
 	isp_apb_dma_init(isp_dev);
 
@@ -469,10 +473,10 @@ static int isp_hw_cfg_slice(struct isp_dev_t *isp_dev, int pos)
 
 	switch (pos) {
 	case 0:
-		isp_ofe_cfg_size(isp_dev, &isp_dev->lfmt);
+		isp_ofe_cfg_slice_size(isp_dev, &isp_dev->lfmt);
 	break;
 	case 1:
-		isp_ofe_cfg_size(isp_dev, &isp_dev->rfmt);
+		isp_ofe_cfg_slice_size(isp_dev, &isp_dev->rfmt);
 	break;
 	case 2:
 		for (i = 0; i < 1; i++)
