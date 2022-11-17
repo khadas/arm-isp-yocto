@@ -441,7 +441,8 @@ static irqreturn_t adap_irq_handler_offline(int irq, void *dev)
 
 	status = adap_dev->ops->hw_interrupt_status(adap_dev);
 	if (status & (1 << 18)) {
-		tasklet_schedule(&adap_dev->irq_tasklet);
+		adap_fe_done_buf(adap_dev);
+		adap_fe_cfg_buf(adap_dev);
 	}
 
 	spin_unlock_irqrestore(&adap_dev->irq_lock, flags);
@@ -814,11 +815,10 @@ int aml_adap_subdev_init(void *c_dev)
 	}
 
 	aml_adap_global_init();
-#if 0
+
 	rtn = adap_request_irq_offline(adap_dev);
 	if (rtn)
 		adap_iounmap_resource(adap_dev);
-#endif
 
 	dev_info(adap_dev->dev, "ADAP%u: subdev init\n", adap_dev->index);
 

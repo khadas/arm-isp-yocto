@@ -457,7 +457,7 @@ static int isp_subdev_set_ctrl(struct v4l2_ctrl *ctrl)
 
 	switch (ctrl->id) {
 	case V4L2_CID_AML_MODE:
-		pr_info("isp_subdev_set_ctrl:%d\n", ctrl->val);
+		pr_err("isp_subdev_set_ctrl:%d\n", ctrl->val);
 		isp_dev->enWDRMode = ctrl->val;
 		g_info->mode = AML_ISP_SCAM;
 		if (isp_dev->enWDRMode == ISP_SDR_DCAM_MODE)
