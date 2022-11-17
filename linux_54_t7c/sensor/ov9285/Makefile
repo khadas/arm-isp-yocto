@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: (GPL-2.0+ OR MIT)
-obj-m += imx290.o
+obj-m += ov9285.o
 
 M_PATH := $(shell dirname $(lastword $(MAKEFILE_LIST)))
 
@@ -9,4 +9,8 @@ M_DRV_SRC := $(DRV_SRC:$(M_PATH)/%=%)
 
 DRV_SRC_OBJ := $(M_DRV_SRC:.c=.o)
 
-imx290-y := $(DRV_SRC_OBJ)
+ov9285-y := $(DRV_SRC_OBJ)
+
+LOCAL_INCLUDES := -I$(M_PATH)/../include -I$(M_PATH)/../../amlcam/cam_common
+
+ccflags-y += $(LOCAL_INCLUDES)

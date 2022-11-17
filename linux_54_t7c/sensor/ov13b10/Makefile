@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: (GPL-2.0+ OR MIT)
-obj-m += imx290.o
+obj-m += ov13b10.o
 
 M_PATH := $(shell dirname $(lastword $(MAKEFILE_LIST)))
 
@@ -9,4 +9,4 @@ M_DRV_SRC := $(DRV_SRC:$(M_PATH)/%=%)
 
 DRV_SRC_OBJ := $(M_DRV_SRC:.c=.o)
 
-imx290-y := $(DRV_SRC_OBJ)
+ov13b10-y := $(DRV_SRC_OBJ)
