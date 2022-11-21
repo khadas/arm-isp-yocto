@@ -626,6 +626,11 @@ static int adap_subdev_hw_init(struct adapter_dev_t *adap_dev,
 		param->mode = MODE_MIPI_RAW_SDR_DDR;
 		param->dol_type = ADAP_DOL_NONE;
 		aml_adap_global_mode(MODE_MIPI_RAW_SDR_DDR);
+	} else if (adap_dev->enWDRMode == ISP_SDR_DCAM_MODE) {
+		param->mode = MODE_MIPI_RAW_SDR_DDR;
+		param->dol_type = ADAP_DOL_NONE;
+		aml_adap_global_mode(MODE_MIPI_RAW_SDR_DDR);
+		pr_err("dcam mode\n");
 	} else {
 		param->mode = MODE_MIPI_RAW_SDR_DIRCT;
 		if (param->format == ADAP_YUV422_8BIT)
