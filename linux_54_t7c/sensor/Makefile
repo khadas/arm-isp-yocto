@@ -19,15 +19,18 @@ all:
 	$(call module_func,ov9285)
 	$(call module_func,ov08a10)
 	$(call module_func,imx415)
+	$(call module_func,ov13b10)
 
 clean:
 	$(call module_clean,imx290)
 	$(call module_clean,ov9285)
 	$(call module_clean,ov08a10)
 	$(call module_clean,imx415)
+	$(call module_clean,ov13b10)
 
 modules_install:
 	$(call module_install,imx290)
 	$(call module_install,ov9285)
 	$(call module_install,ov08a10)
 	$(call module_install,imx415)
+	$(call module_install,ov13b10)
