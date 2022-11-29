@@ -26,7 +26,7 @@
 #include <signal.h>
 #include <semaphore.h>
 
-#include "../../media-v4l2/mediactl.h"
+#include "mediactl.h"
 
 #include "aml_isp_api.h"
 #include "aml_isp_tuning.h"

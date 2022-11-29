@@ -26,13 +26,13 @@
 #include <signal.h>
 #include <semaphore.h>
 
-#include "../../media-v4l2/mediactl.h"
-#include "../../media-v4l2/v4l2subdev.h"
-#include "../../media-v4l2/v4l2videodev.h"
+#include "mediactl.h"
+#include "v4l2subdev.h"
+#include "v4l2videodev.h"
 
 #include "aml_isp_api.h"
 
-#include "sensor_calibration.h"
+#include "imx290_sensor_calibration.h"
 #include "imx290_api.h"
 
 ISP_SNS_STATE_S g_pastImx290;
@@ -55,7 +55,10 @@ void cmos_set_sensor_entity(struct media_entity * sensor_ent, int wdr)
 
 void cmos_get_sensor_calibration(aisp_calib_info_t * calib)
 {
-    dynamic_calibrations_init(calib);
+    if (g_pastImx290.enWDRMode == 0)
+        imx290_sdr_calibrations_init(calib);
+    else
+        imx290_wdr_calibrations_init(calib);
 }
 
 int cmos_get_ae_default(int ViPipe, ALG_SENSOR_DEFAULT_S *pstAeSnsDft)
@@ -65,22 +68,26 @@ int cmos_get_ae_default(int ViPipe, ALG_SENSOR_DEFAULT_S *pstAeSnsDft)
     g_pastImx290.snsAlgInfo.active.width = 1920;
     g_pastImx290.snsAlgInfo.active.height = 1080;
     g_pastImx290.snsAlgInfo.fps = 30;
-    g_pastImx290.snsAlgInfo.sensor_exp_number = 1;
-    g_pastImx290.snsAlgInfo.bits = 12;
 
     g_pastImx290.snsAlgInfo.sensor_gain_number = 1;
-    g_pastImx290.snsAlgInfo.total.width = 4400;
-    g_pastImx290.snsAlgInfo.total.height = 1125;
 
     g_pastImx290.snsAlgInfo.lines_per_second = g_pastImx290.snsAlgInfo.total.height*30;
     g_pastImx290.snsAlgInfo.pixels_per_line = g_pastImx290.snsAlgInfo.total.width;
 
     if (g_pastImx290.enWDRMode == 1) {
+        g_pastImx290.snsAlgInfo.sensor_exp_number = 2;
+        g_pastImx290.snsAlgInfo.bits = 10;
+        g_pastImx290.snsAlgInfo.total.width = 2028;
+        g_pastImx290.snsAlgInfo.total.height = 1220;
         g_pastImx290.snsAlgInfo.integration_time_min = 1<<SHUTTER_TIME_SHIFT;
         g_pastImx290.snsAlgInfo.integration_time_max = (225 - 3) << SHUTTER_TIME_SHIFT;
         g_pastImx290.snsAlgInfo.integration_time_long_max = (g_pastImx290.snsAlgInfo.total.height*2 - (225 + 3)) << SHUTTER_TIME_SHIFT;
         g_pastImx290.snsAlgInfo.integration_time_limit = (225 - 3)<<SHUTTER_TIME_SHIFT;
     } else {
+        g_pastImx290.snsAlgInfo.sensor_exp_number = 1;
+        g_pastImx290.snsAlgInfo.bits = 12;
+        g_pastImx290.snsAlgInfo.total.width = 4400;
+        g_pastImx290.snsAlgInfo.total.height = 1125;
         g_pastImx290.snsAlgInfo.integration_time_min = 1<<SHUTTER_TIME_SHIFT;
         g_pastImx290.snsAlgInfo.integration_time_max = g_pastImx290.snsAlgInfo.total.height<<SHUTTER_TIME_SHIFT;
         g_pastImx290.snsAlgInfo.integration_time_long_max = g_pastImx290.snsAlgInfo.total.height<<SHUTTER_TIME_SHIFT;
@@ -99,10 +106,17 @@ int cmos_get_ae_default(int ViPipe, ALG_SENSOR_DEFAULT_S *pstAeSnsDft)
     g_pastImx290.snsAlgInfo.again_high_accuracy = (1<<(LOG2_GAIN_SHIFT))/20;
     g_pastImx290.snsAlgInfo.again_accuracy_fmt = 1;
     g_pastImx290.snsAlgInfo.again_accuracy = (1<<(LOG2_GAIN_SHIFT))/20;
-    g_pastImx290.snsAlgInfo.expos_lines = (0x2A2<<(SHUTTER_TIME_SHIFT));
-    g_pastImx290.snsAlgInfo.expos_accuracy = (1<<(SHUTTER_TIME_SHIFT));
-    g_pastImx290.snsAlgInfo.sexpos_lines = (1<<(SHUTTER_TIME_SHIFT));
-    g_pastImx290.snsAlgInfo.sexpos_accuracy = (1<<(SHUTTER_TIME_SHIFT));
+    if (g_pastImx290.enWDRMode == 1) {
+        g_pastImx290.snsAlgInfo.expos_lines = (0x84b<<(SHUTTER_TIME_SHIFT));
+        g_pastImx290.snsAlgInfo.expos_accuracy = (1<<(SHUTTER_TIME_SHIFT));
+        g_pastImx290.snsAlgInfo.sexpos_lines = (0x15<<(SHUTTER_TIME_SHIFT));
+        g_pastImx290.snsAlgInfo.sexpos_accuracy = (1<<(SHUTTER_TIME_SHIFT));
+    } else {
+        g_pastImx290.snsAlgInfo.expos_lines = (0x2A2<<(SHUTTER_TIME_SHIFT));
+        g_pastImx290.snsAlgInfo.expos_accuracy = (1<<(SHUTTER_TIME_SHIFT));
+        g_pastImx290.snsAlgInfo.sexpos_lines = (1<<(SHUTTER_TIME_SHIFT));
+        g_pastImx290.snsAlgInfo.sexpos_accuracy = (1<<(SHUTTER_TIME_SHIFT));
+    }
     g_pastImx290.snsAlgInfo.vsexpos_lines = (1<<(SHUTTER_TIME_SHIFT));
     g_pastImx290.snsAlgInfo.vsexpos_accuracy = (1<<(SHUTTER_TIME_SHIFT));
     g_pastImx290.snsAlgInfo.vvsexpos_lines = (1<<(SHUTTER_TIME_SHIFT));
@@ -179,7 +193,7 @@ void cmos_fps_set(int ViPipe, float f32Fps, ALG_SENSOR_DEFAULT_S *pstAeSnsDft)
 
 void cmos_alg_update(int ViPipe)
 {
-    uint32_t shutter_time_lines = 0;//, shutter_time_lines_short = 0;
+    uint32_t shutter_time_lines = 0, shutter_time_lines_short = 0;
     uint32_t i = 0;
 
     if ( g_pastImx290.snsAlgInfo.u16GainCnt || g_pastImx290.snsAlgInfo.u16IntTimeCnt ) {
@@ -203,12 +217,16 @@ void cmos_alg_update(int ViPipe)
             }
 
             if (g_pastImx290.enWDRMode) {
-                //shutter_time_lines_short = g_pastImx290.snsAlgInfo.u32Inttime[1][g_pastImx290.snsAlgInfo.integration_time_apply_delay];
+                shutter_time_lines_short = g_pastImx290.snsAlgInfo.u32Inttime[1][g_pastImx290.snsAlgInfo.integration_time_apply_delay];
                 //imx290_write_register(ViPipe, 0x3020, shutter_time_lines_short & 0xff);
                 //imx290_write_register(ViPipe, 0x3021, (shutter_time_lines_short>>8) & 0xff);
                 //imx290_write_register(ViPipe, 0x3024, shutter_time_lines&0xff);
                 //imx290_write_register(ViPipe, 0x3025, (shutter_time_lines>>8) & 0xff);
-                //printf("sensor expo: %d, %d\n", shutter_time_lines, shutter_time_lines_short);
+                //ALOGD("cmos expo: %d, %d, %x\n", shutter_time_lines, shutter_time_lines_short, (shutter_time_lines << 16) | shutter_time_lines_short);
+                struct v4l2_ext_control expo;
+                expo.id = V4L2_CID_EXPOSURE;
+                expo.value = (shutter_time_lines << 16) | shutter_time_lines_short;
+                v4l2_subdev_set_ctrls(g_pastImx290.sensor_ent, &expo, 1);
             }
         }
     }

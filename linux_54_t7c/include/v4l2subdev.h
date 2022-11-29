@@ -234,7 +234,7 @@ int v4l2_subdev_set_frame_interval(struct media_entity *entity,
  * subdev pad specified in @a p. @a endp will be written a pointer where
  * parsing of @a p ended.
  *
- * Format strings are separeted by commas (,).
+ * Format strings are separated by commas (,).
  *
  * @return 0 on success, or a negative error code on failure.
  */

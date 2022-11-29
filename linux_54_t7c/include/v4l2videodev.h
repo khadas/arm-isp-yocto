@@ -23,6 +23,7 @@ int v4l2_video_set_format(struct media_entity *entity,
 int v4l2_video_get_capability(struct media_entity *entity,
                         struct v4l2_capability * v4l2_cap);
 
+
 int v4l2_video_req_bufs(struct media_entity *entity,
                         struct v4l2_requestbuffers * v4l2_rb);
 
@@ -31,6 +32,8 @@ int v4l2_video_query_buf(struct media_entity *entity,
 
 int v4l2_video_q_buf(struct media_entity *entity,
                        struct v4l2_buffer *v4l2_buf);
+
+
 
 int v4l2_video_dq_buf(struct media_entity *entity,
                        struct v4l2_buffer *v4l2_buf);
