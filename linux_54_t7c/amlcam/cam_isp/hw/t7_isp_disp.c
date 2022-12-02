@@ -764,26 +764,32 @@ void isp_disp_pps_config(struct isp_dev_t *isp_dev, u32 idx,
 	reg_prevsc_flt_num = (val >> 8) & 0xf;
 	reg_hsc_tap_num    = (val >> 4) & 0xf;
 	reg_vsc_tap_num    = (val >> 0) & 0xf;
+
+	pre_vscale_max_hsize = reg_prevsc_flt_num == 2 ? max_hsize : reg_prevsc_flt_num == 4 ? max_hsize/2 : max_hsize/4;
 #ifdef T7C_CHIP
-	preh_force_open  = 0 & (ihsize > max_hsize) & prev_en;
-	prev_flt_4_invld = 0 & (ihsize > (max_hsize/2)) & (ihsize <= max_hsize)   & prev_en;
-	prev_flt_8_invld = 0 & (ihsize > (max_hsize/4)) & (ihsize <= max_hsize/2) & prev_en;
+	preh_force_open  = (ihsize > pre_vscale_max_hsize) & prev_en;
+	//prev_flt_4_invld = (ihsize > (max_hsize/2)) & (ihsize <= max_hsize)   & prev_en;
+	//prev_flt_8_invld = (ihsize > (max_hsize/4)) & (ihsize <= max_hsize/2) & prev_en;
 #else
-	preh_force_open  = ((idx==0) | (idx==1)) & (ihsize > max_hsize); //& prev_en;
-	prev_flt_4_invld = ((idx==0) | (idx==1)) & (ihsize > (max_hsize/2)) & (ihsize <= max_hsize)   & prev_en;
-	prev_flt_8_invld = ((idx==0) | (idx==1)) & (ihsize > (max_hsize/4)) & (ihsize <= max_hsize/2) & prev_en;
+	preh_force_open  = (ihsize > max_hsize) | (prev_en & (ihsize > pre_vscale_max_hsize)); //& prev_en;
+	//prev_flt_4_invld = ((idx==0) | (idx==1)) & (ihsize > (max_hsize/2)) & (ihsize <= max_hsize)   & prev_en;
+	//prev_flt_8_invld = ((idx==0) | (idx==1)) & (ihsize > (max_hsize/4)) & (ihsize <= max_hsize/2) & prev_en;
 #endif
 	reg_prehsc_rate    = (preh_en | preh_force_open) ? 1 : 0;
 
 	reg_prevsc_rate    = prev_en ? 1 : 0;
 
-	reg_prevsc_flt_num      = ((reg_prevsc_flt_num == 4) & prev_flt_4_invld) | ((reg_prevsc_flt_num == 8) & prev_flt_8_invld) ?
-							(reg_prevsc_flt_num >> 1) : reg_prevsc_flt_num; //reg_prevsc_flt_num = 2/4/8
+	pre_hsc_mult             = 1 << reg_prehsc_rate;
+	ihsize_after_pre_hsc     = preh_en | preh_force_open ? (ihsize + pre_hsc_mult - 1) / pre_hsc_mult : ihsize;
+
+	prev_flt_4_invld         = (reg_prevsc_flt_num == 4) & (ihsize_after_pre_hsc > max_hsize/2);
+	prev_flt_8_invld         = (reg_prevsc_flt_num == 8) & (ihsize_after_pre_hsc > max_hsize/4);
+
+	reg_prevsc_flt_num       = ( prev_flt_4_invld |  prev_flt_8_invld)  & prev_en ?
+			        (reg_prevsc_flt_num >> 1) : reg_prevsc_flt_num; //reg_prevsc_flt_num = 2/4/8
 
 	pre_vscale_max_hsize = reg_prevsc_flt_num == 2 ? max_hsize : reg_prevsc_flt_num == 4 ? max_hsize/2 : max_hsize/4;// LBUF_MAX_HSIZE/2
 
-	pre_hsc_mult             = 1 << reg_prehsc_rate;
-	ihsize_after_pre_hsc     = preh_en | preh_force_open ? (ihsize + pre_hsc_mult - 1) / pre_hsc_mult : ihsize;
 	ihsize_pre_vsc_vld       = prev_en ? ihsize_after_pre_hsc < pre_vscale_max_hsize : 1;
 
 	reg_prehsc_rate_alt      = ihsize_pre_vsc_vld ? reg_prehsc_rate : reg_prehsc_rate + 1; //reg_prehsc_rate = 0/1/2/3
