@@ -283,6 +283,47 @@ static struct media_entity *csiphy_subdev_get_sensor_entity(struct media_entity 
 		return NULL;
 }
 
+static int csiphy_subdev_querymenu(struct v4l2_ctrl_handler *hdl, struct v4l2_querymenu *qm)
+{
+	struct v4l2_ctrl *ctrl;
+	u32 i = qm->index;
+
+	ctrl = v4l2_ctrl_find(hdl, qm->id);
+	if (!ctrl)
+		return -EINVAL;
+
+	qm->reserved = 0;
+	/* Sanity checks */
+	switch (ctrl->type) {
+	case V4L2_CTRL_TYPE_MENU:
+		if (!ctrl->qmenu)
+			return -EINVAL;
+		break;
+	case V4L2_CTRL_TYPE_INTEGER_MENU:
+		if (!ctrl->qmenu_int)
+			return -EINVAL;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	if (i < ctrl->minimum || i > ctrl->maximum)
+		return -EINVAL;
+
+	/* Use mask to see if this menu item should be skipped */
+	if (ctrl->menu_skip_mask & (1ULL << i))
+		return -EINVAL;
+	/* Empty menu items should also be skipped */
+	if (ctrl->type == V4L2_CTRL_TYPE_MENU) {
+		if (!ctrl->qmenu[i] || ctrl->qmenu[i][0] == '\0')
+			return -EINVAL;
+		strscpy(qm->name, ctrl->qmenu[i], sizeof(qm->name));
+	} else {
+		qm->value = ctrl->qmenu_int[i];
+	}
+	return 0;
+}
+
 static int csiphy_subdev_get_link_freq(struct media_entity *entity, s64 *link_freq)
 {
 	int rtn = 0;
@@ -308,7 +349,7 @@ static int csiphy_subdev_get_link_freq(struct media_entity *entity, s64 *link_fr
 	qm.id = V4L2_CID_LINK_FREQ;
 	qm.index = ctrl->val;
 
-	rtn = v4l2_querymenu(subdev->ctrl_handler, &qm);
+	rtn = csiphy_subdev_querymenu(subdev->ctrl_handler, &qm);
 	if (rtn) {
 		pr_err("Failed to querymenu idx %d\n", qm.index);
 		return rtn;

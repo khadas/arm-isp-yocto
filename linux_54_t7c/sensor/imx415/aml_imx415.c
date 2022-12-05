@@ -1162,14 +1162,6 @@ static int imx415_parse_endpoint(struct imx415 *imx415)
 		}
 	}
 
-	endpoint = fwnode_graph_get_endpoint_by_id(dev_fwnode(imx415->dev),
-					     0, 1,
-					     FWNODE_GRAPH_ENDPOINT_NEXT);
-	if (!endpoint) {
-		dev_err(imx415->dev, "Endpoint node not found\n");
-		return -EINVAL;
-	}
-
 	rtn = v4l2_fwnode_endpoint_alloc_parse(endpoint, &imx415->ep);
 	fwnode_handle_put(endpoint);
 	if (rtn) {
