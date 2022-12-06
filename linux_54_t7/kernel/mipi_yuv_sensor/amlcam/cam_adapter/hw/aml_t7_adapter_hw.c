@@ -27,6 +27,7 @@
 #include "../aml_t7_adapter.h"
 #include "aml_t7_adapter_hw.h"
 #include "aml_t7_misc.h"
+#include "chip_type.h"
 
 static int ceil_upper(int val, int mod)
 {
@@ -181,6 +182,7 @@ static int adap_frontend_init(void *a_dev)
 	u32 reg_lbuf0_vs_sel;
 	u32 reg_vfifo_vs_out_pre;
 	int module = FRONTEND_MD;
+	int reg_val;
 	struct adapter_dev_t *adap_dev = a_dev;
 	struct adapter_dev_param *param = &adap_dev->param;
 
@@ -201,9 +203,9 @@ static int adap_frontend_init(void *a_dev)
 		cfg_isp2ddr_enable  = 0; // no isp2ddr
 		cfg_isp2comb_enable = 0; // no isp2comb
 		vc_mode             = 0x11110000;
-		cfg_line_sup_vs_en  = 1; // line sup en 1. enable line supply
-		cfg_line_sup_vs_sel = 1; // vsync sel 1 use mem2ddrvsync
-		cfg_line_sup_sel    = 1; // line sup sel. 1 - line supply on mem2ddr path
+		cfg_line_sup_vs_en  = 0; // line sup en 1. enable line supply
+		cfg_line_sup_vs_sel = 0; // vsync sel 1 use mem2ddrvsync
+		cfg_line_sup_sel    = 0; // line sup sel. 1 - line supply on mem2ddr path
 	break;
 	default:
 		cfg_all_to_mem      = 1;
@@ -211,12 +213,13 @@ static int adap_frontend_init(void *a_dev)
 		cfg_isp2ddr_enable  = 0;
 		cfg_isp2comb_enable = 0;
 		vc_mode             = 0x11110000;
-		cfg_line_sup_vs_en  = 1;
-		cfg_line_sup_vs_sel = 1;
-		cfg_line_sup_sel    = 1;
+		cfg_line_sup_vs_en  = 0;
+		cfg_line_sup_vs_sel = 0;
+		cfg_line_sup_sel    = 0;
 	break;
 	}
 
+	module_reg_write(a_dev, module, CSI2_CLK_RESET, 0x0);
 	module_reg_write(a_dev, module, CSI2_CLK_RESET, 0x6);
 
 	module_reg_write(a_dev, module, CSI2_X_START_END_ISP,
@@ -264,10 +267,18 @@ static int adap_frontend_init(void *a_dev)
 				cfg_all_to_mem << 4 |
 				pingpong_en << 5 |
 				0x01 << 12 |
-				0x07 << 16 | // allow receive raw yuv rgb data
+				0x03 << 16 | // allow receive raw yuv
 				cfg_isp2ddr_enable << 25 |
 				cfg_isp2comb_enable << 26);
 
+	module_reg_write(a_dev, module, CSI2_ERR_STAT0, 0x0);
+
+	if (CHIP_TYPE_T7C == get_chip_type()) {
+		pr_info("t7c - set fe CSI2_WRDDR_DATA_SEL, 0x123");
+		module_reg_write(a_dev, module, CSI2_WRDDR_DATA_SEL, 0x123);
+		module_reg_read( a_dev, module, CSI2_WRDDR_DATA_SEL, &reg_val);
+		pr_info("get fe CSI2_WRDDR_DATA_SEL, 0x%x", reg_val );
+	}
 	return rtn;
 }
 
@@ -351,7 +362,7 @@ static int adap_hw_init(void *a_dev)
 	if (rtn)
 		return rtn;
 
-	pr_info("Success adap hw init.raw yuv rgb enabled \n");
+	pr_info("Success adap hw init.raw yuv enabled \n");
 
 	return rtn;
 }

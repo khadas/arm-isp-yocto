@@ -43,6 +43,8 @@
 #define CSI2_INTERRUPT_CTRL_STAT             (0x14 << 2)
 #define CSI2_VC_MODE2_MATCH_MASK_B_L         (0x15 << 2)
 #define CSI2_VC_MODE2_MATCH_MASK_B_H         (0x16 << 2)
+#define CSI2_WRDDR_DATA_SEL                  (0x18 << 2)
+
 #define CSI2_GEN_STAT0                       (0x20 << 2)
 #define CSI2_ERR_STAT0                       (0x21 << 2)
 #define CSI2_PIC_SIZE_STAT                   (0x22 << 2) //0x88

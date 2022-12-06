@@ -19,7 +19,7 @@
 #include <media/v4l2-mc.h>
 
 #include "aml_t7_cam.h"
-
+#include "chip_type.h"
 
 static struct cam_dev_info cam_info;
 
@@ -360,6 +360,7 @@ static int cam_probe(struct platform_device *pdev)
 	int rtn = 0;
 	struct cam_device *cam_dev;
 	struct device *dev = &pdev->dev;
+	init_chip_type();
 
 	cam_dev = devm_kzalloc(dev, sizeof(*cam_dev), GFP_KERNEL);
 	if (!cam_dev)
