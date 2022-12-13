@@ -359,7 +359,7 @@ static const struct reg_value ov5640_init_setting_30fps_1920x1080[] = {
 	{0x3006, 0xc3, 0, 0},
 	{0x300e, 0x45, 0, 0},
 	{0x302e, 0x08, 0, 0},
-	{0x4300, 0x33, 0, 0},// 30 vyuy / 31 uyvy / 32 yvyu / 33 yuyv
+	{0x4300, 0x32, 0, 0},// 30 yuyv  / 31 yvyu  / 32 uyvy / 33 vyuy
 	{0x501f, 0x00, 0, 0},
 	{0x5684, 0x07, 0, 0},//
 	{0x5685, 0xa0, 0, 0},//
@@ -1196,25 +1196,25 @@ static int ov5640_set_framefmt(struct ov5640_dev *sensor,
 	case MEDIA_BUS_FMT_VYUY8_1X16:
 	case MEDIA_BUS_FMT_VYUY8_2X8:
 		/* YUV422, VYUY */
-		fmt = 0x30;
+		fmt = 0x33;
 		mux = OV5640_FMT_MUX_YUV422;
 		break;
 	case MEDIA_BUS_FMT_UYVY8_1X16:
 	case MEDIA_BUS_FMT_UYVY8_2X8:
 		/* YUV422, UYVY */
-		fmt = 0x31;
+		fmt = 0x32;
 		mux = OV5640_FMT_MUX_YUV422;
 		break;
 	case MEDIA_BUS_FMT_YVYU8_1X16:
 	case MEDIA_BUS_FMT_YVYU8_2X8:
 		/* YUV422, YVYU */
-		fmt = 0x32;
+		fmt = 0x31;
 		mux = OV5640_FMT_MUX_YUV422;
 		break;
 	case MEDIA_BUS_FMT_YUYV8_1X16:
 	case MEDIA_BUS_FMT_YUYV8_2X8:
 		/* YUV422, YUYV */
-		fmt = 0x33;
+		fmt = 0x30;
 		mux = OV5640_FMT_MUX_YUV422;
 		break;
 	case MEDIA_BUS_FMT_RGB565_2X8_LE:
