@@ -1152,14 +1152,11 @@ static int imx415_parse_endpoint(struct imx415 *imx415)
 	int rtn = 0;
 	s64 fq;
 	struct fwnode_handle *endpoint = NULL;
-	struct device_node *node = NULL;
 
-	//endpoint = fwnode_graph_get_next_endpoint(dev_fwnode(imx415->dev), NULL);
-	for_each_endpoint_of_node(imx415->dev->of_node, node) {
-		if (strstr(node->name, "imx415")) {
-			endpoint = of_fwnode_handle(node);
-			break;
-		}
+	endpoint = fwnode_graph_get_next_endpoint(dev_fwnode(imx415->dev), NULL);
+	if (!endpoint) {
+		dev_err(imx415->dev, "Endpoint node not found\n");
+		return -EINVAL;
 	}
 
 	rtn = v4l2_fwnode_endpoint_alloc_parse(endpoint, &imx415->ep);

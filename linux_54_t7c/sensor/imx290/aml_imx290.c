@@ -1313,14 +1313,18 @@ static int imx290_parse_endpoint(struct imx290 *imx290)
 	int rtn = 0;
 	s64 fq;
 	struct fwnode_handle *endpoint = NULL;
-	struct device_node *node = NULL;
+	//struct device_node *node = NULL;
 
-	//endpoint = fwnode_graph_get_next_endpoint(dev_fwnode(imx415->dev), NULL);
-	for_each_endpoint_of_node(imx290->dev->of_node, node) {
+	/*for_each_endpoint_of_node(imx290->dev->of_node, node) {
 		if (strstr(node->name, "imx290")) {
 			endpoint = of_fwnode_handle(node);
 			break;
 		}
+	}*/
+	endpoint = fwnode_graph_get_next_endpoint(dev_fwnode(imx290->dev), NULL);
+	if (!endpoint) {
+		dev_err(imx290->dev, "Endpoint node not found\n");
+		return -EINVAL;
 	}
 
 	rtn = v4l2_fwnode_endpoint_alloc_parse(endpoint, &imx290->ep);

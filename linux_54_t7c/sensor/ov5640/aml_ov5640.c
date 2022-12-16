@@ -1295,14 +1295,11 @@ static int ov5640_parse_endpoint(struct ov5640 *ov5640)
 	int rtn = 0;
 	s64 fq;
 	struct fwnode_handle *endpoint = NULL;
-	struct device_node *node = NULL;
 
-	//endpoint = fwnode_graph_get_next_endpoint(dev_fwnode(ov5640->dev), NULL);
-	for_each_endpoint_of_node(ov5640->dev->of_node, node) {
-		if (strstr(node->name, "ov5640")) {
-			endpoint = of_fwnode_handle(node);
-			break;
-		}
+	endpoint = fwnode_graph_get_next_endpoint(dev_fwnode(ov5640->dev), NULL);
+	if (!endpoint) {
+		dev_err(ov5640->dev, "Endpoint node not found\n");
+		return -EINVAL;
 	}
 
 	rtn = v4l2_fwnode_endpoint_alloc_parse(endpoint, &ov5640->ep);
