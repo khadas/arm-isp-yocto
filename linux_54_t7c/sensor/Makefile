@@ -22,6 +22,7 @@ all:
 	$(call module_func,ov13b10)
 	$(call module_func,ov5640)
 	$(call module_func,ov13855)
+	$(call module_func,lt6911c)
 
 clean:
 	$(call module_clean,imx290)
@@ -31,6 +32,7 @@ clean:
 	$(call module_clean,ov13b10)
 	$(call module_clean,ov5640)
 	$(call module_clean,ov13855)
+	$(call module_clean,lt6911c)
 
 modules_install:
 	$(call module_install,imx290)
@@ -40,3 +42,4 @@ modules_install:
 	$(call module_install,ov13b10)
 	$(call module_install,ov5640)
 	$(call module_install,ov13855)
+	$(call module_install,lt6911c)

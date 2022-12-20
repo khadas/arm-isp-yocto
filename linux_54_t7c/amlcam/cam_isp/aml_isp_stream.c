@@ -150,7 +150,6 @@ static int isp_cap_irq_handler(void *video, int status)
 		spin_unlock_irqrestore(&vd->buff_list_lock, flags);
 		return 0;
 	}
-
 	if (b_current) {
 		vd->frm_cnt++;
 		if (g_info->mode == AML_ISP_SCAM) {
