@@ -982,7 +982,7 @@ static int ov13855_probe(struct i2c_client *client)
 
 	dev_info(ov13855->dev, "probe done \n");
 
-	return 0;
+	return ret;
 
 free_entity:
 	media_entity_cleanup(&ov13855->sd.entity);
