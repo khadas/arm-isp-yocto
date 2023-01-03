@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
+#include <dlfcn.h>
 #include <pthread.h>
 #include <linux/fb.h>
 #include <sys/mman.h>
@@ -31,18 +32,14 @@
 #include "mediactl.h"
 #include "v4l2subdev.h"
 #include "v4l2videodev.h"
+#include "mediaApi.h"
 
-#include "aml_isp_api.h"
+#include "staticPipe.h"
+#include "ispMgr.h"
 
-#include "imx290_api.h"
+
 //#define WDR_ENABLE
-enum {
-    WDR_MODE_NONE,
-    WDR_MODE_2To1_LINE,
-    WDR_MODE_2To1_FRAME,
-    SDR_DDR_MODE,
-    ISP_SDR_DCAM_MODE,
-};
+#define DUAL_CAMERA
 
 #define NB_BUFFER                4
 #define NB_BUFFER_PARAM          1
@@ -50,54 +47,12 @@ enum {
 #define V4L2_META_AML_ISP_CONFIG    v4l2_fourcc('A', 'C', 'F', 'G') /* Aml isp config */
 #define V4L2_META_AML_ISP_STATS     v4l2_fourcc('A', 'S', 'T', 'S') /* Aml isp statistics */
 
-int image_width = 1920;
-int image_height = 1080;
+uint32_t image_width = 1920;
+uint32_t image_height = 1080;
 
 #ifndef ANDROID
 #define RTSP 0
 #endif
-
-typedef struct pipe_info{
-    char * media_dev_name ;
-    char * sensor_ent_name ;
-    char * csiphy_ent_name;
-    char * adap_ent_name;
-    char * isp_ent_name;
-    char * video_ent_name;
-    char * video_stats_name;
-    char * video_param_name;
-} pipe_info_t;
-
-struct pipe_info pipe_0 = {
-   .media_dev_name  = "/dev/media0",
-   .sensor_ent_name = "imx290-0",//"ov08a10-0",//
-   .csiphy_ent_name = "isp-csiphy",
-   .adap_ent_name   = "isp-adapter",
-   .isp_ent_name   = "isp-core",
-   .video_ent_name  = "isp-output0",
-   .video_stats_name  = "isp-stats",
-   .video_param_name  = "isp-param",
-};
-
-struct pipe_info pipe_1 = {
-   .media_dev_name  = "/dev/media0",
-   .sensor_ent_name = "imx290-0",
-   .csiphy_ent_name = "isp-csiphy",
-   .adap_ent_name   = "isp-adapter",
-   .isp_ent_name   = "isp-core",
-   .video_ent_name  = "isp-output3",
-   .video_stats_name  = "isp-stats",
-   .video_param_name  = "isp-param",
-};
-
-
-/*struct pipe_info pipe_1 = {
-    .media_dev_name  = "/dev/media1",
-    .sensor_ent_name = "imx290-1",
-    .csiphy_ent_name = "t7-csi2phy-1",
-    .adap_ent_name   = "t7-adapter-1",
-    .video_ent_name  = "t7-video-1-0"
-};*/
 
 enum {
     ARM_V4L2_TEST_STREAM_OUTPUT0,
@@ -105,32 +60,6 @@ enum {
     ARM_V4L2_TEST_STREAM_STATS,
     ARM_V4L2_TEST_STREAM_MAX
 };
-
-typedef struct camera_configuration{
-    struct aml_format format;
-} camera_configuration_t;
-
-typedef struct media_stream {
-    char media_dev_name[64];
-    char sensor_ent_name[32];
-    char csiphy_ent_name[32];
-    char adap_ent_name[32];
-    char isp_ent_name[32];
-    char video_ent_name[32];
-    char video_stats_name[32];
-    char video_param_name[32];
-
-    struct media_device  * media_dev;
-
-    struct media_entity  * sensor_ent;
-    struct media_entity  * csiphy_ent;
-    struct media_entity  * adap_ent;
-    struct media_entity  * isp_ent;
-    struct media_entity  * video_ent;
-    struct media_entity  * video_stats;
-    struct media_entity  * video_param;
-
-} media_stream_t;
 
 struct thread_info {
     pthread_t p_id;
@@ -143,6 +72,8 @@ struct thread_info {
 
 pthread_t tid[ARM_V4L2_TEST_STREAM_MAX];
 
+struct ispIF ispIf;
+
 /* config parameters */
 struct thread_param {
     /* v4l2 variables */
@@ -151,6 +82,7 @@ struct thread_param {
     void                        *v4l2_mem[NB_BUFFER];
     int                          param_buf_length;
     int                          stats_buf_length;
+    struct sensorConfig          *sensorCfg;
 
     char                        *mediadevname;
     /* video device info */
@@ -182,387 +114,61 @@ struct thread_param {
     struct thread_info          info;
 };
 
-static int media_stream_init(media_stream_t * stream, struct pipe_info *pipe_info_ptr){
-
-    memset(stream, 0, sizeof(*stream));
-
-    strncpy(stream->media_dev_name, pipe_info_ptr->media_dev_name, sizeof(stream->media_dev_name));
-
-    strncpy(stream->sensor_ent_name, pipe_info_ptr->sensor_ent_name, sizeof(stream->sensor_ent_name));
-    strncpy(stream->csiphy_ent_name, pipe_info_ptr->csiphy_ent_name, sizeof(stream->csiphy_ent_name));
-    strncpy(stream->adap_ent_name,   pipe_info_ptr->adap_ent_name,   sizeof(stream->adap_ent_name));
-    strncpy(stream->isp_ent_name,   pipe_info_ptr->isp_ent_name,   sizeof(stream->isp_ent_name));
-    strncpy(stream->video_ent_name,  pipe_info_ptr->video_ent_name,  sizeof(stream->video_ent_name));
-    strncpy(stream->video_stats_name,   pipe_info_ptr->video_stats_name,   sizeof(stream->video_stats_name));
-    strncpy(stream->video_param_name,  pipe_info_ptr->video_param_name,  sizeof(stream->video_param_name));
-
-    stream->media_dev = media_device_new(stream->media_dev_name);
-
-    if (NULL == stream->media_dev) {
-        ERR("new media dev fail\n");
-        return -1;
-    }
-
-    if (0 != media_device_enumerate(stream->media_dev) ) {
-        ERR("media_device_enumerate fail\n");
-        return -1;
-    }
-
-    int node_num = media_get_entities_count(stream->media_dev);
-    for (int ii = 0; ii <node_num; ++ii) {
-        struct media_entity * ent = media_get_entity(stream->media_dev, ii);
-        INFO("ent %d, name %s \n", ii, ent->info.name);
-    }
-
-    stream->sensor_ent = media_get_entity_by_name(stream->media_dev, stream->sensor_ent_name, strlen(stream->sensor_ent_name));
-    if (NULL == stream->sensor_ent) {
-        ERR("get  sensor_ent fail\n");
-        return -1;
-    }
-
-    stream->csiphy_ent = media_get_entity_by_name(stream->media_dev, stream->csiphy_ent_name, strlen(stream->csiphy_ent_name));
-    if (NULL == stream->csiphy_ent) {
-        ERR("get  csiphy_ent fail\n");
-        return -1;
-    }
-
-    stream->adap_ent = media_get_entity_by_name(stream->media_dev, stream->adap_ent_name, strlen(stream->adap_ent_name));
-    if (NULL == stream->adap_ent) {
-        ERR("get  adap_ent fail\n");
-        return -1;
-    }
-
-    stream->isp_ent = media_get_entity_by_name(stream->media_dev, stream->isp_ent_name, strlen(stream->isp_ent_name));
-    if (NULL == stream->isp_ent) {
-        ERR("get  isp_ent fail\n");
-        return -1;
-    }
-
-    stream->video_ent = media_get_entity_by_name(stream->media_dev, stream->video_ent_name, strlen(stream->video_ent_name));
-    if (NULL == stream->video_ent) {
-        ERR("get video_ent fail\n");
-        return -1;
-    }
-
-    stream->video_stats = media_get_entity_by_name(stream->media_dev, stream->video_stats_name, strlen(stream->video_stats_name));
-    if (NULL == stream->video_stats) {
-        ERR("get  video_stats fail\n");
-        return -1;
-    }
-
-    stream->video_param = media_get_entity_by_name(stream->media_dev, stream->video_param_name, strlen(stream->video_param_name));
-    if (NULL == stream->video_param) {
-        ERR("get  video_param fail\n");
-        return -1;
-    }
-
-    MSG("media stream init success\n");
-    return 0;
-}
-
-
-int createLinks(media_stream_t *camera)
-{
-    // 0 = sink; 1 = src
-    const int sink_pad_idx = 0;
-    const int src_pad_idx = 1;
-
-    int rtn = -1;
-    struct media_pad      *src_pad;
-    struct media_pad      *sink_pad;
-
-    int flag = MEDIA_LNK_FL_ENABLED;
-
-    MSG("create link ++\n");
-
-    if (camera->media_dev == NULL) {
-        return 0;
-    }
-
-/*source:adap_ent sink:isp_ent*/
-    sink_pad = (struct media_pad*) media_entity_get_pad(camera->isp_ent, sink_pad_idx);
-    if (!sink_pad) {
-        ERR("Failed to get isp sink pad[0]");
-        return rtn;
-    }
-
-    src_pad = (struct media_pad*)media_entity_get_pad(camera->adap_ent, src_pad_idx);
-    if (!src_pad) {
-        ERR("Failed to get adap_ent src pad[1]");
-        return rtn;
-    }
-
-    rtn = media_setup_link( camera->media_dev, src_pad, sink_pad, flag);
-
-/*source:csiphy_ent sink:adap_ent*/
-    sink_pad = (struct media_pad*) media_entity_get_pad(camera->adap_ent, sink_pad_idx);
-    if (!sink_pad) {
-        ERR("Failed to get adap sink pad[0]");
-        return rtn;
-    }
-
-    src_pad = (struct media_pad*)media_entity_get_pad(camera->csiphy_ent, src_pad_idx);
-    if (!src_pad) {
-        ERR("Failed to get csiph src pad[1]");
-        return rtn;
-    }
-
-    rtn = media_setup_link( camera->media_dev, src_pad, sink_pad, flag);
-    if (0 != rtn) {
-        ERR( "Failed to link adap with csiphy");
-        return rtn;
-    }
-
-/*source:sensor_ent sink:csiphy_ent*/
-    // sensor only has 1 pad
-    src_pad =  (struct media_pad*)media_entity_get_pad(camera->sensor_ent, 0);
-    if (!src_pad) {
-        ERR("Failed to get sensor src pad[0]");
-        return rtn;
-    }
-
-    sink_pad = (struct media_pad*)media_entity_get_pad(camera->csiphy_ent, sink_pad_idx);
-    if (!sink_pad) {
-        ERR("Failed to get csiph sink pad[1]");
-        return rtn;
-    }
-
-    rtn = media_setup_link( camera->media_dev, src_pad, sink_pad, flag);
-    if (0 != rtn) {
-        ERR( "Failed to link sensor with csiphy");
-        return rtn;
-    }
-
-    MSG("create link success \n");
-    return rtn;
-}
-
-int media_set_WdrMode(media_stream_t *camera, uint32_t wdr_mode)
-{
-    int rtn = -1;
-
-    MSG("%s ++ wdr_mode : %d \n", __func__,wdr_mode);
-
-    // sensor wdr mode
-    rtn = v4l2_subdev_set_wdr(camera->sensor_ent, wdr_mode);
-    if (rtn < 0) {
-        ERR("Failed to set sensor wdr mode");
-        return rtn;
-    }
-
-    // sensor wdr mode
-    rtn = v4l2_subdev_set_wdr(camera->adap_ent, wdr_mode);
-    if (rtn < 0) {
-        ERR("Failed to set adapter wdr mode");
-        return rtn;
-    }
-
-    // sensor wdr mode
-    rtn = v4l2_subdev_set_wdr(camera->isp_ent, wdr_mode);
-    if (rtn < 0) {
-        ERR("Failed to set isp wdr mode");
-        return rtn;
-    }
-
-    MSG("%s success --\n", __func__);
-
-    return rtn;
-}
-
-
-int setSdFormat(media_stream_t *camera, camera_configuration_t *cfg)
-{
-    int rtn = -1;
-
-    struct v4l2_mbus_framefmt mbus_format;
-
-    mbus_format.width  = cfg->format.width;
-    mbus_format.height = cfg->format.height;
-    mbus_format.code   = cfg->format.code;
-
-    int which = V4L2_SUBDEV_FORMAT_ACTIVE;
-
-    MSG("%s ++\n", __func__);
-
-    // sensor source pad fmt
-    rtn = v4l2_subdev_set_format(camera->sensor_ent,
-          &mbus_format, 0, which);
-    if (rtn < 0) {
-        ERR("Failed to set sensor format");
-        return rtn;
-    }
-
-#ifdef WDR_ENABLE
-    cmos_set_sensor_entity(camera->sensor_ent, 1);
-#else
-    cmos_set_sensor_entity(camera->sensor_ent, 0);
-#endif
-
-    // csiphy source & sink pad fmt
-    rtn = v4l2_subdev_set_format(camera->csiphy_ent,
-          &mbus_format, 0, which);
-    if (rtn < 0) {
-        ERR("Failed to set csiphy pad[0] format");
-        return rtn;
-    }
-
-    rtn = v4l2_subdev_set_format(camera->csiphy_ent,
-          &mbus_format, 1, which);
-    if (rtn < 0) {
-        ERR("Failed to set csiphy pad[1] format");
-        return rtn;
-    }
-
-    // adap source & sink pad fmt
-    rtn = v4l2_subdev_set_format(camera->adap_ent,
-          &mbus_format, 0, which);
-
-    if (rtn < 0) {
-        ERR("Failed to set adap pad[0] format");
-        return rtn;
-    }
-
-    rtn = v4l2_subdev_set_format(camera->adap_ent,
-          &mbus_format, 1, which);
-    if (rtn < 0) {
-        ERR("Failed to set adap pad[1] format");
-        return rtn;
-    }
-
-    // isp source & sink pad fmt
-    rtn = v4l2_subdev_set_format(camera->isp_ent,
-          &mbus_format, 0, which);
-
-    if (rtn < 0) {
-        ERR("Failed to set isp pad[0] format");
-        return rtn;
-    }
-
-    MSG("%s success --\n", __func__);
-
-    return rtn;
-}
-
-int setImgFormat(media_stream_t *camera, camera_configuration_t *cfg)
-{
-    int rtn = -1;
-    struct v4l2_format          v4l2_fmt;
-
-    MSG("%s ++\n", __func__);
-
-    memset (&v4l2_fmt, 0, sizeof (struct v4l2_format));
-    if (cfg->format.nplanes > 1) {
-        ERR ("not supported yet!");
-        //return -1;
-    }
-
-    v4l2_fmt.type                    = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    v4l2_fmt.fmt.pix_mp.width        = image_width;//cfg->format.width;
-    v4l2_fmt.fmt.pix_mp.height       = image_height;//cfg->format.height;
-    v4l2_fmt.fmt.pix_mp.pixelformat  = cfg->format.fourcc;
-    v4l2_fmt.fmt.pix_mp.field        = V4L2_FIELD_ANY;
-
-    rtn = v4l2_video_set_format( camera->video_ent,&v4l2_fmt);
-    if (rtn < 0) {
-        ERR("Failed to set video fmt, ret %d\n", rtn);
-        return rtn;
-    }
-
-    MSG("%s success --\n", __func__);
-
-    return rtn;
-}
-
-int setDataFormat(media_stream_t *camera, camera_configuration_t *cfg)
-{
-    int rtn = -1;
-    struct v4l2_format          v4l2_fmt;
-
-    MSG("%s ++\n", __func__);
-
-    memset (&v4l2_fmt, 0, sizeof (struct v4l2_format));
-
-    v4l2_fmt.type                    = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    v4l2_fmt.fmt.pix_mp.width        = cfg->format.width;
-    v4l2_fmt.fmt.pix_mp.height       = cfg->format.height;
-    v4l2_fmt.fmt.pix_mp.pixelformat  = V4L2_META_AML_ISP_STATS;
-    v4l2_fmt.fmt.pix_mp.field        = V4L2_FIELD_ANY;
-
-    rtn = v4l2_video_set_format( camera->video_stats,&v4l2_fmt);
-    if (rtn < 0) {
-        ERR("Failed to set video fmt, ret %d\n", rtn);
-        return rtn;
-    }
-
-    MSG("%s success\n", __func__);
-
-    return 0;
-}
-
-int setConfigFormat(media_stream_t *camera, camera_configuration_t *cfg)
-{
-    int rtn = -1;
-    struct v4l2_format          v4l2_fmt;
-
-    MSG("%s ++\n", __func__);
-
-    memset (&v4l2_fmt, 0, sizeof (struct v4l2_format));
-
-    v4l2_fmt.type                    = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    v4l2_fmt.fmt.pix_mp.width        = cfg->format.width;
-    v4l2_fmt.fmt.pix_mp.height       = cfg->format.height;
-    v4l2_fmt.fmt.pix_mp.pixelformat  = V4L2_META_AML_ISP_CONFIG;
-    v4l2_fmt.fmt.pix_mp.field        = V4L2_FIELD_ANY;
-
-    rtn = v4l2_video_set_format( camera->video_param,&v4l2_fmt);
-    if (rtn < 0) {
-        ERR("Failed to set video fmt, ret %d\n", rtn);
-        return rtn;
-    }
-
-    MSG("%s success\n", __func__);
-
-    return 0;
-}
-
-int media_stream_config(media_stream_t * stream, camera_configuration_t *cfg)
-{
-    int rtn = -1;
-
-    MSG("%s ++\n", __func__);
-
-    rtn = setSdFormat(stream, cfg);
-    if (rtn < 0) {
-        ERR("Failed to set subdev format");
-        return rtn;
-    }
-
-    rtn = setImgFormat(stream, cfg);
-    if (rtn < 0) {
-        ERR("Failed to set image format");
-        return rtn;
-    }
-
-    rtn = createLinks(stream);
-    if (rtn) {
-        ERR( "Failed to create links");
-        return rtn;
-    }
-
-    MSG("Success to config media stream \n");
-
-    return 0;
-}
-
+static int32_t manual_sensor_integration_time = -1;
+static int32_t manual_sensor_analog_gain = -1;
+static int32_t manual_sensor_digital_gain = -1;
+static int32_t manual_isp_digital_gain = -1;
 
 int media_stream_start(media_stream_t * stream, int type)
 {
-    return v4l2_video_stream_on(stream->video_ent, type);
+    return v4l2_video_stream_on(stream->video_ent0, type);
 }
 
 int media_stream_stop(media_stream_t * stream, int type)
 {
-    return v4l2_video_stream_off(stream->video_ent, type);
+    return v4l2_video_stream_off(stream->video_ent0, type);
+}
+
+static int getInterface() {
+    auto lib = ::dlopen("libispaml.so", RTLD_NOW);
+    if (!lib) {
+        char const* err_str = ::dlerror();
+        ERR("dlopen: error:%s", (err_str ? err_str : "unknown"));
+        dlclose(lib);
+        return -1;
+    }
+    ispIf.alg2User = (isp_alg2user)::dlsym(lib, "aisp_alg2user");
+    if (!ispIf.alg2User) {
+        char const* err_str = ::dlerror();
+        ERR("dlsym: error:%s", (err_str ? err_str : "unknown"));
+        return -1;
+    }
+    ispIf.alg2Kernel = (isp_alg2kernel)::dlsym(lib, "aisp_alg2kernel");
+    if (!ispIf.alg2Kernel) {
+        char const* err_str = ::dlerror();
+        ERR("dlsym: error:%s", (err_str ? err_str : "unknown"));
+        return -1;
+    }
+    ispIf.algEnable = (isp_enable)::dlsym(lib, "aisp_enable");
+    if (!ispIf.algEnable) {
+        char const* err_str = ::dlerror();
+        ERR("dlsym: error:%s", (err_str ? err_str : "unknown"));
+        return -1;
+    }
+    ispIf.algDisable = (isp_disable)::dlsym(lib, "aisp_disable");
+    if (!ispIf.algDisable) {
+        char const* err_str = ::dlerror();
+        ERR("dlsym: error:%s", (err_str ? err_str : "unknown"));
+        return -1;
+    }
+    ispIf.algFwInterface = (isp_fw_interface)::dlsym(lib, "aisp_fw_interface");
+    if (!ispIf.algFwInterface) {
+        char const* err_str = ::dlerror();
+        ERR("dlsym: error:%s", (err_str ? err_str : "unknown"));
+        return -1;
+    }
+    printf("%s success", __FUNCTION__);
+    return 0;
 }
 
 /**********
@@ -603,8 +209,7 @@ static int do_get_dma_buf_fd(int videofd, uint32_t index, uint32_t plane)
     return ex_buf.fd;
 }
 
-
-void save_img(const char* prefix, unsigned char *buff, unsigned int size, int flag, int num)
+void save_img(const char* prefix, void *buff, unsigned int size, int flag, int num, int width, int height)
 {
     char name[60] = {'\0'};
     int fd = -1;
@@ -614,16 +219,16 @@ void save_img(const char* prefix, unsigned char *buff, unsigned int size, int fl
         return;
     }
 
-    if (num > 100)
+    if (num > 1000)
         return;
 
-    if (num % 20 != 0)
+    if (num % 10 != 0)
         return;
 
     #ifdef ANDROID
-    sprintf(name, "/sdcard/DCIM/ca_%s-%d_dump-%d.yuv", prefix, flag, num);
+    sprintf(name, "/sdcard/DCIM/ca_%s-%d_dump-%d-%dx%d.yuv", prefix, flag, num, width, height);
     #else
-    sprintf(name, "/tmp/ca_%s-%d_dump-%d.yuv", prefix, flag, num);
+    sprintf(name, "/tmp/ca_%s-%d_dump-%d-%dx%d.yuv", prefix, flag, num, width, height);
     #endif
 
     fd = open(name, O_RDWR | O_CREAT, 0666);
@@ -670,7 +275,7 @@ void isp_param_init(struct media_stream v4l2_media_stream, struct thread_param *
     struct v4l2_buffer v4l2_buf;
     char alg_init[256*1024];
 
-    camera_configuration_t     stream_config;
+    stream_configuration_t     stream_config;
     stream_config.format.width = 1024;
     stream_config.format.height = 256;
     stream_config.format.nplanes   = 1;
@@ -759,15 +364,31 @@ void isp_param_init(struct media_stream v4l2_media_stream, struct thread_param *
         }
     }
 
-    cmos_sensor_control_cb(&tparm->info.pstAlgCtx.stSnsExp);
+    static int ret = getInterface();
+    if (ret == -1) {
+        ERR("Failed to getInterface");
+        return ;
+    }
 
-    cmos_get_sensor_calibration(&tparm->info.calib);
+    tparm->sensorCfg = matchSensorConfig(&v4l2_media_stream);
+    if (tparm->sensorCfg == nullptr) {
+        ERR("Failed to matchSensorConfig");
+        return ;
+    }
 
-    aisp_enable(0, &tparm->info.pstAlgCtx, &tparm->info.calib);
+#ifdef WDR_ENABLE
+    cmos_set_sensor_entity(tparm->sensorCfg, v4l2_media_stream.sensor_ent, 1);
+#else
+    cmos_set_sensor_entity(tparm->sensorCfg, v4l2_media_stream.sensor_ent, 0);
+#endif
+    cmos_sensor_control_cb(tparm->sensorCfg, &tparm->info.pstAlgCtx.stSnsExp);
+    cmos_get_sensor_calibration(tparm->sensorCfg, &tparm->info.calib);
+
+    (ispIf.algEnable)(0, &tparm->info.pstAlgCtx, &tparm->info.calib);
     memset(alg_init, 0, sizeof(alg_init));
 
-    aisp_alg2user(0, alg_init);
-    aisp_alg2kernel(0, tparm->v4l2_mem_param[0]);
+    (ispIf.alg2User)(0, alg_init);
+    (ispIf.alg2Kernel)(0, tparm->v4l2_mem_param[0]);
 
     /* queue buffers */
     DBG("[T#0] begin to Queue buf.\n");
@@ -836,7 +457,6 @@ void * video_thread(void *arg)
 
     uint64_t display_count = 0;
     int64_t start, end;
-    struct pipe_info *pipe_ptr = NULL;
 
     /**************************************************
      * find thread id
@@ -851,47 +471,44 @@ void * video_thread(void *arg)
     for (i = 0; i < NB_BUFFER * VIDEO_MAX_PLANES; i++) {
         v4l2_dma_fd[i] = -1;
     }
-    if (stream_type == ARM_V4L2_TEST_STREAM_OUTPUT0)
-        pipe_ptr = &pipe_0;
-    else if(stream_type == ARM_V4L2_TEST_STREAM_RAW)
-        pipe_ptr = &pipe_1;
+    tparm->v4l2_media_stream.media_dev = media_device_new(tparm->mediadevname);
 
-    if (tparm->mediadevname ) {
-        pipe_ptr->media_dev_name = tparm->mediadevname;
-    }
-
-    rc = media_stream_init(&tparm->v4l2_media_stream, pipe_ptr);
+    rc = mediaStreamInit(&tparm->v4l2_media_stream, tparm->v4l2_media_stream.media_dev);
     if (0 != rc) {
         ERR("[T#%d] The %s device init fail.\n", stream_type, tparm->mediadevname);
-        goto fatal; ;
+        return NULL;
     }
     INFO("[T#%d] The %s device was opened successfully. stream init ok\n", stream_type, tparm->mediadevname);
-
+    android::staticPipe::fetchPipeMaxResolution(&tparm->v4l2_media_stream, tparm->width, tparm->height);
     /* check capability */
     memset (&v4l2_cap, 0, sizeof (struct v4l2_capability));
-    rc = v4l2_video_get_capability(tparm->v4l2_media_stream.video_ent, &v4l2_cap);
+    rc = v4l2_video_get_capability(tparm->v4l2_media_stream.video_ent0, &v4l2_cap);
     if (rc < 0) {
         ERR ("[T#%d] Error: get capability.\n", stream_type);
-        goto fatal;
+        return NULL;
     }
     INFO("[T#%d] VIDIOC_QUERYCAP: cap.driver = %s, capabilities=0x%x, device_caps:0x%x\n",
         stream_type, v4l2_cap.driver, v4l2_cap.capabilities, v4l2_cap.device_caps);
 
-    media_set_WdrMode(&tparm->v4l2_media_stream,0);
-    media_set_WdrMode(&tparm->v4l2_media_stream,tparm->wdr_mode);
-
+    media_set_wdrMode(&tparm->v4l2_media_stream, 0);
+    media_set_wdrMode(&tparm->v4l2_media_stream, tparm->wdr_mode);
     /* config & set format */
-    camera_configuration_t     stream_config ;
-    stream_config.format.width = tparm->width;
+    stream_configuration     stream_config ;
+    memset(&stream_config, 0, sizeof(stream_configuration));
+    stream_config.format.width =  tparm->width;
     stream_config.format.height = tparm->height;
     stream_config.format.fourcc = tparm->pixformat;
     stream_config.format.code   = tparm->fmt_code;
     stream_config.format.nplanes   = 1;
 
-    rc = media_stream_config(&tparm->v4l2_media_stream, &stream_config);
+    stream_config.vformat[0].width  = tparm->width;
+    stream_config.vformat[0].height = tparm->height;
+    stream_config.vformat[0].fourcc = tparm->pixformat;
+
+    rc = mediaStreamConfig(&tparm->v4l2_media_stream, &stream_config);
     if (rc < 0) {
         ERR("[T#%d] Error: config stream %d.\n", stream_type, rc);
-        goto fatal;
+        return NULL;
     }
 
     memset (&v4l2_fmt, 0, sizeof (struct v4l2_format));
@@ -901,24 +518,24 @@ void * video_thread(void *arg)
     v4l2_fmt.fmt.pix_mp.pixelformat  = stream_config.format.fourcc;
     v4l2_fmt.fmt.pix_mp.field        = V4L2_FIELD_ANY;
 
-    rc = v4l2_video_get_format(tparm->v4l2_media_stream.video_ent, &v4l2_fmt);
+    rc = v4l2_video_get_format(tparm->v4l2_media_stream.video_ent0, &v4l2_fmt);
     if (rc < 0) {
         ERR("[T#%d] Error: get video format %d.\n", stream_type, rc);
-        goto fatal;
+        return NULL;
     }
 
     /* Selection */
-    //v4l2_video_crop(tparm->v4l2_media_stream.video_ent, 1280, 720);
+    //v4l2_video_crop(tparm->v4l2_media_stream.video_ent0, 1280, 720);
 
     /* request buffers */
     memset (&v4l2_rb, 0, sizeof (struct v4l2_requestbuffers));
     v4l2_rb.count  = NB_BUFFER;
     v4l2_rb.type   = v4l2_enum_type;
     v4l2_rb.memory = V4L2_MEMORY_MMAP;
-    rc = v4l2_video_req_bufs(tparm->v4l2_media_stream.video_ent, &v4l2_rb);
+    rc = v4l2_video_req_bufs(tparm->v4l2_media_stream.video_ent0, &v4l2_rb);
     if (rc < 0) {
         printf("[T#%d] Error: request buffer.\n", stream_type);
-        goto fatal;
+        return NULL;
     }
 
     printf("[T#%d] request buf ok\n", stream_type);
@@ -935,28 +552,28 @@ void * video_thread(void *arg)
             v4l2_buf.m.planes=buf_planes;
             v4l2_buf.length = v4l2_fmt.fmt.pix_mp.num_planes;
         }
-        rc = v4l2_video_query_buf(tparm->v4l2_media_stream.video_ent, &v4l2_buf);
+        rc = v4l2_video_query_buf(tparm->v4l2_media_stream.video_ent0, &v4l2_buf);
         if (rc < 0) {
             printf("[T#%d] Error: query buffer %d.\n", stream_type, rc);
-            goto fatal;
+            return NULL;
         }
 
         if (v4l2_buf.type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
             v4l2_buf_length = v4l2_buf.length;
             INFO("[T#%d] type video capture. length: %u offset: %u\n", stream_type, v4l2_buf.length, v4l2_buf.m.offset);
             v4l2_mem[i] = mmap (0, v4l2_buf.length, PROT_READ, MAP_SHARED,
-                tparm->v4l2_media_stream.video_ent->fd, v4l2_buf.m.offset);
+                tparm->v4l2_media_stream.video_ent0->fd, v4l2_buf.m.offset);
             ++total_mapped_mem;
             INFO("[T#%d] Buffer[%d] mapped at address 0x%p total_mapped_mem:%d.\n", stream_type, i, v4l2_mem[i], total_mapped_mem);
         }
         else if (v4l2_buf.type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
             for (j=0;j<v4l2_fmt.fmt.pix_mp.num_planes;j++) {
                 v4l2_buf_length = v4l2_buf.m.planes[j].length;
-                dma_fd = do_get_dma_buf_fd(tparm->v4l2_media_stream.video_ent->fd, i, j);
+                dma_fd = do_get_dma_buf_fd(tparm->v4l2_media_stream.video_ent0->fd, i, j);
                 INFO("[T#%d] plane:%d multiplanar length: %u offset: %u, dma_fd:%d\n",
                     stream_type, j, v4l2_buf.m.planes[j].length, v4l2_buf.m.planes[j].m.mem_offset, dma_fd);
                 v4l2_mem[i*v4l2_fmt.fmt.pix_mp.num_planes + j] = mmap (0, v4l2_buf.m.planes[j].length, PROT_READ, MAP_SHARED,
-                    tparm->v4l2_media_stream.video_ent->fd, v4l2_buf.m.planes[j].m.mem_offset);
+                    tparm->v4l2_media_stream.video_ent0->fd, v4l2_buf.m.planes[j].m.mem_offset);
                 v4l2_dma_fd[i*v4l2_fmt.fmt.pix_mp.num_planes + j] = dma_fd;
                 ++total_mapped_mem;
                 INFO("[T#%d] Buffer[%d] mapped at address %p total_mapped_mem:%d.\n", stream_type,i*v4l2_fmt.fmt.pix_mp.num_planes + j, v4l2_mem[i*v4l2_fmt.fmt.pix_mp.num_planes + j],total_mapped_mem);
@@ -964,7 +581,7 @@ void * video_thread(void *arg)
         }
         if (v4l2_mem[i] == MAP_FAILED) {
             ERR("[T#%d] Error: mmap buffers.\n", stream_type);
-            goto fatal;
+            return NULL;
         }
         MSG("[T#%d] map  %d ok, 0x%p\n", stream_type, i, v4l2_mem[i]);
     }
@@ -983,10 +600,10 @@ void * video_thread(void *arg)
             v4l2_buf.m.planes=buf_planes;
             v4l2_buf.length = v4l2_fmt.fmt.pix_mp.num_planes;
         }
-        rc = v4l2_video_q_buf( tparm->v4l2_media_stream.video_ent, &v4l2_buf );
+        rc = v4l2_video_q_buf( tparm->v4l2_media_stream.video_ent0, &v4l2_buf );
         if (rc < 0) {
             ERR("[T#%d] Error: queue buffers, rc:%d i:%d\n",stream_type, rc, i);
-            goto fatal;;
+            return NULL;
         }
     }
     DBG("[T#%d] Queue buf done.\n", stream_type);
@@ -999,10 +616,10 @@ void * video_thread(void *arg)
     /* stream on */
     //int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     int type = v4l2_enum_type;
-    rc =  media_stream_start(&tparm->v4l2_media_stream, type); // v4l2_video_stream_on(v4l2_media_stream->video_ent, type);
+    rc =  media_stream_start(&tparm->v4l2_media_stream, type); // v4l2_video_stream_on(v4l2_media_stream->video_ent0, type);
     if (rc < 0) {
         ERR("[T#%d] Error: streamon.\n", stream_type);
-        goto fatal;
+        return NULL;
     }
 
     INFO("[T#%d] Video stream is on.\n", stream_type);
@@ -1025,11 +642,11 @@ void * video_thread(void *arg)
         v4l2_buf.memory = V4L2_MEMORY_MMAP;
         if (v4l2_buf.type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) {
             //v4l2_buf.m.planes=buf_planes;
-            v4l2_buf.m.planes=malloc(v4l2_fmt.fmt.pix_mp.num_planes*sizeof(struct v4l2_plane));
+            v4l2_buf.m.planes = (struct v4l2_plane *)malloc(v4l2_fmt.fmt.pix_mp.num_planes*sizeof(struct v4l2_plane));
             v4l2_buf.length = v4l2_fmt.fmt.pix_mp.num_planes;
         }
         //INFO("beg to  dq buffer.\n");
-        rc = v4l2_video_dq_buf(tparm->v4l2_media_stream.video_ent, &v4l2_buf);
+        rc = v4l2_video_dq_buf(tparm->v4l2_media_stream.video_ent0, &v4l2_buf);
         if (rc < 0) {
             ERR ("Error: dequeue buffer.\n");
             if (v4l2_buf.type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
@@ -1038,14 +655,20 @@ void * video_thread(void *arg)
         }
         idx = v4l2_buf.index;
         //INFO("[T#%d] dq buf ok, idx %d, mem 0x%p \n",stream_type, idx, v4l2_mem[idx]);
-        save_img("mif",v4l2_mem[idx], image_width * image_height*3/2, stream_type, display_count);
+        //save_img("mif",v4l2_mem[idx], tparm->width * tparm->height *2, stream_type, display_count);
+        if (strstr(tparm->mediadevname, "/dev/media0")) {
+            save_img("mif_0",v4l2_mem[idx], tparm->width * tparm->height*3/2, stream_type, display_count, tparm->width, tparm->height);
+        }
+        if (strstr(tparm->mediadevname, "/dev/media1")) {
+            save_img("mif_1",v4l2_mem[idx], tparm->width * tparm->height*3/2, stream_type, display_count, tparm->width, tparm->height);
+        }
 #if RTSP
-        lib_put_frame(v4l2_mem[idx], image_width * image_height * 3 / 2);
+        lib_put_frame(v4l2_mem[idx], tparm->width * tparm->height * 3 / 2);
 #endif
         //INFO("[T#%d] todo: do something with buf. capture count %d \n ", stream_type, tparm->capture_count);
         usleep(1000*10);
 
-        rc = v4l2_video_q_buf(tparm->v4l2_media_stream.video_ent,  & v4l2_buf);
+        rc = v4l2_video_q_buf(tparm->v4l2_media_stream.video_ent0, &v4l2_buf);
         if (rc < 0) {
             ERR ("[T#%d] Error: queue buffer.\n", stream_type);
             break;
@@ -1059,7 +682,7 @@ void * video_thread(void *arg)
             #ifdef ANDROID
             INFO("[T#%d] stream port %s fps is : %ld\n",stream_type, "raw", (100 * 1000) /end);
             #else
-            INFO("[T#%d] stream port %s fps is : %ld\n",stream_type, "raw", (100 * 1000) /end);
+            INFO("[T#%d] stream port %s fps is : %lld\n",stream_type, "raw", (100 * 1000) /end);
             #endif
             start = GetTimeMsec();
         }
@@ -1085,12 +708,6 @@ void * video_thread(void *arg)
 
     MSG("[T#%d]  close success. thread exit ...\n", stream_type);
     return 0;
-
-fatal:
-
-    MSG("[T#%d]  fatal terminated ...\n", stream_type);
-
-    return NULL;
 }
 
 void * stats_thread(void *arg)
@@ -1119,20 +736,55 @@ void * stats_thread(void *arg)
         }
     }
 
-    struct pipe_info *pipe_ptr = &pipe_0;
-    if (tparm->pipe_idx == 1 ) {
-        pipe_ptr = &pipe_1;
-    }
-
-    if (tparm->mediadevname ) {
-        pipe_ptr->media_dev_name = tparm->mediadevname;
-    }
-
     sem_wait(&tparm->info.p_sem);
 
     INFO("[T#%d] Video stream is on.\n", stream_type);
 
     start = GetTimeMsec();
+
+    if (manual_sensor_integration_time > 0 || manual_sensor_analog_gain > 0
+            || manual_sensor_digital_gain > 0 || manual_isp_digital_gain > 0) {
+        aisp_api_type_t param;
+        isp_exposure_attr_s data;
+        aisp_api_type_t *api_type = &param;
+        isp_exposure_attr_s *attr = &data;
+        api_type->u8Direction = AML_CMD_SET;
+        api_type->u8CmdType = 0;// not used
+        api_type->u8CmdId = AML_MBI_ISP_ExposureAttr;
+        api_type->u32Value = 0;// not used
+        api_type->pData = (uint32_t *)&data;
+        INFO("manual mode: integration_time %d, analog_gain %d, digital_gain %d, isp_digital_gain %d\n",
+            manual_sensor_integration_time, manual_sensor_analog_gain,
+            manual_sensor_digital_gain, manual_isp_digital_gain);
+
+        attr->bByPass = mbp_true;
+        if (manual_sensor_integration_time > 0) {
+            attr->stManual.enExpTimeOpType = OP_TYPE_MANUAL;
+            attr->stManual.u32ExpTime = manual_sensor_integration_time;
+        } else {
+                attr->stManual.enExpTimeOpType = OP_TYPE_AUTO;
+        }
+        if (manual_sensor_analog_gain > 0) {
+            attr->stManual.enAGainOpType  = OP_TYPE_MANUAL;
+            attr->stManual.u32AGain = manual_sensor_analog_gain;
+        } else {
+            attr->stManual.enAGainOpType = OP_TYPE_AUTO;
+        }
+        if (manual_sensor_digital_gain > 0) {
+            attr->stManual.enDGainOpType  = OP_TYPE_MANUAL;
+            attr->stManual.u32DGain = manual_sensor_digital_gain;
+        } else {
+            attr->stManual.enDGainOpType = OP_TYPE_AUTO;
+        }
+        if (manual_isp_digital_gain > 0) {
+            attr->stManual.enISPDGainOpType  = OP_TYPE_MANUAL;
+            attr->stManual.u32ISPDGain  = manual_isp_digital_gain;
+        } else {
+            attr->stManual.enISPDGainOpType  = OP_TYPE_AUTO;
+        }
+
+        ispIf.algFwInterface(0, api_type);
+    }
 
     /* dequeue and display */
     do {
@@ -1167,8 +819,8 @@ void * stats_thread(void *arg)
         idx = v4l2_buf.index;
         idx1 = v4l2_buf_param.index;
 
-        aisp_alg2user(0, tparm->v4l2_mem[idx]);
-        aisp_alg2kernel(0, tparm->v4l2_mem_param[idx1]);
+        (ispIf.alg2User)(0, tparm->v4l2_mem[idx]);
+        (ispIf.alg2Kernel)(0, tparm->v4l2_mem_param[idx1]);
 
         usleep(1000*5);
 
@@ -1186,13 +838,13 @@ void * stats_thread(void *arg)
             #ifdef ANDROID
             INFO("[T#%d] stream port %s fps is : %ld\n",stream_type, "stats", (100 * 1000) /end);
             #else
-            INFO("[T#%d] stream port %s fps is : %ld\n",stream_type, "stats", (100 * 1000) /end);
+            INFO("[T#%d] stream port %s fps is : %lld\n",stream_type, "stats", (100 * 1000) /end);
             #endif
             start = GetTimeMsec();
         }
 
-        if (tparm->capture_count > 0)
-            tparm->capture_count--;
+        /*if (tparm->capture_count > 0)
+            tparm->capture_count--;*/
 
     } while (tparm->capture_count > 0);
 
@@ -1263,7 +915,7 @@ void finishStatsCapture(struct thread_param * tparam) {
 void usage(char * prog){
     printf("%s\n", prog);
     printf("usage:\n");
-    printf(" example   : ./v4l2_test_raw  -n 100 m /dev/media0 -p 0 \n");
+    printf(" example   : ./v4l2_test_raw  -n 100 -m /dev/media0 -p 0 \n");
     //printf("    f : fmt       : 0: rgb24  1:nv12 \n");
     printf("    m : media dev name: /dev/media0 or /dev/media1 \n");
     printf("    p : pipe selection  : 0 1 default 0\n");
@@ -1292,7 +944,7 @@ void parse_fmt_res(uint8_t fmt, int res, uint32_t wdr_mode_prm, uint32_t exposur
         return;
     }
 
-    t_param = param;
+    t_param = (struct thread_param *)param;
 
     switch (fmt) {
     case 0:
@@ -1391,8 +1043,8 @@ int main(int argc, char *argv[])
 
     //char *fbdevname = "/dev/fb0";
     //char *v4ldevname = "/dev/video60";
-    char *v4ldevname = "/dev/video3";
-    char *v4l2mediadevname = "/dev/media0";
+    char v4ldevname[128] = "/dev/video3";
+    char v4l2mediadevname[128] = "/dev/media0";
 
     int count = -100;
     int pipe_idx = 0;
@@ -1415,13 +1067,25 @@ int main(int argc, char *argv[])
                 //fbdevname = optarg;
                 break;
             case 'v':
-                v4ldevname = optarg;
+                strcpy(v4ldevname, optarg);
                 break;
             case 'm':
-                v4l2mediadevname = optarg;
+                strcpy(v4l2mediadevname, optarg);
                 break;
             case 'p':
                 pipe_idx = atoi(optarg);
+                break;
+            case 'L':
+                manual_sensor_integration_time = atoi(optarg);
+                break;
+            case 'A':
+                manual_sensor_analog_gain = atoi(optarg);
+                break;
+            case 'G':
+                manual_sensor_digital_gain = atoi(optarg);
+                break;
+            case 'S':
+                manual_isp_digital_gain = atoi(optarg);
                 break;
             case '?':
                 usage(argv[0]);
@@ -1447,10 +1111,13 @@ int main(int argc, char *argv[])
 
         .width      = 1920,
         .height     = 1080,
-        .pixformat  = V4L2_PIX_FMT_NV12, //V4L2_PIX_FMT_Y12,//V4L2_PIX_FMT_NV12,//V4L2_PIX_FMT_SRGGB12,//
+        .pixformat  = V4L2_PIX_FMT_NV12,//V4L2_PIX_FMT_SBGGR10, //V4L2_PIX_FMT_Y12,//V4L2_PIX_FMT_NV12,//V4L2_PIX_FMT_SRGGB12,//
 
-#ifdef WDR_ENABLE
-        .fmt_code   = MEDIA_BUS_FMT_SRGGB10_1X10,//MEDIA_BUS_FMT_SRGGB12_1X12,//
+#if defined (DUAL_CAMERA)
+        .fmt_code   = MEDIA_BUS_FMT_SRGGB12_1X12,
+        .wdr_mode   = ISP_SDR_DCAM_MODE,
+#elif defined (WDR_ENABLE)
+        .fmt_code   = MEDIA_BUS_FMT_SBGGR10_1X10,//MEDIA_BUS_FMT_SRGGB12_1X12,//
         .wdr_mode   = WDR_MODE_2To1_LINE,//WDR_MODE_2To1_LINE,
 #else
         .fmt_code   = MEDIA_BUS_FMT_SRGGB12_1X12,//
