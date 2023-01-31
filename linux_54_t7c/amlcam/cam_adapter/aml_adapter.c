@@ -475,7 +475,12 @@ static irqreturn_t adap_irq_handler_offline(int irq, void *dev)
 
 	status = adap_dev->ops->hw_interrupt_status(adap_dev);
 	if (status & (1 << 18)) {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+		adap_fe_done_buf(adap_dev);
+		adap_fe_cfg_buf(adap_dev);
+#else
 		tasklet_schedule(&adap_dev->irq_tasklet);
+#endif
 	}
 
 	spin_unlock_irqrestore(&adap_dev->irq_lock, flags);
