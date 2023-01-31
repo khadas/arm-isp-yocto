@@ -10,6 +10,17 @@
 #ifndef __AISP_H__
 #define __AISP_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+typedef enum
+{
+    AML_CMD_GET = 0x0,
+    AML_CMD_SET,
+} aisp_cmd_type_t;
+
 struct aml_format {
     uint32_t xstart;
     uint32_t ystart;
@@ -110,5 +121,9 @@ void aisp_fw_interface(uint32_t ctx_id, void *param);
 
 #define LOG2_GAIN_SHIFT 12
 #define SHUTTER_TIME_SHIFT 12
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

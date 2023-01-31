@@ -234,7 +234,7 @@ typedef struct LookupTable {
 } LookupTable;
 
 typedef struct _AIspCalibrations {
-    LookupTable *calibrations[CALIBRATION_TOTAL_SIZE];
+    LookupTable *pstcalibrations[CALIBRATION_TOTAL_SIZE];
 } AIspCalibrations;
 
 typedef struct aisp_calib_info_s {
