@@ -32,6 +32,7 @@
 #define OV13B10_EXPOSURE   0x3501
 #define OV13B10_EXPOSURE_L   0x3502
 #define OV13B10_ID         0x560d42
+#define OV13B10_ID_2       0x560d43
 //0x530841
 
 #define AML_SENSOR_NAME  "ov13b10-%u"
@@ -471,7 +472,7 @@ static int ov13b10_get_id(struct ov13b10 *ov13b10)
     ov13b10_read_reg(ov13b10, 0x300c, &val);
 	sensor_id |= val;
 
-	if (sensor_id != OV13B10_ID) {
+	if (sensor_id != OV13B10_ID && sensor_id != OV13B10_ID_2) {
 		dev_err(ov13b10->dev, "Failed to get ov13b10 id: 0x%x\n", sensor_id);
 		return rtn;
 	} else {
