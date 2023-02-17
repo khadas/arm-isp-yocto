@@ -27,7 +27,9 @@
 #include "../include/mclk_api.h"
 
 #define OV08A10_GAIN       0x3508
+#define OV08A10_GAIN_L     0x3509
 #define OV08A10_EXPOSURE   0x3501
+#define OV08A10_EXPOSURE_L 0x3502
 #define OV08A10_ID         0x530841
 
 #define AML_SENSOR_NAME  "ov08a10-%u"
@@ -994,14 +996,14 @@ static int ov08a10_write_reg(struct ov08a10 *ov08a10, u16 addr, u8 value)
 static int ov08a10_get_id(struct ov08a10 *ov08a10)
 {
 	int rtn = -EINVAL;
-    uint32_t sensor_id = 0;
-    u8 val = 0;
+	uint32_t sensor_id = 0;
+	u8 val = 0;
 
 	ov08a10_read_reg(ov08a10, 0x300a, &val);
 	sensor_id |= (val << 16);
 	ov08a10_read_reg(ov08a10, 0x300b, &val);
 	sensor_id |= (val << 8);
-    ov08a10_read_reg(ov08a10, 0x300c, &val);
+	ov08a10_read_reg(ov08a10, 0x300c, &val);
 	sensor_id |= val;
 
 	if (sensor_id != OV08A10_ID) {
@@ -1030,31 +1032,15 @@ static int ov08a10_set_register_array(struct ov08a10 *ov08a10,
 	return 0;
 }
 
-static int ov08a10_write_buffered_reg(struct ov08a10 *ov08a10, u16 address_low,
-				     u8 nr_regs, u32 value)
-{
-	unsigned int i;
-	int ret;
-
-	for (i = 0; i < nr_regs; i++) {
-		ret = ov08a10_write_reg(ov08a10, address_low + i,
-				       (u8)(value >> (i * 8)));
-		if (ret) {
-			dev_err(ov08a10->dev, "Error writing buffered registers\n");
-			return ret;
-		}
-	}
-
-	return ret;
-}
-
 static int ov08a10_set_gain(struct ov08a10 *ov08a10, u32 value)
 {
 	int ret;
-
-	ret = ov08a10_write_buffered_reg(ov08a10, OV08A10_GAIN, 1, value);
+	ret = ov08a10_write_reg(ov08a10, OV08A10_GAIN, (value >> 8) & 0xFF);
 	if (ret)
-		dev_err(ov08a10->dev, "Unable to write gain\n");
+		dev_err(ov08a10->dev, "Unable to write gain_H\n");
+	ret = ov08a10_write_reg(ov08a10, OV08A10_GAIN_L, value & 0xFF);
+	if (ret)
+		dev_err(ov08a10->dev, "Unable to write gain_L\n");
 
 	return ret;
 }
@@ -1062,11 +1048,12 @@ static int ov08a10_set_gain(struct ov08a10 *ov08a10, u32 value)
 static int ov08a10_set_exposure(struct ov08a10 *ov08a10, u32 value)
 {
 	int ret;
-
-	ret = ov08a10_write_buffered_reg(ov08a10, OV08A10_EXPOSURE, 2, value);
+	ret = ov08a10_write_reg(ov08a10, OV08A10_EXPOSURE, (value >> 8) & 0xFF);
 	if (ret)
-		dev_err(ov08a10->dev, "Unable to write gain\n");
-
+		dev_err(ov08a10->dev, "Unable to write gain_H\n");
+	ret = ov08a10_write_reg(ov08a10, OV08A10_EXPOSURE_L, value & 0xFF);
+	if (ret)
+		dev_err(ov08a10->dev, "Unable to write gain_L\n");
 	return ret;
 }
 
@@ -1252,8 +1239,8 @@ static int ov08a10_set_fmt(struct v4l2_subdev *sd,
 		return 0;
 	} else {
 		dev_err(ov08a10->dev, " zzw set format, w %d, h %d, code 0x%x \n",
-            fmt->format.width, fmt->format.height,
-            fmt->format.code);
+			fmt->format.width, fmt->format.height,
+			fmt->format.code);
 		format = &ov08a10->current_format;
 		ov08a10->current_mode = mode;
 		ov08a10->bpp = ov08a10_formats[i].bpp;

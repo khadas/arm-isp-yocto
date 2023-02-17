@@ -40,6 +40,7 @@
 
 //#define WDR_ENABLE
 #define DUAL_CAMERA
+//#define dump_forever
 
 #define NB_BUFFER                4
 #define NB_BUFFER_PARAM          1
@@ -209,6 +210,26 @@ static int do_get_dma_buf_fd(int videofd, uint32_t index, uint32_t plane)
     return ex_buf.fd;
 }
 
+#ifdef dump_forever
+void save_img(const char* prefix, void* buf, int length){
+    FILE* fp = NULL;
+    char name[60] = {'\0'};
+#ifdef ANDROID
+    sprintf(name, "/sdcard/DCIM/dst_%s.yuv", prefix);
+#else
+    sprintf(name, "/tmp/dst_%s.yuv", prefix);
+#endif
+    fp = fopen(name,"ab+");
+    if (!fp) {
+        printf("%s:Error open file\n", __func__);
+        return;
+    }
+    fwrite(buf,1,length,fp);
+    fclose(fp);
+    fp = NULL;
+    return;
+}
+#else
 void save_img(const char* prefix, void *buff, unsigned int size, int flag, int num, int width, int height)
 {
     char name[60] = {'\0'};
@@ -218,7 +239,6 @@ void save_img(const char* prefix, void *buff, unsigned int size, int flag, int n
         printf("%s:Error input param\n", __func__);
         return;
     }
-
     if (num > 1000)
         return;
 
@@ -239,6 +259,7 @@ void save_img(const char* prefix, void *buff, unsigned int size, int flag, int n
     write(fd, buff, size);
     close(fd);
 }
+#endif
 
 int get_file_size(char *f_name)
 {
@@ -654,14 +675,22 @@ void * video_thread(void *arg)
             break;
         }
         idx = v4l2_buf.index;
-        //INFO("[T#%d] dq buf ok, idx %d, mem 0x%p \n",stream_type, idx, v4l2_mem[idx]);
-        //save_img("mif",v4l2_mem[idx], tparm->width * tparm->height *2, stream_type, display_count);
+#ifdef dump_forever
+        if (strstr(tparm->mediadevname, "/dev/media0")) {
+            save_img("mif_0", v4l2_mem[idx], tparm->width * tparm->height*3/2);
+        }
+        if (strstr(tparm->mediadevname, "/dev/media1")) {
+            save_img("mif_1", v4l2_mem[idx], tparm->width * tparm->height*3/2);
+        }
+#else
         if (strstr(tparm->mediadevname, "/dev/media0")) {
             save_img("mif_0",v4l2_mem[idx], tparm->width * tparm->height*3/2, stream_type, display_count, tparm->width, tparm->height);
         }
         if (strstr(tparm->mediadevname, "/dev/media1")) {
             save_img("mif_1",v4l2_mem[idx], tparm->width * tparm->height*3/2, stream_type, display_count, tparm->width, tparm->height);
         }
+#endif
+
 #if RTSP
         lib_put_frame(v4l2_mem[idx], tparm->width * tparm->height * 3 / 2);
 #endif
