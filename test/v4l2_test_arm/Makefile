@@ -14,6 +14,7 @@ OFILE=v4l2_test
 #_OBJ = v4l2_test.o capture.o renderer.o isp_metadata.o gdc.o
 _OBJ = v4l2_test.o
 OBJ=$(patsubst %,$(ODIR)/%,$(_OBJ))
+$(shell  mkdir -p $(ODIR))
 
 $(ODIR)/%.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
