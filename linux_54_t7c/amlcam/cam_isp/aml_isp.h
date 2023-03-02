@@ -122,7 +122,7 @@ struct isp_global_info {
 	u32 status;
 	u32 user;
 	struct aml_buffer rreg_buff;
-
+	spinlock_t lock;
 	struct isp_dev_t *isp_dev;
 };
 
