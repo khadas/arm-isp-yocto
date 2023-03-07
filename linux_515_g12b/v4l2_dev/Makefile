@@ -18,6 +18,7 @@
 obj-m += iv009_isp.o
 
 M_PATH := $(shell dirname $(lastword $(MAKEFILE_LIST)))
+LOCAL_PATH := $(shell pwd)
 
 FW_SRC := $(wildcard $(M_PATH)/src/*.c  $(M_PATH)/src/*/*.c \
 		$(M_PATH)/src/*/*/*.c  $(M_PATH)/app/*.c  $(M_PATH)/app/*/*.c)
@@ -34,21 +35,23 @@ EXTRA_CFLAGS := -I$(M_PATH)/app -I$(M_PATH)/inc -I$(M_PATH)/app/control \
 
 EXTRA_CFLAGS += -Wno-declaration-after-statement -Idrivers/staging/android/
 
-ifeq ($(SYSTEM_VERSION),)
-    #ccflags-y += -DCONFIG_ANDROID_OS
-	ccflags-y += -DCONFIG_LINUX_OS
-else
-    ccflags-y += -DCONFIG_$(SYSTEM_VERSION)
-endif
+ccflags-y += -DCONFIG_LINUX_OS
 
-ifeq ($(PLATFORM_VERSION),)
-    ccflags-y += -DCONFIG_G12B
-else
-    ccflags-y += -DCONFIG_$(PLATFORM_VERSION)
-endif
+ccflags-y += -DCONFIG_G12B
 
-ifeq ($(SEAMLESS_SUPPORT),)
-    ccflags-y += -DCONFIG_SEAMLESS_N
-else
-    ccflags-y += -DCONFIG_SEAMLESS_$(SEAMLESS_SUPPORT)
-endif
+ccflags-y += -DCONFIG_SEAMLESS_N
+.PHONY:clean
+
+all:
+	@echo "$(MAKE) jss M=$(M) -C $(KERNEL_SRC) modules"
+	@$(MAKE) -C $(KERNEL_SRC) M=$(M)  modules
+modules_install:
+	@echo "$(MAKE) INSTALL_MOD_STRIP=1 M=$(M) -C $(KERNEL_SRC) modules_install"
+	@$(MAKE) INSTALL_MOD_STRIP=1 M=$(M) -C $(KERNEL_SRC) modules_install
+	mkdir -p ${OUT_DIR}/../vendor_lib
+	cp $(OUT_DIR)/$(M)/*.ko ${OUT_DIR}/../vendor_lib/modules/
+
+clean:
+	#@$(MAKE) -C $(KERNEL_SRC) M=$(M) clean
+	#@$(make) -C $(KERNEL_SRC) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) M=$(LOCAL_PATH)/$(1) clean
+	rm -rf $(FW_SRC_OBJ) $(M_PATH)/*.ko

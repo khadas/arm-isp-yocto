@@ -30,11 +30,13 @@
 #include "capture.h"
 #include "logs.h"
 #include "gdc_api.h"
-// #include "ispaaalib.h"
+#include "ispaaalib.h"
 
 #define STATIC_STREAM_COUNT (ARM_V4L2_TEST_STREAM_MAX - ARM_V4L2_TEST_HAS_RAW)
 #define NB_BUFFER 6
 #define DUMP_RAW 0
+// #define dump_forever
+#define auto_exposure
 static int sensor_bits = 10;
 
 static char *str_on_off[2] = {"ON", "OFF"};
@@ -61,8 +63,10 @@ static int fps_test_port = -1;
 static int open_port_cnt = 1;
 static int fb_buffer_cnt = 3;
 
+static int dump_num = 0;
 static int ir_cut_state = 1;
 static uint32_t manual_exposure_enable = 0;
+static uint32_t run_auto_exposure = 1;
 static uint32_t manual_sensor_integration_time = 1;
 static uint32_t manual_sensor_analog_gain = 0;
 static uint32_t manual_sensor_digital_gain = 0;
@@ -342,7 +346,7 @@ static void set_manual_isp_digital_gain(int videofd, uint32_t isp_digital_gain_s
     }
 }
 
-void save_imgae(const char *prefix, unsigned char *buff, unsigned int size, int flag, int num)
+/*void save_image(const char *prefix, void *buff, unsigned int size, int flag, int num)
 {
     char name[60] = {'\0'};
     int fd = -1;
@@ -352,20 +356,54 @@ void save_imgae(const char *prefix, unsigned char *buff, unsigned int size, int 
         printf("%s:Error input param\n", __func__);
         return;
     }
-
-    if (num % 20 != 0)
+    printf("%s: num = %d \n", __func__, num);
+    if (num % 10 != 0)
         return;
-
+#ifdef dump_forever
+    sprintf(name, "/tmp/ca_%s-%d_dump.yuv", prefix, flag);
+    fd = open(name, O_RDWR | O_CREAT | O_APPEND, 0777);
+//#else
     sprintf(name, "/tmp/ca_%s-%d_dump-%d.yuv", prefix, flag, num);
-
-    fd = open(name, O_RDWR | O_CREAT, 0666);
+    fd = open(name, O_RDWR | O_CREAT, 0777);
+//#endif
     if (fd < 0)
     {
         printf("%s:Error open file\n", __func__);
         return;
     }
     write(fd, buff, size);
+    //fsync(fd);
     close(fd);
+}*/
+
+void save_image(const char *prefix, void *buf, int length, int flag, int num)
+{
+    FILE *fp = NULL;
+    // int fd = 0;
+    char name[60] = {'\0'};
+    if (buf == NULL || length == 0)
+    {
+        printf("%s:Error input param\n", __func__);
+        return;
+    }
+    /*if (num % 10 != 0)
+        return;*/
+    dump_num++;
+    sprintf(name, "/tmp/dst_%s-%d.yuv", prefix, flag);
+    fp = fopen(name, "ab+");
+    if (!fp)
+    {
+        printf("%s:Error open file\n", __func__);
+        return;
+    }
+    fseek(fp, 0, SEEK_END);
+    fwrite(buf, 1, length, fp);
+    // fd = fileno(fp);
+    // fsync(fd);
+    fclose(fp);
+    // close(fd);
+    fp = NULL;
+    return;
 }
 
 int get_file_size(char *f_name)
@@ -447,7 +485,7 @@ static void do_crop(int type, int videofd, int width, int height)
         return;
     }
 }
-// #include "ispaaalib.h"
+#include "ispaaalib.h"
 /**********
  * thread function
  */
@@ -473,7 +511,8 @@ void *video_thread(void *arg)
     /* condition & loop flags */
     int rc = 0;
     int i, j;
-    __u32 v4l2_enum_type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+    //__u32 v4l2_enum_type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+    __u32 v4l2_enum_type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     unsigned char *displaybuf = NULL;
     uint64_t display_count = 0;
     int64_t start, end;
@@ -527,23 +566,23 @@ void *video_thread(void *arg)
     INFO("[T#%d] VIDIOC_QUERYCAP: capabilities=0x%x, device_caps:0x%x\n",
          stream_type, v4l2_cap.capabilities, v4l2_cap.device_caps);
 
-    /*if(stream_type == ARM_V4L2_TEST_STREAM_FR)
-        isp_lib_enable();*/
-
-    // do_sensor_preset(videofd,1);
-
-    /**************************************************
-     * according exposure value control hdr sensor setting
-     *************************************************/
     if (stream_type == ARM_V4L2_TEST_STREAM_FR)
-    {
-        printf("FR wdr_mode = %d, exp = %d, sensor_fps:%d\n", tparm->wdr_mode, tparm->exposure, tparm->fps);
-        do_sensor_wdr_mode(videofd, tparm->wdr_mode);
-        do_sensor_exposure(videofd, tparm->exposure);
-        do_sensor_fps(videofd, tparm->fps);
-    }
+        // isp_lib_enable();
 
-    do_sensor_ir_cut(videofd, ir_cut_state);
+        // do_sensor_preset(videofd,1);
+
+        /**************************************************
+         * according exposure value control hdr sensor setting
+         *************************************************/
+        if (stream_type == ARM_V4L2_TEST_STREAM_FR)
+        {
+            printf("FR wdr_mode = %d, exp = %d, sensor_fps:%d\n", tparm->wdr_mode, tparm->exposure, tparm->fps);
+            do_sensor_wdr_mode(videofd, tparm->wdr_mode);
+            do_sensor_exposure(videofd, tparm->exposure);
+            do_sensor_fps(videofd, tparm->fps);
+        }
+
+    // do_sensor_ir_cut(videofd, ir_cut_state);
     /**************************************************
      * format configuration
      *************************************************/
@@ -579,13 +618,14 @@ void *video_thread(void *arg)
         printf("Error: get format %d.\n", rc);
         goto fatal;
     }
-    INFO("[T#%d] VIDIO_G_FMT: type=%d, w=%d, h=%d, fmt=0x%x, field=%d\n",
+    INFO("[T#%d] VIDIO_G_FMT: type=%d, w=%d, h=%d, fmt=0x%x, field=%d, plane_fmt[0].sizeimage=%d\n",
          stream_type,
          v4l2_fmt.type,
          v4l2_fmt.fmt.pix.width,
          v4l2_fmt.fmt.pix.height,
          v4l2_fmt.fmt.pix.pixelformat,
-         v4l2_fmt.fmt.pix.field);
+         v4l2_fmt.fmt.pix.field,
+         v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage);
 
     // real type and planes here
     v4l2_enum_type = v4l2_fmt.type;
@@ -631,6 +671,9 @@ void *video_thread(void *arg)
             manual_exposure_enable = 0;
             set_manual_exposure(videofd, manual_exposure_enable);
         }
+#ifdef auto_exposure
+
+#else
         set_manual_exposure(videofd, manual_exposure_enable);
         set_manual_sensor_integration_time(videofd, manual_sensor_integration_time);
         set_manual_sensor_analog_gain(videofd, manual_sensor_analog_gain);
@@ -638,6 +681,7 @@ void *video_thread(void *arg)
         set_manual_isp_digital_gain(videofd, manual_isp_digital_gain);
         set_stop_sensor_update(videofd, stop_sensor_update);
         // set_sensor_max_integration_time(videofd, max_int_time);
+#endif
     }
 
     /**************************************************
@@ -834,6 +878,11 @@ void *video_thread(void *arg)
         }
         idx = v4l2_buf.index;
 
+        if (stream_type == ARM_V4L2_TEST_STREAM_FR)
+        {
+            save_image("fr", v4l2_mem[idx], tparm->width * tparm->height * 3 / 2, stream_type, tparm->capture_count);
+            // save_image("fr", displaybuf, v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage * 2, tparm->capture_count);
+        }
         // fill frame_pack and do enqueue_buffer()
         newframe.vfd = videofd;
         newframe.vbuf = v4l2_buf;
@@ -882,7 +931,7 @@ void *video_thread(void *arg)
         src.bpp = 32; // Todo: fixed to ARGB for now
         src.fmt = v4l2_fmt.fmt.pix.pixelformat;
 
-        if (src.fmt == V4L2_PIX_FMT_NV12)
+        /*if (src.fmt == V4L2_PIX_FMT_NV12)
         {
             memcpy(displaybuf, v4l2_mem[idx * 2], v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage);
             memcpy(displaybuf + v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage, v4l2_mem[idx * 2 + 1],
@@ -891,20 +940,24 @@ void *video_thread(void *arg)
         else
         {
             memcpy(displaybuf, src.ptr, v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage);
-        }
-
+        }*/
+        /*if (stream_type == ARM_V4L2_TEST_STREAM_FR)
+        {
+            save_image("fr", displaybuf, v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage * 2, stream_type, tparm->capture_count);
+            //save_image("fr", displaybuf, v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage * 2, tparm->capture_count);
+        }*/
         rc = ioctl(videofd, VIDIOC_QBUF, &v4l2_buf);
         if (rc < 0)
         {
             printf("Error: queue buffer.\n");
             break;
         }
-
-        /***** select save file or display through different stream_type *****/
         if (stream_type == ARM_V4L2_TEST_STREAM_FR)
         {
-            save_imgae("fr", displaybuf, v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage * 2, stream_type, tparm->capture_count);
+            // save_image("fr", displaybuf, v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage * 2, stream_type, tparm->capture_count);
+            // save_image("fr", displaybuf, v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage * 2, tparm->capture_count);
         }
+        /***** select save file or display through different stream_type *****/
 #if ARM_V4L2_TEST_HAS_META
         else if (stream_type == ARM_V4L2_TEST_STREAM_META)
         {
@@ -913,11 +966,11 @@ void *video_thread(void *arg)
 #endif
         else if (stream_type == ARM_V4L2_TEST_STREAM_DS1)
         {
-            save_imgae("ds1", displaybuf, v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage * 2, stream_type, tparm->capture_count);
+            // save_image("ds1", displaybuf, v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage * 2, stream_type, tparm->capture_count);
         }
         else if (stream_type == ARM_V4L2_TEST_STREAM_DS2)
         {
-            save_imgae("ds2", displaybuf, v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage, stream_type, tparm->capture_count);
+            // save_image("ds2", displaybuf, v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage, stream_type, tparm->capture_count);
         }
 
         display_count++;
@@ -942,8 +995,8 @@ void *video_thread(void *arg)
     free(displaybuf);
     /* stream off */
     rc = ioctl(videofd, VIDIOC_STREAMOFF, &type);
-    int ir_cut_state = 2;
-    do_sensor_ir_cut(videofd, ir_cut_state);
+    // int ir_cut_state = 2;
+    // do_sensor_ir_cut(videofd, ir_cut_state);
     if (rc < 0)
     {
         printf("Error: streamoff.\n");
@@ -1135,7 +1188,7 @@ int main(int argc, char *argv[])
     char *v4ldevname = "/dev/video0";
     int rc = 0;
     int i;
-    int command = -1;
+    int command = 1;
     uint32_t fr_c_width = 0;
     uint32_t fr_c_height = 0;
     uint32_t fr_a_ctrl = 0;
@@ -1602,7 +1655,7 @@ int main(int argc, char *argv[])
     {
         pthread_join(tid[i], NULL);
     }
-
+    printf("dump_num = %d\n", dump_num);
     MSG("terminating v4l2 test app, thank you ...\n");
 
     munmap(fbp, screensize);

@@ -16,7 +16,7 @@
 #
 
 obj-m += iv009_isp_iq.o
-
+LOCAL_PATH := $(shell pwd)
 M_PATH := $(shell dirname $(lastword $(MAKEFILE_LIST)))
 
 FW_SRC := $(wildcard $(M_PATH)/src/*.c  $(M_PATH)/src/*/*.c \
@@ -35,4 +35,15 @@ EXTRA_CFLAGS := -I$(M_PATH)/app -I$(M_PATH)/inc -I$(M_PATH)/app/control \
 
 EXTRA_CFLAGS += -Wno-declaration-after-statement -Idrivers/staging/android/ \
 		-Wno-error
+all:
+	@$(MAKE) -C $(KERNEL_SRC) M=$(M)  modules
+modules_install:
+	@echo "$(MAKE) INSTALL_MOD_STRIP=1 M=$(M) -C $(KERNEL_SRC) modules_install"
+	@$(MAKE) INSTALL_MOD_STRIP=1 M=$(M) -C $(KERNEL_SRC) modules_install
+	mkdir -p ${OUT_DIR}/../vendor_lib
+	cp $(OUT_DIR)/$(M)/*.ko ${OUT_DIR}/../vendor_lib/modules/
 
+clean:
+	#@$(MAKE) -C $(KERNEL_SRC) M=$(M) clean
+	#@$(MAKE) -C $(KERNEL_SRC) M=$(LOCAL_PATH) clean
+	rm -rf $(FW_SRC_OBJ) $(M_PATH)/*.ko
