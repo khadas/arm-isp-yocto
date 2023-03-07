@@ -196,6 +196,8 @@ void isp_wrmifx3_cfg_frm_size(struct isp_dev_t *isp_dev, u32 idx,
 	isp_reg_write(isp_dev, raddr, val);
 
 	stride = (width * bpp + 127) >> 7;
+	fmt->stride = ( (width * bpp + 127) & ( ~(127) ) )/ 8;
+	//pr_info("wrmifx3: width %d, bpp %d, stride %d", width, bpp, fmt->stride);
 
 	switch (fmt->nplanes) {
 	case 2:
