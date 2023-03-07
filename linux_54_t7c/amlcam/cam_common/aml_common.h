@@ -83,6 +83,7 @@ struct aml_format {
 	u32 nplanes;
 	u32 bpp;
 	u32 size;
+	u32 stride;
 };
 
 struct aml_reg {

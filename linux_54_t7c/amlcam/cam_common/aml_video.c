@@ -16,6 +16,8 @@
 * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 *
 */
+#define pr_fmt(fmt)  "[ispvideo]:%s:%d: " fmt, __func__, __LINE__
+
 #include <linux/version.h>
 #include <media/v4l2-subdev.h>
 #include <media/v4l2-ioctl.h>
@@ -178,10 +180,17 @@ static int video_set_fmt(struct file *file, void *fh, struct v4l2_format *fmt)
 		fmt->fmt.pix.colorspace = V4L2_COLORSPACE_SRGB;
 	}
 
+	// phase 1. set basic info to video->f_current.
+	// let under layers fill details.
 	video->f_current = *fmt;
 
 	if (video->ops->cap_set_format)
 		video->ops->cap_set_format(video);
+
+	// phase 2. use detailed format info in video->afmt.
+	fmt->fmt.pix.bytesperline = video->afmt.stride;
+	video->f_current = *fmt;
+	//pr_info("bytesperline  %d\n", fmt->fmt.pix.bytesperline);
 
 	return 0;
 }
