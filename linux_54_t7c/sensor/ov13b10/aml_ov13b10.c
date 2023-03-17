@@ -63,6 +63,7 @@ struct ov13b10 {
 	u8 nlanes;
 	u8 bpp;
 	u32 enWDRMode;
+	u8 i2c_addr;
 
 	struct i2c_client *client;
 	struct v4l2_subdev sd;
@@ -79,6 +80,7 @@ struct ov13b10 {
 	struct v4l2_ctrl *link_freq;
 	struct v4l2_ctrl *pixel_rate;
 	struct v4l2_ctrl *wdr;
+	struct v4l2_ctrl *address;
 
 	int status;
 	struct mutex lock;
@@ -102,6 +104,11 @@ static const struct regmap_config ov13b10_regmap_config = {
 	.reg_bits = 16,
 	.val_bits = 8,
 	.cache_type = REGCACHE_RBTREE,
+};
+
+static const u8 ov13b10_i2c_address[2] = {
+	0x10,
+	0x36,
 };
 
 #ifdef SDR_60FPS_1440M
@@ -424,52 +431,81 @@ static inline struct ov13b10 *to_ov13b10(struct v4l2_subdev *_sd)
 
 static inline int ov13b10_read_reg(struct ov13b10 *ov13b10, u16 addr, u8 *value)
 {
-	unsigned int regval;
-
+	int msg_count = 0;
 	int i, ret;
 
-	for (i = 0; i < 3; ++i) {
-		ret = regmap_read(ov13b10->regmap, addr, &regval);
-		if (0 == ret ) {
+	u8 buf[4];
+	struct i2c_msg msgs[2];
+
+	buf[0] = (addr >> 8) & 0xff;
+	buf[1] = addr & 0xff;
+
+	msgs[0].addr  = ov13b10->i2c_addr;
+	msgs[0].flags = 0;
+	msgs[0].len = 2;
+	msgs[0].buf = buf;
+
+	msgs[1].addr  = ov13b10->i2c_addr;
+	msgs[1].flags = I2C_M_RD;
+	msgs[1].len = 1;
+	msgs[1].buf = buf;
+
+	msg_count = sizeof(msgs) / sizeof(msgs[0]);
+	for (i = 0; i < 3; i++) {
+		ret = i2c_transfer(ov13b10->client->adapter, msgs, msg_count);
+		if (ret == msg_count)
 			break;
-		}
 	}
 
-	if (ret)
+	if (ret != msg_count)
 		dev_err(ov13b10->dev, "I2C read with i2c transfer failed for addr: %x, ret %d\n", addr, ret);
 
-	*value = regval & 0xff;
+	*value = buf[0] & 0xff;
 	return 0;
 }
 
 static int ov13b10_write_reg(struct ov13b10 *ov13b10, u16 addr, u8 value)
 {
+	int msg_count = 0;
 	int i, ret;
 
+	u8 buf[3];
+	struct i2c_msg msgs[1];
+
+	buf[0] = (addr >> 8) & 0xff;
+	buf[1] = addr & 0xff;
+	buf[2] = value & 0xff;
+
+	msgs[0].addr = ov13b10->i2c_addr;
+	msgs[0].flags = 0;
+	msgs[0].len = 3;
+	msgs[0].buf = buf;
+
+	msg_count = sizeof(msgs) / sizeof(msgs[0]);
 	for (i = 0; i < 3; i++) {
-		ret = regmap_write(ov13b10->regmap, addr, value);
-		if (0 == ret) {
+		ret = i2c_transfer(ov13b10->client->adapter, msgs, msg_count);
+		if (ret == msg_count) {
 			break;
 		}
 	}
 
-	if (ret)
+	if (ret != msg_count)
 		dev_err(ov13b10->dev, "I2C write failed for addr: %x, ret %d\n", addr, ret);
 
-	return ret;
+	return ((ret != msg_count) ? -1 : 0);
 }
 
 static int ov13b10_get_id(struct ov13b10 *ov13b10)
 {
 	int rtn = -EINVAL;
-    uint32_t sensor_id = 0;
-    u8 val = 0;
+	uint32_t sensor_id = 0;
+	u8 val = 0;
 
 	ov13b10_read_reg(ov13b10, 0x300a, &val);
 	sensor_id |= (val << 16);
 	ov13b10_read_reg(ov13b10, 0x300b, &val);
 	sensor_id |= (val << 8);
-    ov13b10_read_reg(ov13b10, 0x300c, &val);
+	ov13b10_read_reg(ov13b10, 0x300c, &val);
 	sensor_id |= val;
 
 	if (sensor_id != OV13B10_ID && sensor_id != OV13B10_ID_2) {
@@ -599,8 +635,30 @@ static int ov13b10_set_ctrl(struct v4l2_ctrl *ctrl)
 	return ret;
 }
 
+static int ov13b10_get_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct ov13b10 *ov13b10 = container_of(ctrl->handler,
+					     struct ov13b10, ctrls);
+	int ret = 0;
+
+	switch (ctrl->id) {
+	case V4L2_CID_AML_ADDRESS:
+		dev_err(ov13b10->dev, "i2c_addr 0x%x\n", ov13b10->i2c_addr);
+		ctrl->val = ov13b10->i2c_addr;
+		break;
+	default:
+		dev_err(ov13b10->dev, "Error ctrl->id %u, flag 0x%lx\n",
+			ctrl->id, ctrl->flags);
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
 static const struct v4l2_ctrl_ops ov13b10_ctrl_ops = {
 	.s_ctrl = ov13b10_set_ctrl,
+	.g_volatile_ctrl = ov13b10_get_ctrl,
 };
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
 static int ov13b10_enum_mbus_code(struct v4l2_subdev *sd,
@@ -705,7 +763,8 @@ static int ov13b10_set_fmt(struct v4l2_subdev *sd,
 	struct ov13b10 *ov13b10 = to_ov13b10(sd);
 	const struct ov13b10_mode *mode;
 	struct v4l2_mbus_framefmt *format;
-	unsigned int i,ret;
+	unsigned int i;
+	int ret;
 
 	mutex_lock(&ov13b10->lock);
 
@@ -757,7 +816,6 @@ static int ov13b10_set_fmt(struct v4l2_subdev *sd,
 	ov13b10->status = 0;
 
 	mutex_unlock(&ov13b10->lock);
-
 	if (ov13b10->enWDRMode) {
 		/* Set init register settings */
 		ret = ov13b10_set_register_array(ov13b10, setting_4208_3120_4lane_1080m_30fps,
@@ -779,7 +837,6 @@ static int ov13b10_set_fmt(struct v4l2_subdev *sd,
 		} else
 			dev_err(ov13b10->dev, "ov13b10 linear mode init...\n");
 	}
-
 	return 0;
 }
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
@@ -1000,6 +1057,18 @@ static struct v4l2_ctrl_config wdr_cfg = {
 	.def = 0,
 };
 
+static struct v4l2_ctrl_config addr_cfg = {
+	.ops = &ov13b10_ctrl_ops,
+	.id = V4L2_CID_AML_ADDRESS,
+	.name = "sensor address",
+	.type = V4L2_CTRL_TYPE_INTEGER,
+	.flags = V4L2_CTRL_FLAG_VOLATILE | V4L2_CTRL_FLAG_EXECUTE_ON_WRITE,
+	.min = 0x00,
+	.max = 0xFF,
+	.step = 1,
+	.def = 0x00,
+};
+
 static int ov13b10_ctrls_init(struct ov13b10 *ov13b10)
 {
 	int rtn = 0;
@@ -1028,6 +1097,7 @@ static int ov13b10_ctrls_init(struct ov13b10 *ov13b10)
 					       ov13b10_calc_pixel_rate(ov13b10));
 
 	ov13b10->wdr = v4l2_ctrl_new_custom(&ov13b10->ctrls, &wdr_cfg, NULL);
+	ov13b10->address = v4l2_ctrl_new_custom(&ov13b10->ctrls, &addr_cfg, NULL);
 
 	ov13b10->sd.ctrl_handler = &ov13b10->ctrls;
 
@@ -1185,7 +1255,7 @@ static int ov13b10_probe(struct i2c_client *client)
 	struct device *dev = &client->dev;
 	struct ov13b10 *ov13b10;
 	int ret = -EINVAL;
-
+	u8 i = 0;
 
 	ov13b10 = devm_kzalloc(dev, sizeof(*ov13b10), GFP_KERNEL);
 	if (!ov13b10)
@@ -1194,6 +1264,7 @@ static int ov13b10_probe(struct i2c_client *client)
 
 	ov13b10->dev = dev;
 	ov13b10->client = client;
+	ov13b10->i2c_addr = client->addr;
 
 	ov13b10->regmap = devm_regmap_init_i2c(client, &ov13b10_regmap_config);
 	if (IS_ERR(ov13b10->regmap)) {
@@ -1230,9 +1301,15 @@ static int ov13b10_probe(struct i2c_client *client)
 		goto free_err;
 	}
 
-
-	ret = ov13b10_get_id(ov13b10);
-	if (ret) {
+	for (i = 0; i < sizeof(ov13b10_i2c_address); i++) {
+		ov13b10->i2c_addr = ov13b10_i2c_address[i];
+		ret = ov13b10_get_id(ov13b10);
+		if (ret == 0) {
+			dev_err(dev, "Success get sensor id for addr 0x%2x\n", ov13b10->i2c_addr);
+			break;
+		}
+	}
+	if (ret != 0) {
 		dev_err(dev, "Could not get id\n");
 		ov13b10_power_off(ov13b10);
 		goto free_err;
