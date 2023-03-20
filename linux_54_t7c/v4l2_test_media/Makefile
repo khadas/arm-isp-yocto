@@ -4,6 +4,9 @@ ISP_ROOT_DIR := $(LOCAL_PATH)/..
 LOCAL_INCLUDES := -I$(ISP_ROOT_DIR)/include/
 LOCAL_INCLUDES += -I$(ISP_ROOT_DIR)/sensor_calibration/imx290/
 LOCAL_INCLUDES += -I$(ISP_ROOT_DIR)/sensor_calibration/ov08a10/
+LOCAL_INCLUDES += -I$(ISP_ROOT_DIR)/sensor_calibration/ov13b10/
+LOCAL_INCLUDES += -I$(ISP_ROOT_DIR)/sensor_calibration/ov13855/
+LOCAL_INCLUDES += -I$(ISP_ROOT_DIR)/sensor_calibration/imx415/
 
 
 TARGET := v4l2_test_raw

@@ -44,5 +44,6 @@ void cmos_fps_set_imx290(int ViPipe, float f32Fps, ALG_SENSOR_DEFAULT_S *pstAeSn
 void cmos_alg_update_imx290(int ViPipe);
 void cmos_set_sensor_entity_imx290(struct media_entity * sensor_ent, int wdr);
 void cmos_get_sensor_calibration_imx290(aisp_calib_info_t * calib);
+void cmos_get_sensor_otp_data_imx290(aisp_calib_info_t * otp);
 
 #endif
