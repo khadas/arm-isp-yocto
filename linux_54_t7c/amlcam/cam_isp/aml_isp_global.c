@@ -130,8 +130,10 @@ int isp_global_reset(struct isp_dev_t *isp_dev)
 	memset(isp_dev->lutWr.lutRegW, 0, sizeof(isp_dev->lutWr.lutRegW));
 	memset(isp_dev->lutWr.lutRegAddr, 0, sizeof(isp_dev->lutWr.lutRegAddr));
 
-	if (g_info->user)
+	if (g_info->user) {
+		spin_unlock(&g_info->lock);
 		return 0;
+	}
 
 	isp_dev->ops->hw_reset(isp_dev);
 	isp_dev->ops->hw_fill_gisp_rreg_buff(g_info);
