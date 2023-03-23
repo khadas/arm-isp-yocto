@@ -611,7 +611,7 @@ int aml_video_register(struct aml_video *video)
 	vdev->vfl_dir = VFL_DIR_RX;
 	vdev->queue = &video->vb2_q;
 	vdev->lock = &video->lock;
-	strncpy(vdev->name, video->name, sizeof(vdev->name));
+	strncpy(vdev->name, video->name, strlen(video->name));
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
 	rtn = video_register_device(vdev, VFL_TYPE_VIDEO, VIDEO_NODE);
 #else
@@ -639,6 +639,9 @@ error_vb2_init:
 
 void aml_video_unregister(struct aml_video *video)
 {
+	if (video->name == NULL)
+		return;
+
 	vb2_queue_release(&video->vb2_q);
 	video_unregister_device(&video->vdev);
 }

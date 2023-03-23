@@ -250,7 +250,7 @@ void isp_mcnr_mif_cfg_buf(struct isp_dev_t *isp_dev, struct aml_format *fmt, str
 	u32 meta_size = 0;
 	u32 meta_addr = 0;
 
-	meta_size = (((fmt->width + 15) / 16) * 16) * fmt->height / 4 * 4 / 8;
+	meta_size = (((fmt->width / 2 * 4 + 127) / 128) * 16) * fmt->height / 2;
 	meta_size = ISP_ALIGN(meta_size, 1 << 12);
 	meta_addr = buff->addr[AML_PLANE_A];
 

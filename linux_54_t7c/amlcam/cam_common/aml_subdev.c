@@ -235,7 +235,7 @@ int aml_subdev_register(struct aml_subdev *subdev)
 	v4l2_subdev_init(sd, &subdev_v4l2_ops);
 	sd->owner = THIS_MODULE;
 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE | V4L2_SUBDEV_FL_HAS_EVENTS;
-	memcpy(sd->name, subdev->name, sizeof(sd->name));
+	memcpy(sd->name, subdev->name, strlen(subdev->name));
 
 	sd->entity.function = subdev->function;
 

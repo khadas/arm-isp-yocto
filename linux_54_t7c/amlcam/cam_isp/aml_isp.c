@@ -201,10 +201,10 @@ static int isp_subdev_mcnr_buf_alloc(struct isp_dev_t *isp_dev, struct aml_forma
 	mix_body_size = ISP_SIZE_ALIGN(mix_body_size, 1 << 12);
 	mix_body_page = mix_body_size >> 12;
 
-	meta_size = (((width  + 15) / 16) * 16) * height / 4 * 4 / 8;
+	meta_size = (((width / 2 * 4 + 127) / 128) * 16) * height / 2;
 	meta_size = ISP_SIZE_ALIGN(meta_size, 1 << 12);
 
-	mv_size = (((width  + 15) / 16) * 16) * height / 64 * 16 / 8;
+	mv_size = (((width  / 8 * 20 + 127) / 128) * 16) * height / 8;
 	mv_size = ISP_SIZE_ALIGN(mv_size, 1 << 12);
 
 	iir_slice_size = 16 * 1024;
