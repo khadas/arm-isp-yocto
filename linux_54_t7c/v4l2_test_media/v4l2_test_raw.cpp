@@ -40,7 +40,7 @@
 
 //#define WDR_ENABLE
 #define DUAL_CAMERA
-//#define dump_forever
+#define dump_forever
 
 #define NB_BUFFER                4
 #define NB_BUFFER_PARAM          1
@@ -72,6 +72,9 @@ struct thread_info {
 };
 
 pthread_t tid[ARM_V4L2_TEST_STREAM_MAX];
+pthread_mutex_t mutex;
+pthread_cond_t cond;
+
 
 struct ispIF ispIf;
 
@@ -723,7 +726,10 @@ void * video_thread(void *arg)
 
 
     INFO("[T#%d] media stream stop \n",stream_type);
-
+    pthread_mutex_lock(&mutex);
+    pthread_cond_wait(&cond, &mutex);
+    printf("stats thread applied the condition\n");
+    pthread_mutex_unlock(&mutex);
     /* stream off */
     rc = media_stream_stop(&tparm->v4l2_media_stream, type);
 
@@ -877,7 +883,7 @@ void * stats_thread(void *arg)
 
     } while (tparm->capture_count > 0);
 
-
+    pthread_cond_signal(&cond);
     INFO("[T#%d] media stream stop \n",stream_type);
 
     /* stream off */
@@ -1158,7 +1164,8 @@ int main(int argc, char *argv[])
     };
 
     sem_init(&tparam_raw.info.p_sem, 0, 0);
-
+    pthread_mutex_init(&mutex, NULL);
+    pthread_cond_init(&cond, NULL);
     /* turn on stats capture stream */
     if (prepareStatsCapture(&tparam_raw) != 0) {
         ERR("Error: Can't start raw stream, cancelling capture.\n");
