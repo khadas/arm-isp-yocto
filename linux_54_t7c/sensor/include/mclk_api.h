@@ -86,7 +86,7 @@ static int mclk_disable(struct device *dev)
     }
 
     clk_val = clk_get_rate(clk);
-    if ((clk_val != 12000000) && (clk_val != 24000000)) {
+    if ((clk_val != 12000000) && (clk_val != 24000000) && __clk_is_enabled(clk)) {
         clk_disable_unprepare(clk);
     }
 
