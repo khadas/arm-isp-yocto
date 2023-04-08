@@ -279,7 +279,7 @@ static void ae_cfg_size(struct isp_dev_t *isp_dev, struct aml_format *fmt)
 static void ae_init(struct isp_dev_t *isp_dev)
 {
 	u32 i, val = 0;
-	u32 ae_stat_thrd[4] = {13107, 13107*2, 13107*3, 13107*4}; // under u16 preciison
+	u32 ae_stat_thrd[4] = {13107, 13107*2, 13107*3, 13107*4}; // under u16 precision
 	u32 yuvlimit[6] = {0, 4095, 0, 4095, 0, 4095};
 	u32 ae_roi_xywin[4][4] = {{50, 50, 80, 40}, {100, 50, 80, 40},
 			{32, 62, 32, 42}, {32, 82, 64, 52}};

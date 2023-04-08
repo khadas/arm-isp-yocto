@@ -367,7 +367,7 @@ void isp_snr_init(struct isp_dev_t *isp_dev)
 	isp_reg_update_bits(isp_dev, ISP_SNR_VAR_LUMA_RS, 8, 0, 4);
 
 	val = (20 << 0) | (10 << 12) | (2 << 20) | (2 << 28);
-	isp_reg_write(isp_dev, ISP_SNR_STRENGHT, val);
+	isp_reg_write(isp_dev, ISP_SNR_STRENGTH, val);
 
 	isp_reg_update_bits(isp_dev, ISP_SNR_LPF_PHS_DIFF, 0, 19, 1);
 	isp_reg_update_bits(isp_dev, ISP_SNR_SAD_MAP_FLAT_TH, 1, 8, 10);
