@@ -40,8 +40,10 @@ static __inline uint32_t acamera_awb_statistics_data_read( AWB_fsm_t *p_fsm, uin
 
 //==========AWB functions (calling order:  awb.scxml)=============================
 // Handle the hardware interrupt
-void AWB_fsm_process_interrupt( const AWB_fsm_t *p_fsm, uint8_t irq_event )
+void AWB_fsm_process_interrupt(void * fsm, uint8_t irq_event )
 {
+    AWB_fsm_t *p_fsm = (AWB_fsm_t *)fsm;
+
     if ( acamera_fsm_util_is_irq_event_ignored( (fsm_irq_mask_t *)( &p_fsm->mask ), irq_event ) )
         return;
 

@@ -19,13 +19,21 @@
 
 #ifndef _ISP_VB2_H_
 #define _ISP_VB2_H_
-
+#include <linux/version.h>
 #include <linux/videodev2.h>
 #include <media/videobuf2-core.h>
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0))
 #include <linux/meson_ion.h>
-
+#elif (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
+#include "../../../../staging/android/ion/ion.h"
+#endif
 #include "isp-v4l2-stream.h"
 #include "isp-vb2-cmalloc.h"
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+#ifdef CONFIG_AMLOGIC_ION
+#include "../common_drivers/drivers/media/common/ion_dev/dev_ion.h"
+#endif
+#endif
 
 /* VB2 control interfaces */
 int isp_vb2_queue_init( struct vb2_queue *q, struct mutex *mlock, isp_v4l2_stream_t *pstream, struct device *dev );

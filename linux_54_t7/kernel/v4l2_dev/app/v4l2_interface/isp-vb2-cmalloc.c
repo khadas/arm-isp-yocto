@@ -17,16 +17,30 @@
 #include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <linux/dma-mapping.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+#include <linux/dma-map-ops.h>
+#include <linux/cma.h>
+#include <linux/kasan.h>
+#else
 #include <linux/dma-contiguous.h>
+#endif
 
 #include "isp-vb2-cmalloc.h"
 
-static void *cma_alloc(struct device *dev, unsigned long size)
+static void *aml_cma_alloc(struct device *dev, unsigned long size)
 {
     struct page *cma_pages = NULL;
     dma_addr_t paddr = 0;
     void *vaddr = NULL;
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0))
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+    struct cma *cma_area;
+    if (dev && dev->cma_area)
+        cma_area = dev->cma_area;
+    else
+        cma_area = dma_contiguous_default_area;
+    cma_pages = cma_alloc(cma_area, size >> PAGE_SHIFT, 0, 0);
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0))
     cma_pages = dma_alloc_from_contiguous(dev,
 			size >> PAGE_SHIFT, 0, false);
 #else
@@ -46,7 +60,7 @@ static void *cma_alloc(struct device *dev, unsigned long size)
     return vaddr;
 }
 
-static void cma_free(void *buf_priv)
+static void aml_cma_free(void *buf_priv)
 {
     struct vb2_cmalloc_buf *buf = buf_priv;
     struct page *cma_pages = NULL;
@@ -57,8 +71,17 @@ static void cma_free(void *buf_priv)
 
     cma_pages = buf->vaddr;
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+    struct cma *cma_area;
+    if (dev && dev->cma_area)
+        cma_area = dev->cma_area;
+    else
+        cma_area = dma_contiguous_default_area;
+    rc = cma_release(cma_area, cma_pages, buf->size >> PAGE_SHIFT);
+#else
     rc = dma_release_from_contiguous(dev, cma_pages,
                 buf->size >> PAGE_SHIFT);
+#endif
     if (rc == false) {
         pr_err("Failed to release cma buffer\n");
         return;
@@ -77,24 +100,36 @@ static void vb2_cmalloc_put(void *buf_priv)
 #else
     if (atomic_dec_and_test(&buf->refcount)) {
 #endif
-        cma_free(buf_priv);
+        aml_cma_free(buf_priv);
         kfree(buf);
     }
 }
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
 static void *vb2_cmalloc_alloc(struct device *dev, unsigned long attrs,
                 unsigned long size, enum dma_data_direction dma_dir,
                 gfp_t gfp_flags)
+#else
+static void *vb2_cmalloc_alloc(struct vb2_buffer *vb, struct device *dev, unsigned long size)
+#endif
 {
     struct vb2_cmalloc_buf *buf;
 
+#if (LINUX_VERSION_CODE <= KERNEL_VERSION(5, 10, 0))
     buf = kzalloc(sizeof(*buf), GFP_KERNEL | gfp_flags);
+#else
+    buf = kzalloc(sizeof(*buf), GFP_KERNEL);
+#endif
     if (!buf)
         return ERR_PTR(-ENOMEM);
 
     buf->size = PAGE_ALIGN(size);
-    buf->vaddr = cma_alloc(dev, buf->size);
+    buf->vaddr = aml_cma_alloc(dev, buf->size);
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
     buf->dma_dir = dma_dir;
+#else
+    buf->dma_dir = vb->vb2_queue->dma_dir;
+#endif
     buf->handler.refcount = &buf->refcount;
     buf->handler.put = vb2_cmalloc_put;
     buf->handler.arg = buf;
@@ -115,9 +150,14 @@ static void *vb2_cmalloc_alloc(struct device *dev, unsigned long attrs,
     return buf;
 }
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
 void *vb2_get_userptr(struct device *dev, unsigned long vaddr,
                 unsigned long size,
                 enum dma_data_direction dma_dir)
+#else
+void *vb2_get_userptr(struct vb2_buffer *vb, struct device *dev,
+                unsigned long vaddr, unsigned long size)
+#endif
 {
     struct vb2_cmalloc_buf *buf;
 
@@ -129,7 +169,11 @@ void *vb2_get_userptr(struct device *dev, unsigned long vaddr,
 
     buf->dbuf = (void *)dev;
     buf->vaddr = (void *)vaddr;
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
     buf->dma_dir = dma_dir;
+#else
+    buf->dma_dir = vb->vb2_queue->dma_dir;
+#endif
     buf->size = size;
 
     return buf;
@@ -145,7 +189,11 @@ void vb2_put_userptr(void *buf_priv)
     kfree(buf_priv);
 }
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
 static void *vb2_cmalloc_vaddr(void *buf_priv)
+#else
+static void *vb2_cmalloc_vaddr(struct vb2_buffer *vb, void *buf_priv)
+#endif
 {
     struct vb2_cmalloc_buf *buf = buf_priv;
 
@@ -330,21 +378,35 @@ static void vb2_cmalloc_dmabuf_ops_release(struct dma_buf *dbuf)
     vb2_cmalloc_put(dbuf->priv);
 }
 
+#if (LINUX_VERSION_CODE <= KERNEL_VERSION(5, 4, 0))
 static void *vb2_cmalloc_dmabuf_ops_kmap(struct dma_buf *dbuf, unsigned long pgnum)
 {
     struct vb2_cmalloc_buf *buf = dbuf->priv;
 
     return buf->vaddr + pgnum * PAGE_SIZE;
 }
+#endif
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
 static void *vb2_cmalloc_dmabuf_ops_vmap(struct dma_buf *dbuf)
+#else
+static int vb2_cmalloc_dmabuf_ops_vmap(struct dma_buf *dbuf, struct dma_buf_map *map)
+#endif
 {
     struct vb2_cmalloc_buf *buf = dbuf->priv;
 
 #ifdef CONFIG_ANDROID_OS
-    return buf->vaddr;
+    return *(int *)buf->vaddr;
 #else
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
     return page_to_virt(buf->vaddr);
+#else
+#ifdef CONFIG_ARM64
+    return *(int *)page_to_virt(buf->vaddr);
+#else
+    return *(int *)buf->vaddr;
+#endif
+#endif
 #endif
 }
 
@@ -359,18 +421,22 @@ static struct dma_buf_ops vb2_cmalloc_dmabuf_ops = {
     .detach = vb2_cmalloc_dmabuf_ops_detach,
     .map_dma_buf = vb2_cmalloc_dmabuf_ops_map,
     .unmap_dma_buf = vb2_cmalloc_dmabuf_ops_unmap,
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0))
-    .map = vb2_cmalloc_dmabuf_ops_kmap,
-#else
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 10, 0))
     .kmap = vb2_cmalloc_dmabuf_ops_kmap,
     .kmap_atomic = vb2_cmalloc_dmabuf_ops_kmap,
+#elif (LINUX_VERSION_CODE <= KERNEL_VERSION(5, 4, 0))
+    .map = vb2_cmalloc_dmabuf_ops_kmap,
 #endif
     .vmap = vb2_cmalloc_dmabuf_ops_vmap,
     .mmap = vb2_cmalloc_dmabuf_ops_mmap,
     .release = vb2_cmalloc_dmabuf_ops_release,
 };
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
 static struct dma_buf *vb2_cmalloc_get_dmabuf(void *buf_priv, unsigned long flags)
+#else
+static struct dma_buf *vb2_cmalloc_get_dmabuf(struct vb2_buffer *vb, void *buf_priv, unsigned long flags)
+#endif
 {
     struct vb2_cmalloc_buf *buf = buf_priv;
     struct dma_buf *dbuf;

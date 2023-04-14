@@ -316,8 +316,10 @@ void metadata_regist_callback( metadata_fsm_t *p_fsm, metadata_callback_t cb )
     p_fsm->callback_meta = cb;
 }
 
-void metadata_fsm_process_interrupt( metadata_fsm_const_ptr_t p_fsm, uint8_t irq_event )
+void metadata_fsm_process_interrupt(void *fsm       , uint8_t irq_event )
 {
+    metadata_fsm_const_ptr_t p_fsm = (metadata_fsm_const_ptr_t) fsm;
+
     if ( acamera_fsm_util_is_irq_event_ignored( (fsm_irq_mask_t *)( &p_fsm->mask ), irq_event ) )
         return;
     switch ( irq_event ) {

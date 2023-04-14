@@ -332,7 +332,7 @@ int AF_fsm_get_param( void *fsm, uint32_t param_id, void *input, uint32_t input_
 }
 
 
-uint8_t AF_fsm_process_event( AF_fsm_t *p_fsm, event_id_t event_id )
+int AF_fsm_process_event( void *fsm, event_id_t event_id )
 {
     return 0;
 }

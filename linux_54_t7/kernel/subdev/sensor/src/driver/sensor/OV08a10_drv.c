@@ -28,6 +28,7 @@
 //  CONSTANT SECTION
 //        DRIVER
 //-------------------------------------------------------------------------------------
+#include <linux/version.h>
 
 #include <linux/delay.h>
 #include "acamera_types.h"
@@ -604,7 +605,11 @@ static void sensor_test_pattern( void *ctx, uint8_t mode )
 uint32_t write1_reg(unsigned long addr, uint32_t val)
 {
 	void __iomem *io_addr;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+	io_addr = ioremap(addr, 8);
+#else
 	io_addr = ioremap_nocache(addr, 8);
+#endif
 	if (io_addr == NULL) {
 		LOG(LOG_ERR, "%s: Failed to ioremap addr\n", __func__);
 		return -1;

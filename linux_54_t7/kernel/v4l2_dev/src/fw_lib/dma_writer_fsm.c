@@ -182,9 +182,10 @@ int dma_writer_fsm_get_param( void *fsm, uint32_t param_id, void *input, uint32_
 }
 
 
-uint8_t dma_writer_fsm_process_event( dma_writer_fsm_t *p_fsm, event_id_t event_id )
+int dma_writer_fsm_process_event( void *fsm, event_id_t event_id )
 {
     uint8_t b_event_processed = 0;
+    dma_writer_fsm_t *p_fsm = (dma_writer_fsm_t *)fsm;
     switch ( event_id ) {
     default:
         break;

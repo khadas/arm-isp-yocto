@@ -318,10 +318,10 @@ int general_fsm_get_param( void *fsm, uint32_t param_id, void *input, uint32_t i
     return rc;
 }
 
-uint8_t general_fsm_process_event( general_fsm_t *p_fsm, event_id_t event_id )
+int general_fsm_process_event( void *fsm, event_id_t event_id )
 {
     uint8_t b_event_processed = 0;
-
+    general_fsm_t *p_fsm = (general_fsm_t *)fsm;
 
     switch ( event_id ) {
     default:

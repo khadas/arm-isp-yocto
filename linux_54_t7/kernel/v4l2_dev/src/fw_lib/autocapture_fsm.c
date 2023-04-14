@@ -86,9 +86,10 @@ int autocapture_fsm_set_param( void *fsm, uint32_t param_id, void *input, uint32
     return rc;
 }
 
-uint8_t autocapture_fsm_process_event( autocapture_fsm_t *p_fsm, event_id_t event_id )
+int autocapture_fsm_process_event( void *fsm, event_id_t event_id )
 {
     uint8_t b_event_processed = 0;
+    autocapture_fsm_t *p_fsm = (autocapture_fsm_t *)fsm;
 
     return b_event_processed;
 }

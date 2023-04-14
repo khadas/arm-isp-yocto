@@ -174,8 +174,8 @@ static int peak_idx_val[FED_FLKR_STAT_MAX*2];  //= (int*)kzalloc( FED_FLKR_STAT_
 static int valey_idx_val[FED_FLKR_STAT_MAX*2];  //= (int*)kzalloc( FED_FLKR_STAT_MAX*2, GFP_KERNEL );
 static int pDif[FED_FLKR_STAT_MAX];           //= (int*)kzalloc( FED_FLKR_STAT_MAX, GFP_KERNEL );
 static int pDifLpf[FED_FLKR_STAT_MAX];        //= (int*)kzalloc( FED_FLKR_STAT_MAX, GFP_KERNEL );
-static char dump_name[100];
-static loff_t pos;
+//static char dump_name[100];
+//static loff_t pos;
 
 int fw_flicker_det(T_FLKR_CTRL_PRM *prm_flkr_ctrl, T_FLKR_DET_PRM *prm_flkr_det, int frame_id_current)
 {

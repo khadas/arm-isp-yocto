@@ -52,7 +52,7 @@ void sbuf_fsm_clear( sbuf_fsm_ptr_t p_fsm );
 void sbuf_fsm_init( void *fsm, fsm_init_param_t *init_param );
 int sbuf_fsm_set_param( void *fsm, uint32_t param_id, void *input, uint32_t input_size );
 
-uint8_t sbuf_fsm_process_event( sbuf_fsm_ptr_t p_fsm, event_id_t event_id );
+int sbuf_fsm_process_event( void *fsm, event_id_t event_id );
 
 void sbuf_fsm_process_interrupt( sbuf_fsm_const_ptr_t p_fsm, uint8_t irq_event );
 

@@ -16,9 +16,11 @@
 * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 *
 */
-
+#include <linux/version.h>
 #include <linux/kernel.h> 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
 #include <asm/uaccess.h>
+#endif
 #include <linux/gfp.h>
 #include <linux/cdev.h>
 #include <linux/slab.h>

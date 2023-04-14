@@ -186,9 +186,9 @@ void cmos_fsm_init( void *fsm, fsm_init_param_t *init_param );
 
 int cmos_fsm_set_param( void *fsm, uint32_t param_id, void *input, uint32_t input_size );
 int cmos_fsm_get_param( void *fsm, uint32_t param_id, void *input, uint32_t input_size, void *output, uint32_t output_size );
-uint8_t cmos_fsm_process_event( cmos_fsm_ptr_t p_fsm, event_id_t event_id );
+int cmos_fsm_process_event( void * p_fsm, event_id_t event_id );
 
-void cmos_fsm_process_interrupt( cmos_fsm_const_ptr_t p_fsm, uint8_t irq_event );
+void cmos_fsm_process_interrupt( void * fsm, uint8_t irq_event );
 
 void cmos_request_interrupt( cmos_fsm_ptr_t p_fsm, system_fw_interrupt_mask_t mask );
 

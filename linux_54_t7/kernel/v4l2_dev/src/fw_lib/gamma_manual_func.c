@@ -133,8 +133,10 @@ void gamma_manual_update( gamma_manual_fsm_ptr_t p_fsm )
     }
 }
 
-void gamma_manual_fsm_process_interrupt( gamma_manual_fsm_const_ptr_t p_fsm, uint8_t irq_event )
+void gamma_manual_fsm_process_interrupt( void *fsm, uint8_t irq_event )
 {
+    gamma_manual_fsm_const_ptr_t p_fsm = (gamma_manual_fsm_const_ptr_t) fsm;
+
     if ( acamera_fsm_util_is_irq_event_ignored( (fsm_irq_mask_t *)( &p_fsm->mask ), irq_event ) )
         return;
 

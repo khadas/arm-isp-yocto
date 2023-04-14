@@ -16,7 +16,7 @@
 * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 *
 */
-
+#include <linux/version.h>
 #include <linux/delay.h>
 #include "acamera_types.h"
 #include "system_spi.h"
@@ -55,8 +55,11 @@ static uint32_t initial_sensor = 0;
 // 2 - reset-ssub & power-enable-ssub
 static const int32_t config_sensor_idx = 0;                  // 1 2 3
 static const char * reset_dts_pin_name = "reset";             // reset-sub  reset-ssub
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+//static const char * pwr_dts_pin_name   = "pwdn";              // pwdn-sub pwdn-ssub
+#else
 static const char * pwr_dts_pin_name   = "pwdn";              // pwdn-sub pwdn-ssub
-
+#endif
 
 static sensor_mode_t supported_modes[] = {
     {

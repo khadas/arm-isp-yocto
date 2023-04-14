@@ -2929,6 +2929,200 @@ static void update_ctrl_cfg_system_integration_time( uint32_t ctx_id, struct v4l
 
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+/* Set the handler's error code if it wasn't set earlier already */
+static inline int handler_set_err(struct v4l2_ctrl_handler *hdl, int err)
+{
+	if (hdl->error == 0)
+		hdl->error = err;
+	return err;
+}
+
+static struct v4l2_ctrl_ref *find_private_ref(
+		struct v4l2_ctrl_handler *hdl, u32 id)
+{
+	struct v4l2_ctrl_ref *ref;
+
+	id -= V4L2_CID_PRIVATE_BASE;
+	list_for_each_entry(ref, &hdl->ctrl_refs, node) {
+		/* Search for private user controls that are compatible with
+		   VIDIOC_G/S_CTRL. */
+		if (V4L2_CTRL_ID2WHICH(ref->ctrl->id) == V4L2_CTRL_CLASS_USER &&
+		    V4L2_CTRL_DRIVER_PRIV(ref->ctrl->id)) {
+			if (!ref->ctrl->is_int)
+				continue;
+			if (id == 0)
+				return ref;
+			id--;
+		}
+	}
+	return NULL;
+}
+
+/* Find a control with the given ID. */
+static struct v4l2_ctrl_ref *find_ref(struct v4l2_ctrl_handler *hdl, u32 id)
+{
+	struct v4l2_ctrl_ref *ref;
+	int bucket;
+
+	id &= V4L2_CTRL_ID_MASK;
+
+	/* Old-style private controls need special handling */
+	if (id >= V4L2_CID_PRIVATE_BASE)
+		return find_private_ref(hdl, id);
+	bucket = id % hdl->nr_of_buckets;
+
+	/* Simple optimization: cache the last control found */
+	if (hdl->cached && hdl->cached->ctrl->id == id)
+		return hdl->cached;
+
+	/* Not in cache, search the hash */
+	ref = hdl->buckets ? hdl->buckets[bucket] : NULL;
+	while (ref && ref->ctrl->id != id)
+		ref = ref->next;
+
+	if (ref)
+		hdl->cached = ref; /* cache it! */
+	return ref;
+}
+
+static inline u32 node2id(struct list_head *node)
+{
+	return list_entry(node, struct v4l2_ctrl_ref, node)->ctrl->id;
+}
+/* Find a control with the given ID. Take the handler's lock first. */
+static struct v4l2_ctrl_ref *find_ref_lock(struct v4l2_ctrl_handler *hdl, u32 id)
+{
+	struct v4l2_ctrl_ref *ref = NULL;
+
+	if (hdl) {
+		mutex_lock(hdl->lock);
+		ref = find_ref(hdl, id);
+		mutex_unlock(hdl->lock);
+	}
+	return ref;
+}
+
+static int handler_new_ref(struct v4l2_ctrl_handler *hdl,
+		    struct v4l2_ctrl *ctrl,
+		    struct v4l2_ctrl_ref **ctrl_ref,
+		    bool from_other_dev, bool allocate_req)
+{
+	struct v4l2_ctrl_ref *ref;
+	struct v4l2_ctrl_ref *new_ref;
+	u32 id = ctrl->id;
+	u32 class_ctrl = V4L2_CTRL_ID2WHICH(id) | 1;
+	int bucket = id % hdl->nr_of_buckets;	/* which bucket to use */
+	unsigned int size_extra_req = 0;
+
+	if (ctrl_ref)
+		*ctrl_ref = NULL;
+
+	/*
+	 * Automatically add the control class if it is not yet present and
+	 * the new control is not a compound control.
+	 */
+	if (ctrl->type < V4L2_CTRL_COMPOUND_TYPES &&
+	    id != class_ctrl && find_ref_lock(hdl, class_ctrl) == NULL)
+		if (!v4l2_ctrl_new_std(hdl, NULL, class_ctrl, 0, 0, 0, 0))
+			return hdl->error;
+
+	if (hdl->error)
+		return hdl->error;
+
+	if (allocate_req)
+		size_extra_req = ctrl->elems * ctrl->elem_size;
+	new_ref = kzalloc(sizeof(*new_ref) + size_extra_req, GFP_KERNEL);
+	if (!new_ref)
+		return handler_set_err(hdl, -ENOMEM);
+	new_ref->ctrl = ctrl;
+	new_ref->from_other_dev = from_other_dev;
+	if (size_extra_req)
+		new_ref->p_req.p = &new_ref[1];
+
+	INIT_LIST_HEAD(&new_ref->node);
+
+	mutex_lock(hdl->lock);
+
+	/* Add immediately at the end of the list if the list is empty, or if
+	   the last element in the list has a lower ID.
+	   This ensures that when elements are added in ascending order the
+	   insertion is an O(1) operation. */
+	if (list_empty(&hdl->ctrl_refs) || id > node2id(hdl->ctrl_refs.prev)) {
+		list_add_tail(&new_ref->node, &hdl->ctrl_refs);
+		goto insert_in_hash;
+	}
+
+	/* Find insert position in sorted list */
+	list_for_each_entry(ref, &hdl->ctrl_refs, node) {
+		if (ref->ctrl->id < id)
+			continue;
+		/* Don't add duplicates */
+		if (ref->ctrl->id == id) {
+			kfree(new_ref);
+			goto unlock;
+		}
+		list_add(&new_ref->node, ref->node.prev);
+		break;
+	}
+
+insert_in_hash:
+	/* Insert the control node in the hash */
+	new_ref->next = hdl->buckets[bucket];
+	hdl->buckets[bucket] = new_ref;
+	if (ctrl_ref)
+		*ctrl_ref = new_ref;
+	if (ctrl->handler == hdl) {
+		/* By default each control starts in a cluster of its own.
+		 * new_ref->ctrl is basically a cluster array with one
+		 * element, so that's perfect to use as the cluster pointer.
+		 * But only do this for the handler that owns the control.
+		 */
+		ctrl->cluster = &new_ref->ctrl;
+		ctrl->ncontrols = 1;
+	}
+
+unlock:
+	mutex_unlock(hdl->lock);
+	return 0;
+}
+
+/* Add the controls from another handler to our own. */
+int aml_v4l2_ctrl_add_handler(struct v4l2_ctrl_handler *hdl,
+			  struct v4l2_ctrl_handler *add,
+			  bool (*filter)(const struct v4l2_ctrl *ctrl),
+			  bool from_other_dev)
+{
+	struct v4l2_ctrl_ref *ref;
+	int ret = 0;
+
+	/* Do nothing if either handler is NULL or if they are the same */
+	if (!hdl || !add || hdl == add)
+		return 0;
+	if (hdl->error)
+		return hdl->error;
+	mutex_lock(add->lock);
+	list_for_each_entry(ref, &add->ctrl_refs, node) {
+		struct v4l2_ctrl *ctrl = ref->ctrl;
+
+		/* Skip handler-private controls. */
+		if (ctrl->is_private)
+			continue;
+		/* And control classes */
+		if (ctrl->type == V4L2_CTRL_TYPE_CTRL_CLASS)
+			continue;
+		/* Filter any unwanted controls */
+		if (filter && !filter(ctrl))
+			continue;
+		ret = handler_new_ref(hdl, ctrl, NULL, from_other_dev, false);
+		if (ret)
+			break;
+	}
+	mutex_unlock(add->lock);
+	return ret;
+}
+#endif
+
 int isp_v4l2_ctrl_init( uint32_t ctx_id, isp_v4l2_ctrl_t *ctrl )
 {
     struct v4l2_ctrl_handler *hdl_std_ctrl = &ctrl->ctrl_hdl_std_ctrl;
@@ -3148,7 +3342,9 @@ int isp_v4l2_ctrl_init( uint32_t ctx_id, isp_v4l2_ctrl_t *ctrl )
     ADD_CTRL_CST_VOLATILE( ISP_V4L2_CID_ISP_DCAM_MODE, &isp_v4l2_ctrl_dcam_mode, NULL);
 
     /* Add control handler to v4l2 device */
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+    aml_v4l2_ctrl_add_handler( hdl_std_ctrl, hdl_cst_ctrl, NULL, false );
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
     v4l2_ctrl_add_handler( hdl_std_ctrl, hdl_cst_ctrl, NULL, false );
 #else
     v4l2_ctrl_add_handler( hdl_std_ctrl, hdl_cst_ctrl, NULL);

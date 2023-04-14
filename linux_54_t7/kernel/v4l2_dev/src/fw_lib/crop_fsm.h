@@ -71,9 +71,9 @@ void crop_fsm_init( void *fsm, fsm_init_param_t *init_param );
 int crop_fsm_set_param( void *fsm, uint32_t param_id, void *input, uint32_t input_size );
 int crop_fsm_get_param( void *fsm, uint32_t param_id, void *input, uint32_t input_size, void *output, uint32_t output_size );
 
-uint8_t crop_fsm_process_event( crop_fsm_ptr_t p_fsm, event_id_t event_id );
+int crop_fsm_process_event( void *fsm, event_id_t event_id );
 
-void crop_fsm_process_interrupt( crop_fsm_const_ptr_t p_fsm, uint8_t irq_event );
+void crop_fsm_process_interrupt( void * p_fsm, uint8_t irq_event );
 
 int crop_validate_size( crop_fsm_t *p_fsm, uint16_t type, uint16_t sizeto, int isWidth );
 

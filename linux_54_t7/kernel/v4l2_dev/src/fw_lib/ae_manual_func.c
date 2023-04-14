@@ -204,9 +204,9 @@ void ae_initialize( AE_fsm_ptr_t p_fsm )
 #ifdef ISP_HAS_CMPR
 int cmpr_cnt;
 #endif
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
 static char dump_name[100];
 static loff_t pos;
-
 static int dump_flicker_stats (void* data, int size,int frame_id_current) {
 
     memset((void *)dump_name, 0, 100);
@@ -228,7 +228,7 @@ static int dump_flicker_stats (void* data, int size,int frame_id_current) {
 
     return 0;
 }
-
+#endif
 void ae_read_full_histogram_data( AE_fsm_ptr_t p_fsm )
 {
     int i;
@@ -314,8 +314,10 @@ void ae_read_full_histogram_data( AE_fsm_ptr_t p_fsm )
     LOG( LOG_DEBUG, "AE flow: INPUT_READY: frame_id_tracking: %d, cur frame_id: %u.", ae_flow.frame_id_tracking, ae_flow.frame_id_current );
 }
 
-void AE_fsm_process_interrupt( AE_fsm_const_ptr_t p_fsm, uint8_t irq_event )
+void AE_fsm_process_interrupt(    void * fsm, uint8_t irq_event )
 {
+    AE_fsm_const_ptr_t p_fsm = (AE_fsm_const_ptr_t) fsm;
+
     if ( acamera_fsm_util_is_irq_event_ignored( (fsm_irq_mask_t *)( &p_fsm->mask ), irq_event ) )
         return;
 

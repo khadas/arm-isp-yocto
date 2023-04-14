@@ -121,9 +121,10 @@ int sharpening_fsm_get_param( void *fsm, uint32_t param_id, void *input, uint32_
 }
 
 
-uint8_t sharpening_fsm_process_event( sharpening_fsm_t *p_fsm, event_id_t event_id )
+int sharpening_fsm_process_event( void *fsm, event_id_t event_id )
 {
     uint8_t b_event_processed = 0;
+    sharpening_fsm_t *p_fsm = (sharpening_fsm_t *)fsm;
     switch ( event_id ) {
     default:
         break;

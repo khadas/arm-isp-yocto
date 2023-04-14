@@ -463,8 +463,10 @@ void acamera_reload_isp_calibratons( general_fsm_ptr_t p_fsm )
 }
 
 
-void general_fsm_process_interrupt( general_fsm_const_ptr_t p_fsm, uint8_t irq_event )
+void general_fsm_process_interrupt( void * fsm, uint8_t irq_event )
 {
+    general_fsm_const_ptr_t p_fsm = (general_fsm_const_ptr_t) fsm;
+
     if ( acamera_fsm_util_is_irq_event_ignored( (fsm_irq_mask_t *)( &p_fsm->mask ), irq_event ) )
         return;
     switch ( irq_event ) {

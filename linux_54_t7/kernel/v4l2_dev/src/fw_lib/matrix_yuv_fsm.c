@@ -241,9 +241,10 @@ int matrix_yuv_fsm_get_param( void *fsm, uint32_t param_id, void *input, uint32_
 }
 
 
-uint8_t matrix_yuv_fsm_process_event( matrix_yuv_fsm_t *p_fsm, event_id_t event_id )
+int matrix_yuv_fsm_process_event( void *fsm, event_id_t event_id )
 {
     uint8_t b_event_processed = 0;
+    matrix_yuv_fsm_t *p_fsm = (matrix_yuv_fsm_t *) fsm;
     switch ( event_id ) {
     default:
         break;

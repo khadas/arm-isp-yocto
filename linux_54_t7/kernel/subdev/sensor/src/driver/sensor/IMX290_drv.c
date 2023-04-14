@@ -16,6 +16,7 @@
 * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 *
 */
+#include <linux/version.h>
 
 #include <linux/delay.h>
 #include <linux/pinctrl/consumer.h>
@@ -506,7 +507,11 @@ static void stop_streaming( void *ctx )
 uint32_t write2_reg(uint32_t val, unsigned long addr)
 {
     void __iomem *io_addr;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+    io_addr = ioremap(addr, 8);
+#else
     io_addr = ioremap_nocache(addr, 8);
+#endif
     if (io_addr == NULL) {
         LOG(LOG_ERR, "%s: Failed to ioremap addr\n", __func__);
         return -1;

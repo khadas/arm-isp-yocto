@@ -83,9 +83,10 @@ void monitor_fsm_init( void *fsm, fsm_init_param_t *init_param )
     monitor_initialize( p_fsm );
 }
 
-uint8_t monitor_fsm_process_event( monitor_fsm_t *p_fsm, event_id_t event_id )
+int monitor_fsm_process_event( void *fsm, event_id_t event_id )
 {
     uint8_t b_event_processed = 0;
+    monitor_fsm_t *p_fsm = (monitor_fsm_t *)fsm;
     switch ( event_id ) {
     default:
         break;
@@ -293,8 +294,9 @@ int monitor_fsm_get_param( void *fsm, uint32_t param_id, void *input, uint32_t i
     return rc;
 }
 
-void monitor_fsm_process_interrupt( monitor_fsm_const_ptr_t p_fsm, uint8_t irq_event )
+void monitor_fsm_process_interrupt( void * fsm, uint8_t irq_event )
 {
+    monitor_fsm_const_ptr_t p_fsm = (monitor_fsm_const_ptr_t) fsm;
     if ( acamera_fsm_util_is_irq_event_ignored( (fsm_irq_mask_t *)( &p_fsm->mask ), irq_event ) )
         return;
 

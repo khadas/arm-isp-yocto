@@ -1,3 +1,4 @@
+#include <linux/version.h>
 #include <linux/irqreturn.h>
 #include <linux/of_address.h>
 #include <linux/of_irq.h>
@@ -7,7 +8,11 @@
 #include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+#include <linux/dma-map-ops.h>
+#else
 #include <linux/dma-contiguous.h>
+#endif
 #include <linux/of_reserved_mem.h>
 #include <linux/platform_device.h>
 #include <linux/device.h>
@@ -113,8 +118,11 @@ int am_flicker_parse_dt(struct device_node *node)
     pr_info("%s:t_flicker info: irq: %d, ds%d\n", __func__, t_flicker->irq, 0);
 
     t_flicker->reg = rs;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+    t_flicker->base_addr = ioremap(t_flicker->reg.start, resource_size(&t_flicker->reg));
+#else
     t_flicker->base_addr = ioremap_nocache(t_flicker->reg.start, resource_size(&t_flicker->reg));
-
+#endif
     t_flicker->p_dev = of_find_device_by_node(node);
 
     g_flicker = t_flicker;

@@ -16,7 +16,7 @@
 * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 *
 */
-
+#include <linux/version.h>
 #include <linux/io.h>
 #include <linux/delay.h>
 
@@ -339,8 +339,11 @@ void dma_cfg_src6_pong(struct apb_dma_cfg *cfg)
 int apb_dma_init(void)
 {
 	void __iomem *base = NULL;
-
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+	base = ioremap(APB_DMA_BASE_ADDR, 1024);
+#else
 	base = ioremap_nocache(APB_DMA_BASE_ADDR, 1024);
+#endif
 	if (!base) {
 		LOG(LOG_ERR, "Error to ioremap");
 		return -1;

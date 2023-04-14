@@ -66,9 +66,10 @@ int sbuf_fsm_set_param( void *fsm, uint32_t param_id, void *input, uint32_t inpu
     return rc;
 }
 
-uint8_t sbuf_fsm_process_event( sbuf_fsm_t *p_fsm, event_id_t event_id )
+int sbuf_fsm_process_event( void *fsm, event_id_t event_id )
 {
     uint8_t b_event_processed = 0;
+    sbuf_fsm_t *p_fsm = (sbuf_fsm_t *) fsm;
     switch ( event_id ) {
     default:
         break;

@@ -38,8 +38,9 @@
 #endif
 
 
-void dma_writer_fsm_process_interrupt( dma_writer_fsm_const_ptr_t p_fsm, uint8_t irq_event )
+void dma_writer_fsm_process_interrupt( void * fsm, uint8_t irq_event )
 {
+    dma_writer_fsm_const_ptr_t p_fsm = (dma_writer_fsm_const_ptr_t) fsm;
 
     LOG( LOG_DEBUG, "dma writer fsm irq event %d", (int)irq_event );
     if ( acamera_fsm_util_is_irq_event_ignored( (fsm_irq_mask_t *)( &p_fsm->mask ), irq_event ) )

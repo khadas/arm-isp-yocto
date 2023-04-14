@@ -17,7 +17,7 @@
 *
 */
 #define pr_fmt(fmt) "AM_SC: " fmt
-
+#include <linux/version.h>
 #include "system_am_sc.h"
 #include <linux/irqreturn.h>
 #include <linux/of_address.h>
@@ -27,7 +27,11 @@
 #include <linux/dma-mapping.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+#include <linux/dma-map-ops.h>
+#else
 #include <linux/dma-contiguous.h>
+#endif
 #include <linux/of_reserved_mem.h>
 #include <linux/platform_device.h>
 #include <linux/device.h>
@@ -936,8 +940,13 @@ int am_sc_parse_dt(struct device_node *node, int port)
     pr_info("%s: rs idx info: name: %s\n", __func__, rs.name);
     if (strcmp(rs.name, "isp_sc0") == 0) {
         t_sc->reg = rs;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+        t_sc->base_addr = ioremap(
+            t_sc->reg.start, resource_size(&t_sc->reg));
+#else
         t_sc->base_addr = ioremap_nocache(
             t_sc->reg.start, resource_size(&t_sc->reg));
+#endif
     }
 
     irq = irq_of_parse_and_map(node, port);

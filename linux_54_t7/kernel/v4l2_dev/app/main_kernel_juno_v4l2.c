@@ -140,6 +140,9 @@ struct acamera_v4l2_subdev_t {
     struct v4l2_subdev *soc_subdevs[V4L2_SOC_SUBDEV_NUMBER];
     struct v4l2_async_subdev soc_async_sd[V4L2_SOC_SUBDEV_NUMBER];
     struct v4l2_async_subdev *soc_async_sd_ptr[V4L2_SOC_SUBDEV_NUMBER];
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+    struct device_node *pnode[V4L2_SOC_SUBDEV_NUMBER];
+#endif
     int subdev_counter;
     struct v4l2_async_notifier notifier;
     uint32_t hw_isp_addr;
@@ -288,6 +291,7 @@ void cache_flush(uint32_t buf_start, uint32_t buf_size)
 int  write_to_file (char *fname, char *buf, int size)
 {
     int ret = 0;
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
     struct file *fp = NULL;
     mm_segment_t old_fs;
     loff_t pos = 0;
@@ -323,7 +327,8 @@ int  write_to_file (char *fname, char *buf, int size)
 
 exit:
     set_fs(old_fs);
-    return 0;
+#endif
+    return ret;
 }
 
 static void parse_param(
@@ -597,7 +602,11 @@ static DEVICE_ATTR(isp_clk, S_IRUGO | S_IWUSR, isp_clk_read, isp_clk_write);
 uint32_t write_reg(uint32_t val, unsigned long addr)
 {
     void __iomem *io_addr;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+    io_addr = ioremap(addr, 8);
+#else
     io_addr = ioremap_nocache(addr, 8);
+#endif
     if (io_addr == NULL) {
         LOG(LOG_ERR, "%s: Failed to ioremap addr\n", __func__);
         return -1;
@@ -611,8 +620,11 @@ uint32_t read_reg(unsigned long addr)
 {
     void __iomem *io_addr;
     uint32_t ret;
-
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+    io_addr = ioremap(addr, 8);
+#else
     io_addr = ioremap_nocache(addr, 8);
+#endif
     if (io_addr == NULL) {
         LOG(LOG_ERR, "%s: Failed to ioremap addr\n", __func__);
         return -1;
@@ -739,7 +751,11 @@ static void hw_reset(bool reset)
     void __iomem *reset_addr;
 
     uint32_t val;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+    reset_addr = ioremap(RESETCTRL_RESET3_LEVEL, 8);
+#else
     reset_addr = ioremap_nocache(RESETCTRL_RESET3_LEVEL, 8);
+#endif
     if (reset_addr == NULL) {
         LOG(LOG_ERR, "%s: Failed to ioremap\n", __func__);
         return;
@@ -859,7 +875,11 @@ static uint32_t isp_module_check(struct platform_device *pdev)
         return 0;
     } else {
         LOG( LOG_ERR, "isp efuse value: %x %x\n", efuse_val[0], efuse_val[1]);
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+        efuse_addr = ioremap(efuse_val[0], 8);
+#else
         efuse_addr = ioremap_nocache(efuse_val[0], 8);
+#endif
         if (efuse_addr == NULL) {
             LOG( LOG_CRIT, "Failed to ioremap isp efuse register\n");
             return 1;
@@ -891,6 +911,7 @@ static const struct v4l2_async_notifier_operations acamera_camera_async_ops = {
 #ifdef CONFIG_AMLOGIC_LEGACY_EARLY_SUSPEND
 extern void interrupt_handler( void *data, uint32_t mask );
 extern int fw_intf_is_isp_started( void );
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
 static void isp_early_suspend(struct early_suspend *h)
 {
     if (fw_intf_is_isp_started())
@@ -905,6 +926,7 @@ static void isp_late_resume(struct early_suspend *h)
         system_interrupts_init();
     }
 }
+#endif
 #endif
 
 static int32_t isp_platform_probe( struct platform_device *pdev )
@@ -1036,6 +1058,8 @@ static int32_t isp_platform_probe( struct platform_device *pdev )
 
     g_firmware_context_number = dcam;
     LOG(LOG_CRIT, "cam num:%d", g_firmware_context_number);
+
+#if V4L2_SOC_SUBDEV_ENABLE
     int idx;
 
     LOG( LOG_ERR, "--------------------------------" );
@@ -1044,18 +1068,50 @@ static int32_t isp_platform_probe( struct platform_device *pdev )
 
     g_subdevs.subdev_counter = 0;
 
-	v4l2_async_notifier_init(&g_subdevs.notifier);
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
+    v4l2_async_notifier_init(&g_subdevs.notifier);
+#endif
 
     for ( idx = 0; idx < V4L2_SOC_SUBDEV_NUMBER; idx++ ) {
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
         g_subdevs.soc_async_sd[idx].match_type = V4L2_ASYNC_MATCH_CUSTOM;
         g_subdevs.soc_async_sd[idx].match.custom.match = NULL;
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+        g_subdevs.soc_async_sd[idx].match_type = V4L2_ASYNC_MATCH_FWNODE;
+
+        if (idx == 0)
+            g_subdevs.pnode[idx] = of_find_node_by_path("/iq");
+        else if (idx == 1)
+            g_subdevs.pnode[idx] = of_find_node_by_path("/sensor");
+        else
+            g_subdevs.pnode[idx] = of_find_node_by_path("/lens");
+        g_subdevs.soc_async_sd[idx].match.fwnode = &(g_subdevs.pnode[idx]->fwnode);
+
+#endif
+
         g_subdevs.soc_async_sd_ptr[idx] = &g_subdevs.soc_async_sd[idx];
         g_subdevs.soc_subdevs[idx] = 0;
-		v4l2_async_notifier_add_subdev(&g_subdevs.notifier, &g_subdevs.soc_async_sd[idx]);
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+        __v4l2_async_notifier_add_subdev(&g_subdevs.notifier, g_subdevs.soc_async_sd_ptr[idx]);
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
+        v4l2_async_notifier_add_subdev(&g_subdevs.notifier, g_subdevs.soc_async_sd_ptr[idx]);
+#endif
     }
 
     g_subdevs.hw_isp_addr = (uint32_t)isp_res->start; //ISP_SOC_START_ADDR;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0))
     g_subdevs.notifier.ops = &acamera_camera_async_ops;
+#else
+    g_subdevs.notifier.bound = acamera_camera_async_bound;
+    g_subdevs.notifier.complete = acamera_camera_async_complete;
+    g_subdevs.notifier.unbind = acamera_camera_async_unbind;
+#endif
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0))
+    g_subdevs.notifier.subdevs = (struct v4l2_async_subdev **)&g_subdevs.soc_async_sd_ptr;
+    g_subdevs.notifier.num_subdevs = V4L2_SOC_SUBDEV_NUMBER;
+#endif
+
     rc = v4l2_async_notifier_register( &v4l2_dev, &g_subdevs.notifier );
 
     device_create_file(&pdev->dev, &dev_attr_reg);
@@ -1065,13 +1121,19 @@ static int32_t isp_platform_probe( struct platform_device *pdev )
     system_isp_proc_create(&pdev->dev);
     aml_cmpr_bypass();
     LOG( LOG_ERR, "Init finished. async register notifier result %d. Waiting for subdevices", rc );
+#else
+    // no subdevice is used
+    rc = isp_v4l2_create_instance( &v4l2_dev, isp_pdev, (uint32_t)isp_res->start );
+    if ( rc < 0 )
+        goto free_res;
 
-#ifdef CONFIG_AMLOGIC_LEGACY_EARLY_SUSPEND
-    early_suspend.level = EARLY_SUSPEND_LEVEL_STOP_DRAWING;
-    early_suspend.suspend = isp_early_suspend;
-    early_suspend.resume = isp_late_resume;
-    early_suspend.param = pdev;
-    register_early_suspend(&early_suspend);
+    if ( rc == 0 ) {
+        initialized = 1;
+    } else {
+        LOG( LOG_ERR, "Failed to register ISP v4l2 driver." );
+        return -1;
+    }
+
 #endif
 
 free_res:

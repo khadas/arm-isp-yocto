@@ -503,8 +503,10 @@ static void cmos_move_exposure_history( cmos_fsm_ptr_t p_fsm )
     system_spinlock_unlock( p_fsm->exp_lock, irq_flags );
 }
 
-void cmos_fsm_process_interrupt( cmos_fsm_const_ptr_t p_fsm, uint8_t irq_event )
+void cmos_fsm_process_interrupt( void * fsm, uint8_t irq_event )
 {
+    cmos_fsm_const_ptr_t p_fsm = (cmos_fsm_const_ptr_t) fsm;
+
     if ( acamera_fsm_util_is_irq_event_ignored( (fsm_irq_mask_t *)( &p_fsm->mask ), irq_event ) )
         return;
 

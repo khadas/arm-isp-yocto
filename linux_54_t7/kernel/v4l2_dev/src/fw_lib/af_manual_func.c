@@ -152,8 +152,9 @@ void af_read_stats_data( AF_fsm_ptr_t p_fsm )
     LOG( LOG_DEBUG, "Set sbuf ok, idx: %u, status: %u, addr: %p.", sbuf.buf_idx, sbuf.buf_status, sbuf.buf_base );
 }
 
-void AF_fsm_process_interrupt( AF_fsm_const_ptr_t p_fsm, uint8_t irq_event )
+void AF_fsm_process_interrupt( void * fsm, uint8_t irq_event )
 {
+    AF_fsm_const_ptr_t p_fsm = (AF_fsm_const_ptr_t) fsm;
     if ( acamera_fsm_util_is_irq_event_ignored( (fsm_irq_mask_t *)( &p_fsm->mask ), irq_event ) )
         return;
 

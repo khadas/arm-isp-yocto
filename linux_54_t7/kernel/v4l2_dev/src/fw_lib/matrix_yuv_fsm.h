@@ -84,7 +84,7 @@ void matrix_yuv_fsm_init( void *fsm, fsm_init_param_t *init_param );
 int matrix_yuv_fsm_set_param( void *fsm, uint32_t param_id, void *input, uint32_t input_size );
 int matrix_yuv_fsm_get_param( void *fsm, uint32_t param_id, void *input, uint32_t input_size, void *output, uint32_t output_size );
 
-uint8_t matrix_yuv_fsm_process_event( matrix_yuv_fsm_ptr_t p_fsm, event_id_t event_id );
+int matrix_yuv_fsm_process_event( void *fsm, event_id_t event_id );
 
 void matrix_yuv_fsm_process_interrupt( matrix_yuv_fsm_const_ptr_t p_fsm, uint8_t irq_event );
 

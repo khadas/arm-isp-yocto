@@ -1,3 +1,4 @@
+#include <linux/version.h>
 #include <linux/irqreturn.h>
 #include <linux/of_address.h>
 #include <linux/of_irq.h>
@@ -7,7 +8,11 @@
 #include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+#include <linux/dma-map-ops.h>
+#else
 #include <linux/dma-contiguous.h>
+#endif
 #include <linux/of_reserved_mem.h>
 #include <linux/platform_device.h>
 #include <linux/device.h>
@@ -136,8 +141,11 @@ int am_cmpr_parse_dt(struct device_node *node)
 
     pr_info("%s: rs info: name: %s\n", __func__, rs.name);
     t_cmpr->reg = rs;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+    t_cmpr->base_addr = ioremap(t_cmpr->reg.start, resource_size(&t_cmpr->reg));
+#else
     t_cmpr->base_addr = ioremap_nocache(t_cmpr->reg.start, resource_size(&t_cmpr->reg));
-
+#endif
     rtn = of_address_to_resource(node, 1, &rs);
     if (rtn != 0) {
         pr_err("%s:Error get cntl-cmpr reg resource\n", __func__);
@@ -146,8 +154,11 @@ int am_cmpr_parse_dt(struct device_node *node)
 
     pr_info("%s: rs info: name: %s\n", __func__, rs.name);
     t_cmpr->reg = rs;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+    t_cmpr->cntl_addr = ioremap(t_cmpr->reg.start, resource_size(&t_cmpr->reg));
+#else
     t_cmpr->cntl_addr = ioremap_nocache(t_cmpr->reg.start, resource_size(&t_cmpr->reg));
-
+#endif
 #if 0
     irq = irq_of_parse_and_map(node, 0);
     if (irq <= 0) {

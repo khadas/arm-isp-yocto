@@ -19,7 +19,7 @@
 
 #define pr_fmt(fmt) "AM_MIPI: " fmt
 
-
+#include <linux/version.h>
 #include "system_am_mipi.h"
 #include "system_am_adap.h"
 #include <linux/of_address.h>
@@ -72,40 +72,85 @@ int am_mipi_parse_dt(struct device_node *node)
 
             if (strcmp(rs.name, "csi2_phy0") == 0) {
                 t_mipi->csi2_phy0_reg = rs;
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(5, 15, 0))
+                t_mipi->csi2_phy0 =
+                    ioremap(t_mipi->csi2_phy0_reg.start, resource_size(&t_mipi->csi2_phy0_reg));
+#else
                 t_mipi->csi2_phy0 =
                     ioremap_nocache(t_mipi->csi2_phy0_reg.start, resource_size(&t_mipi->csi2_phy0_reg));
+#endif
             } else if (strcmp(rs.name, "csi2_phy1") == 0) {
                 t_mipi->csi2_phy1_reg = rs;
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(5, 15, 0))
+                t_mipi->csi2_phy1 =
+                    ioremap(t_mipi->csi2_phy1_reg.start, resource_size(&t_mipi->csi2_phy1_reg));
+#else
                 t_mipi->csi2_phy1 =
                     ioremap_nocache(t_mipi->csi2_phy1_reg.start, resource_size(&t_mipi->csi2_phy1_reg));
+#endif
             } else if (strcmp(rs.name, "csi2_phy2") == 0) {
                 t_mipi->csi2_phy2_reg = rs;
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(5, 15, 0))
+                t_mipi->csi2_phy2 =
+                    ioremap(t_mipi->csi2_phy2_reg.start, resource_size(&t_mipi->csi2_phy2_reg));
+#else
                 t_mipi->csi2_phy2 =
                     ioremap_nocache(t_mipi->csi2_phy2_reg.start, resource_size(&t_mipi->csi2_phy2_reg));
+#endif
             } else if (strcmp(rs.name, "csi2_phy3") == 0) {
                 t_mipi->csi2_phy3_reg = rs;
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(5, 15, 0))
+                t_mipi->csi2_phy3 =
+                    ioremap(t_mipi->csi2_phy3_reg.start, resource_size(&t_mipi->csi2_phy3_reg));
+#else
                 t_mipi->csi2_phy3 =
                     ioremap_nocache(t_mipi->csi2_phy3_reg.start, resource_size(&t_mipi->csi2_phy3_reg));
+#endif
             } else if (strcmp(rs.name, "aphy_reg") == 0){
                 t_mipi->aphy_reg = rs;
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(5, 15, 0))
+                t_mipi->aphy =
+                    ioremap(t_mipi->aphy_reg.start, resource_size(&t_mipi->aphy_reg));
+#else
                 t_mipi->aphy =
                     ioremap_nocache(t_mipi->aphy_reg.start, resource_size(&t_mipi->aphy_reg));
+#endif
             } else if (strcmp(rs.name, "csi0_host") == 0) {
                 t_mipi->csi0_host_reg = rs;
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(5, 15, 0))
+                t_mipi->csi0_host =
+                    ioremap(t_mipi->csi0_host_reg.start, resource_size(&t_mipi->csi0_host_reg));
+#else
                 t_mipi->csi0_host =
                     ioremap_nocache(t_mipi->csi0_host_reg.start, resource_size(&t_mipi->csi0_host_reg));
+#endif
             } else if (strcmp(rs.name, "csi1_host") == 0) {
                 t_mipi->csi1_host_reg = rs;
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(5, 15, 0))
+                t_mipi->csi1_host =
+                    ioremap(t_mipi->csi1_host_reg.start, resource_size(&t_mipi->csi1_host_reg));
+#else
                 t_mipi->csi1_host =
                     ioremap_nocache(t_mipi->csi1_host_reg.start, resource_size(&t_mipi->csi1_host_reg));
+#endif
             } else if (strcmp(rs.name, "csi2_host") == 0) {
                 t_mipi->csi2_host_reg = rs;
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(5, 15, 0))
+                t_mipi->csi2_host =
+                    ioremap(t_mipi->csi2_host_reg.start, resource_size(&t_mipi->csi2_host_reg));
+#else
                 t_mipi->csi2_host =
                     ioremap_nocache(t_mipi->csi2_host_reg.start, resource_size(&t_mipi->csi2_host_reg));
+#endif
             } else if (strcmp(rs.name, "csi3_host") == 0) {
                 t_mipi->csi3_host_reg = rs;
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(5, 15, 0))
+                t_mipi->csi3_host =
+                    ioremap(t_mipi->csi3_host_reg.start, resource_size(&t_mipi->csi3_host_reg));
+#else
                 t_mipi->csi3_host =
                     ioremap_nocache(t_mipi->csi3_host_reg.start, resource_size(&t_mipi->csi3_host_reg));
+#endif
             } else{
                 pr_err("%s:Error match address\n", __func__);
             }

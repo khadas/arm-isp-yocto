@@ -16,7 +16,7 @@
 * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 *
 */
-
+#include <linux/version.h>
 #include "acamera_logger.h"
 #include <linux/gfp.h>
 #include <linux/slab.h>
@@ -27,8 +27,11 @@
 #include <linux/slab.h>
 #include <linux/vmalloc.h>
 #include <linux/dma-mapping.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+#include <linux/dma-map-ops.h>
+#else
 #include <linux/dma-contiguous.h>
-
+#endif
 int32_t init_sw_io( void )
 {
     int32_t result = 0;

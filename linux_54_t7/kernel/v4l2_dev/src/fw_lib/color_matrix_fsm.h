@@ -81,7 +81,7 @@ void color_matrix_fsm_init( void *fsm, fsm_init_param_t *init_param );
 int color_matrix_fsm_set_param( void *fsm, uint32_t param_id, void *input, uint32_t input_size );
 int color_matrix_fsm_get_param( void *fsm, uint32_t param_id, void *input, uint32_t input_size, void *output, uint32_t output_size );
 
-uint8_t color_matrix_fsm_process_event( color_matrix_fsm_ptr_t p_fsm, event_id_t event_id );
+int color_matrix_fsm_process_event( void *fsm, event_id_t event_id );
 
 void color_matrix_fsm_process_interrupt( color_matrix_fsm_const_ptr_t p_fsm, uint8_t irq_event );
 

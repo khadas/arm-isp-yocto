@@ -67,9 +67,10 @@ void noise_reduction_fsm_init( void *fsm, fsm_init_param_t *init_param )
     noise_reduction_hw_init( p_fsm );
 }
 
-uint8_t noise_reduction_fsm_process_event( noise_reduction_fsm_t *p_fsm, event_id_t event_id )
+int noise_reduction_fsm_process_event( void *fsm, event_id_t event_id )
 {
     uint8_t b_event_processed = 0;
+    noise_reduction_fsm_t *p_fsm = (void *)fsm;
     switch ( event_id ) {
     default:
         break;

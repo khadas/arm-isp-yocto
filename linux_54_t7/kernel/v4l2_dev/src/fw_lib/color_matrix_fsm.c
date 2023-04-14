@@ -199,9 +199,10 @@ int color_matrix_fsm_get_param( void *fsm, uint32_t param_id, void *input, uint3
 }
 
 
-uint8_t color_matrix_fsm_process_event( color_matrix_fsm_t *p_fsm, event_id_t event_id )
+int color_matrix_fsm_process_event( void *fsm, event_id_t event_id )
 {
     uint8_t b_event_processed = 0;
+    color_matrix_fsm_t *p_fsm = (color_matrix_fsm_t *)fsm;
     switch ( event_id ) {
     default:
         break;

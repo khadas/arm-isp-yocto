@@ -34,7 +34,9 @@
 #include <linux/of_fdt.h>
 #include <linux/of_reserved_mem.h>
 #include <linux/interrupt.h>
-
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+#include <linux/amlogic/media/utils/am_com.h>
+#endif
 #include "acamera_fw.h"
 #include "acamera.h"
 #include "autocapture_fsm.h"

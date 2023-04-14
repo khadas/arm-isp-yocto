@@ -16,6 +16,7 @@
 * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 *
 */
+#include <linux/version.h>
 #include <linux/device.h>
 #include <linux/kthread.h>
 #include <linux/slab.h>
@@ -31,7 +32,11 @@
 #include <media/v4l2-ctrls.h>
 #include <linux/dma-mapping.h>
 #include <linux/of_reserved_mem.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+#include <linux/dma-map-ops.h>
+#else
 #include <linux/dma-contiguous.h>
+#endif
 
 #include "acamera_firmware_api.h"
 #include "acamera_firmware_config.h"
@@ -1088,7 +1093,11 @@ void isp_v4l2_stream_deinit( isp_v4l2_stream_t *pstream, int stream_on_count )
 
     /* release fw_info */
     if ( pstream ) {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+        kfree( pstream );
+#else
         kzfree( pstream );
+#endif
         pstream = NULL;
     }
 }

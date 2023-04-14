@@ -57,9 +57,9 @@ void gamma_manual_fsm_clear( gamma_manual_fsm_ptr_t p_fsm );
 
 void gamma_manual_fsm_init( void *fsm, fsm_init_param_t *init_param );
 int gamma_manual_fsm_set_param( void *fsm, uint32_t param_id, void *input, uint32_t input_size );
-uint8_t gamma_manual_fsm_process_event( gamma_manual_fsm_ptr_t p_fsm, event_id_t event_id );
+int gamma_manual_fsm_process_event( void *fsm, event_id_t event_id );
 
-void gamma_manual_fsm_process_interrupt( gamma_manual_fsm_const_ptr_t p_fsm, uint8_t irq_event );
+void gamma_manual_fsm_process_interrupt( void *fsm, uint8_t irq_event );
 
 void gamma_manual_request_interrupt( gamma_manual_fsm_ptr_t p_fsm, system_fw_interrupt_mask_t mask );
 

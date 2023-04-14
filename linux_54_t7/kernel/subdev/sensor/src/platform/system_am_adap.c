@@ -18,6 +18,7 @@
 */
 #define pr_fmt(fmt) "AM_ADAP: " fmt
 
+#include <linux/version.h>
 #include "system_am_adap.h"
 #include <linux/irqreturn.h>
 #include <linux/of_address.h>
@@ -28,7 +29,13 @@
 #include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+#include <linux/dma-map-ops.h>
+#include <linux/cma.h>
+#include <linux/kasan.h>
+#else
 #include <linux/dma-contiguous.h>
+#endif
 #include <linux/of_reserved_mem.h>
 #include <linux/platform_device.h>
 #include <linux/device.h>
@@ -105,6 +112,7 @@ static int ceil_upper(int val, int mod)
 
 int write_index_to_file(char *path, char *buf, int index, int size)
 {
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
     int ret = 0;
     struct file *fp = NULL;
     mm_segment_t old_fs;
@@ -139,6 +147,9 @@ int write_index_to_file(char *path, char *buf, int index, int size)
 exit:
     set_fs(old_fs);
     return ret;
+#else
+    return 0;
+#endif
 }
 
 void inline update_wr_reg_bits(unsigned int reg,
@@ -410,8 +421,13 @@ int am_adap_parse_dt(struct device_node *node)
     //pr_info("%s: rs idx info: name: %s\n", __func__, rs.name);
     if (strcmp(rs.name, "adapter") == 0) {
         t_adap->reg = rs;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+        t_adap->base_addr =
+                ioremap(t_adap->reg.start, 0x5800);//resource_size(&t_adap->reg));
+#else
         t_adap->base_addr =
                 ioremap_nocache(t_adap->reg.start, 0x5800);//resource_size(&t_adap->reg));
+#endif
     }
 
     irq = irq_of_parse_and_map(node, 0);
@@ -1552,7 +1568,15 @@ static int adap_stream_copy_thread( void *data )
 int am_adap_alloc_mem(uint8_t channel)
 {
     if (adap_fsm[channel].para.mode == DDR_MODE) {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+        struct cma *cma_area;
+        struct device *dev = &(g_adap->p_dev->dev);
+        if (dev && dev->cma_area)
+            cma_area = dev->cma_area;
+        else
+            cma_area = dma_contiguous_default_area;
+        adap_fsm[channel].cma_pages = cma_alloc(cma_area,  (g_adap->adap_buf_size[channel] * SZ_1M) >> PAGE_SHIFT, 0, 0);
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0))
         adap_fsm[channel].cma_pages = dma_alloc_from_contiguous(
                   &(g_adap->p_dev->dev),
                   (g_adap->adap_buf_size[channel] * SZ_1M) >> PAGE_SHIFT, 0, false);
@@ -1569,7 +1593,15 @@ int am_adap_alloc_mem(uint8_t channel)
             return 0;
         }
     } else if (adap_fsm[channel].para.mode == DCAM_MODE || adap_fsm[channel].para.mode == DCAM_DOL_MODE) {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+        struct cma *cma_area;
+        struct device *dev = &(g_adap->p_dev->dev);
+        if (dev && dev->cma_area)
+            cma_area = dev->cma_area;
+        else
+            cma_area = dma_contiguous_default_area;
+        adap_fsm[channel].cma_pages = cma_alloc(cma_area,  (g_adap->adap_buf_size[channel] * SZ_1M) >> PAGE_SHIFT, 0, 0);
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0))
         adap_fsm[channel].cma_pages = dma_alloc_from_contiguous(
                   &(g_adap->p_dev->dev),
                   (g_adap->adap_buf_size[channel] * SZ_1M) >> PAGE_SHIFT, 0, false);
@@ -1586,7 +1618,15 @@ int am_adap_alloc_mem(uint8_t channel)
             return 0;
         }
     } else if (adap_fsm[channel].para.mode == DOL_MODE) {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+        struct cma *cma_area;
+        struct device *dev = &(g_adap->p_dev->dev);
+        if (dev && dev->cma_area)
+            cma_area = dev->cma_area;
+        else
+            cma_area = dma_contiguous_default_area;
+        adap_fsm[channel].cma_pages = cma_alloc(cma_area,  (g_adap->adap_buf_size[channel] * SZ_1M) >> PAGE_SHIFT, 0, 0);
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0))
         adap_fsm[channel].cma_pages = dma_alloc_from_contiguous(
                   &(g_adap->p_dev->dev),
                   (g_adap->adap_buf_size[channel] * SZ_1M) >> PAGE_SHIFT, 0, false);
@@ -1610,30 +1650,60 @@ int am_adap_free_mem(uint8_t channel)
 {
     if (adap_fsm[channel].para.mode == DDR_MODE) {
         if (adap_fsm[channel].cma_pages) {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+            struct cma *cma_area;
+            struct device *dev = &(g_adap->p_dev->dev);
+            if (dev && dev->cma_area)
+                cma_area = dev->cma_area;
+            else
+                cma_area = dma_contiguous_default_area;
+            cma_release(cma_area, adap_fsm[channel].cma_pages, (g_adap->adap_buf_size[channel] * SZ_1M) >> PAGE_SHIFT);
+#else
             dma_release_from_contiguous(
                  &(g_adap->p_dev->dev),
                  adap_fsm[channel].cma_pages,
                  (g_adap->adap_buf_size[channel] * SZ_1M) >> PAGE_SHIFT);
+#endif
             adap_fsm[channel].cma_pages = NULL;
             adap_fsm[channel].buffer_start = 0;
             pr_info("release alloc CMA buffer. channel:%d\n",channel);
         }
     } else if (adap_fsm[channel].para.mode == DCAM_MODE || adap_fsm[channel].para.mode == DCAM_DOL_MODE) {
         if (adap_fsm[channel].cma_pages) {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+            struct cma *cma_area;
+            struct device *dev = &(g_adap->p_dev->dev);
+            if (dev && dev->cma_area)
+                cma_area = dev->cma_area;
+            else
+                cma_area = dma_contiguous_default_area;
+            cma_release(cma_area, adap_fsm[channel].cma_pages, (g_adap->adap_buf_size[channel] * SZ_1M) >> PAGE_SHIFT);
+#else
             dma_release_from_contiguous(
                  &(g_adap->p_dev->dev),
                  adap_fsm[channel].cma_pages,
                  (g_adap->adap_buf_size[channel] * SZ_1M) >> PAGE_SHIFT);
+#endif
             adap_fsm[channel].cma_pages = NULL;
             adap_fsm[channel].buffer_start = 0;
             pr_info("release alloc CMA buffer. channel:%d\n",channel);
         }
     } else if (adap_fsm[channel].para.mode == DOL_MODE) {
         if (adap_fsm[channel].cma_pages) {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+            struct cma *cma_area;
+            struct device *dev = &(g_adap->p_dev->dev);
+            if (dev && dev->cma_area)
+                cma_area = dev->cma_area;
+            else
+                cma_area = dma_contiguous_default_area;
+            cma_release(cma_area, adap_fsm[channel].cma_pages, (g_adap->adap_buf_size[channel] * SZ_1M) >> PAGE_SHIFT);
+#else
             dma_release_from_contiguous(
                  &(g_adap->p_dev->dev),
                  adap_fsm[channel].cma_pages,
                  (g_adap->adap_buf_size[channel] * SZ_1M) >> PAGE_SHIFT);
+#endif
             adap_fsm[channel].cma_pages = NULL;
             adap_fsm[channel].buffer_start = 0;
             pr_info("release alloc dol CMA buffer. channel:%d\n",channel);

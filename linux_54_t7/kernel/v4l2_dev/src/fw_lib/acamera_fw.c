@@ -23,6 +23,7 @@
 #endif
 #include <linux/fs.h>
 #include <asm/uaccess.h>
+#include <linux/version.h>
 
 #include "acamera_isp_config.h"
 #include "acamera_command_api.h"
@@ -346,6 +347,7 @@ over_return:
     return rtn;
 }
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
 static void acamera_open_external_bin(void *ctx, struct file **fp, uint32_t *size)
 {
     uint32_t mode = 0;
@@ -385,7 +387,9 @@ static void acamera_open_external_bin(void *ctx, struct file **fp, uint32_t *siz
 
     *fp = filp_open(f_name, O_RDONLY, 0);
 }
+#endif
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
 static int32_t acamera_read_external_bin(struct file *fp, uint8_t *buf, uint32_t size)
 {
     loff_t pos = 0;
@@ -400,9 +404,11 @@ static int32_t acamera_read_external_bin(struct file *fp, uint8_t *buf, uint32_t
 
     return nread;
 }
+#endif
 
 static void acamera_update_external_calibrations(acamera_context_ptr_t p_ctx)
 {
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
     int32_t nread = 0;
     uint32_t idx = 0;
     uint32_t l_size = 0;
@@ -465,6 +471,8 @@ error_size:
         filp_close(fp, NULL);
 error_exit:
     set_fs(fs);
+#endif
+    return;
 }
 
 int32_t acamera_update_calibration_set( acamera_context_ptr_t p_ctx, char* s_name)

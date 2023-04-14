@@ -16,7 +16,7 @@
 * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 *
 */
-
+#include <linux/version.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
@@ -203,8 +203,11 @@ int isp_fw_init( uint32_t hw_isp_addr )
 #endif
         isp_fw_process_thread = kthread_run( isp_fw_process, NULL, "isp_process" );
     }
-
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+    return PTR_ERR_OR_ZERO( isp_fw_process_thread );
+#else
     return PTR_RET( isp_fw_process_thread );
+#endif
 }
 
 void isp_fw_exit( void )

@@ -16,7 +16,7 @@
 * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 *
 */
-
+#include <linux/version.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/mutex.h>
@@ -37,7 +37,14 @@
 #include "fw-interface.h"
 #include <linux/dma-mapping.h>
 #include <linux/of_reserved_mem.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+#include <linux/dma-map-ops.h>
+#include <linux/cma.h>
+#include <linux/kasan.h>
+#else
 #include <linux/dma-contiguous.h>
+#endif
+
 #include "system_am_sc.h"
 #include "system_am_sc1.h"
 #include "system_am_sc2.h"
@@ -92,7 +99,11 @@ static int isp_v4l2_fh_open( struct file *file )
 
     if ( stream_opened > V4L2_STREAM_TYPE_MAX ) {
         LOG( LOG_CRIT, "too many open streams." );
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+        kfree( sp );
+#else
         kzfree( sp );
+#endif
         return -EBUSY;
     }
 
@@ -123,8 +134,11 @@ static int isp_v4l2_fh_release( struct file *file )
         v4l2_fh_del( &sp->fh );
         v4l2_fh_exit( &sp->fh );
     }
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+    kfree( sp );
+#else
     kzfree( sp );
-
+#endif
     return 0;
 }
 
@@ -275,7 +289,11 @@ static int isp_v4l2_fop_close( struct file *file )
             dev->pstreams[sp->stream_id] = NULL;
         }
         if ( dev->pstreams[sp->stream_id] ) {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+            kfree( dev->pstreams[sp->stream_id] );
+#else
             kzfree( dev->pstreams[sp->stream_id] );
+#endif
             dev->pstreams[sp->stream_id] = NULL;
         }
     }
@@ -825,7 +843,16 @@ static const struct v4l2_ioctl_ops isp_v4l2_ioctl_ops = {
 static int isp_cma_alloc(uint32_t ctx_id, struct platform_device *pdev, unsigned long size)
 {
     struct page *cma_pages = NULL;
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0))
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+    struct device *dev = &(pdev->dev);
+    struct cma *cma_area;
+    if (dev && dev->cma_area)
+        cma_area = dev->cma_area;
+    else
+        cma_area = dma_contiguous_default_area;
+    cma_pages = cma_alloc(cma_area, size >> PAGE_SHIFT, 0, 0);
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0))
     cma_pages = dma_alloc_from_contiguous(
             &(pdev->dev), size >> PAGE_SHIFT, 0, false);
 #else
@@ -856,8 +883,17 @@ static void isp_cma_free(struct platform_device *pdev, void *kaddr, unsigned lon
     }
 
     cma_pages = kaddr;
-
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+    struct cma *cma_area;
+    struct device *dev = &(pdev->dev);
+    if (dev && dev->cma_area)
+        cma_area = dev->cma_area;
+    else
+        cma_area = dma_contiguous_default_area;
+    rc = cma_release(cma_area, cma_pages, size >> PAGE_SHIFT);
+#else
     rc = dma_release_from_contiguous(&(pdev->dev), cma_pages, size >> PAGE_SHIFT);
+#endif
     if (rc == false) {
         LOG(LOG_ERR, "Failed to release cma buffer\n");
         return;
@@ -949,9 +985,15 @@ static int isp_v4l2_init_dev( uint32_t ctx_id, struct v4l2_device *v4l2_dev )
     vfd->v4l2_dev = dev->v4l2_dev;
     vfd->queue = NULL; // queue will be customized in file handle
     vfd->tvnorms = tvnorms_cap;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+    vfd->vfl_type = VFL_TYPE_VIDEO;
+#else
     vfd->vfl_type = VFL_TYPE_GRABBER;
-    vfd->device_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;;
+#endif
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
+    vfd->device_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;
+#endif
     /*
      * Provide a mutex to v4l2 core. It will be used to protect
      * all fops and v4l2 ioctls.
@@ -960,7 +1002,11 @@ static int isp_v4l2_init_dev( uint32_t ctx_id, struct v4l2_device *v4l2_dev )
     video_set_drvdata( vfd, dev );
 
     /* videoX start number, -1 is autodetect */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+    rc = video_register_device( vfd, VFL_TYPE_VIDEO, VIDEO_NODE_NUM );
+#else
     rc = video_register_device( vfd, VFL_TYPE_GRABBER, VIDEO_NODE_NUM );
+#endif
     if ( rc < 0 )
         goto unreg_dev;
 

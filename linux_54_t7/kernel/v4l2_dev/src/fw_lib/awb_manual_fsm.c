@@ -372,9 +372,10 @@ int AWB_fsm_set_param( void *fsm, uint32_t param_id, void *input, uint32_t input
     return rc;
 }
 
-uint8_t AWB_fsm_process_event( AWB_fsm_t *p_fsm, event_id_t event_id )
+int AWB_fsm_process_event( void *fsm, event_id_t event_id )
 {
     uint8_t b_event_processed = 0;
+    AWB_fsm_t *p_fsm = (AWB_fsm_t *)fsm;
     switch ( event_id ) {
     default:
         break;

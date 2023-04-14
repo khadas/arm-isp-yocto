@@ -212,8 +212,9 @@ void _update_fr( crop_fsm_ptr_t p_fsm, int isr )
 
 }
 
-void crop_fsm_process_interrupt( crop_fsm_const_ptr_t p_fsm, uint8_t irq_event )
+void crop_fsm_process_interrupt( void * fsm, uint8_t irq_event )
 {
+    crop_fsm_const_ptr_t p_fsm = (crop_fsm_const_ptr_t) fsm;
     if ( acamera_fsm_util_is_irq_event_ignored( (fsm_irq_mask_t *)( &p_fsm->mask ), irq_event ) )
         return;
 

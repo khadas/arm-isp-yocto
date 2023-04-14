@@ -260,9 +260,10 @@ int AE_fsm_get_param( void *fsm, uint32_t param_id, void *input, uint32_t input_
 }
 
 
-uint8_t AE_fsm_process_event( AE_fsm_t *p_fsm, event_id_t event_id )
+int AE_fsm_process_event( void * fsm, event_id_t event_id )
 {
     uint8_t b_event_processed = 0;
+    AE_fsm_t *p_fsm = (AE_fsm_t *) fsm;
     switch ( event_id ) {
     default:
         break;

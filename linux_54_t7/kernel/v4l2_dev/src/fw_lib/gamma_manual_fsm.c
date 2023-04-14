@@ -97,9 +97,10 @@ int gamma_manual_fsm_set_param( void *fsm, uint32_t param_id, void *input, uint3
 }
 
 
-uint8_t gamma_manual_fsm_process_event( gamma_manual_fsm_t *p_fsm, event_id_t event_id )
+int gamma_manual_fsm_process_event( void *fsm, event_id_t event_id )
 {
     uint8_t b_event_processed = 0;
+    gamma_manual_fsm_t *p_fsm = (gamma_manual_fsm_t *)fsm;
     switch ( event_id ) {
     default:
         break;

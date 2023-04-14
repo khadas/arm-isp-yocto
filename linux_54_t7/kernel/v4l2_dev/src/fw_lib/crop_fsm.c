@@ -522,9 +522,10 @@ int crop_fsm_get_param( void *fsm, uint32_t param_id, void *input, uint32_t inpu
 }
 
 
-uint8_t crop_fsm_process_event( crop_fsm_t *p_fsm, event_id_t event_id )
+int crop_fsm_process_event( void *fsm, event_id_t event_id )
 {
     uint8_t b_event_processed = 0;
+    crop_fsm_t *p_fsm = (crop_fsm_t *)fsm;
     switch ( event_id ) {
     default:
         break;

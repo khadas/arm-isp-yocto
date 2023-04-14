@@ -17,6 +17,7 @@
 *
 */
 
+#include <linux/version.h>
 #include <linux/fs.h>
 #include <asm/uaccess.h>
 #include <linux/slab.h>
@@ -136,6 +137,7 @@ uint32_t _GET_SIZE( ACameraCalibrations *p_ctx, uint32_t idx )
 
 static void acamera_load_external_bin(ACameraCalibrations *c, char *sensor_name, int32_t preset, int32_t mode)
 {
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0))
     struct file *fp_s = NULL,*fp_d = NULL;
     mm_segment_t fs;
     int32_t nread = 0;
@@ -263,6 +265,7 @@ error_open:
 
 error_size:
     set_fs(fs);
+#endif
 }
 
 uint32_t get_calibratin_external_tuning( char *sensor_name, void *sensor_arg, ACameraCalibrations *c )

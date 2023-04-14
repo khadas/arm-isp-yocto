@@ -75,9 +75,9 @@ void general_fsm_init( void *fsm, fsm_init_param_t *init_param );
 int general_fsm_set_param( void *fsm, uint32_t param_id, void *input, uint32_t input_size );
 int general_fsm_get_param( void *fsm, uint32_t param_id, void *input, uint32_t input_size, void *output, uint32_t output_size );
 
-uint8_t general_fsm_process_event( general_fsm_ptr_t p_fsm, event_id_t event_id );
+int general_fsm_process_event( void *fsm, event_id_t event_id );
 
-void general_fsm_process_interrupt( general_fsm_const_ptr_t p_fsm, uint8_t irq_event );
+void general_fsm_process_interrupt( void * fsm, uint8_t irq_event );
 
 void general_request_interrupt( general_fsm_ptr_t p_fsm, system_fw_interrupt_mask_t mask );
 

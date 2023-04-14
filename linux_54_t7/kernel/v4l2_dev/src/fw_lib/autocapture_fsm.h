@@ -50,7 +50,7 @@ void autocapture_hwreset(autocapture_fsm_ptr_t p_fsm );
 
 int autocapture_fsm_set_param( void *fsm, uint32_t param_id, void *input, uint32_t input_size );
 
-uint8_t autocapture_fsm_process_event( autocapture_fsm_ptr_t p_fsm, event_id_t event_id );
+int autocapture_fsm_process_event( void *fsm, event_id_t event_id );
 void autocapture_fsm_process_interrupt( autocapture_fsm_const_ptr_t p_fsm, uint8_t irq_event );
 
 void autocap_set_new_param(struct module_cfg_info *m_cfg);

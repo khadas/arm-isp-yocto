@@ -353,9 +353,10 @@ int cmos_fsm_get_param( void *fsm, uint32_t param_id, void *input, uint32_t inpu
 }
 
 
-uint8_t cmos_fsm_process_event( cmos_fsm_t *p_fsm, event_id_t event_id )
+int cmos_fsm_process_event( void *fsm, event_id_t event_id )
 {
     uint8_t b_event_processed = 0;
+    cmos_fsm_t *p_fsm = (cmos_fsm_t *)fsm;
     switch ( event_id ) {
     default:
         break;

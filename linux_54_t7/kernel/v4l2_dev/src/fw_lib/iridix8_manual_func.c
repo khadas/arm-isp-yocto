@@ -102,8 +102,10 @@ static void iridix_mointor_frame_end( iridix_fsm_ptr_t p_fsm )
     }
 }
 
-void iridix_fsm_process_interrupt( iridix_fsm_const_ptr_t p_fsm, uint8_t irq_event )
+void iridix_fsm_process_interrupt( void * fsm, uint8_t irq_event )
 {
+    iridix_fsm_const_ptr_t p_fsm = (iridix_fsm_const_ptr_t) fsm;
+
     if ( acamera_fsm_util_is_irq_event_ignored( (fsm_irq_mask_t *)( &p_fsm->mask ), irq_event ) )
         return;
 

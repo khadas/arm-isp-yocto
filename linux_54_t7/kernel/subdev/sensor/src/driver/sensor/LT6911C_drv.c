@@ -28,6 +28,7 @@
 //  CONSTANT SECTION
 //        DRIVER
 //-------------------------------------------------------------------------------------
+#include <linux/version.h>
 
 #include <linux/delay.h>
 #include "acamera_types.h"
@@ -259,7 +260,7 @@ void sensor_deinit_lt6911( void *ctx )
     if (t_ctx != NULL && t_ctx->sbp != NULL)
         gp_pl_am_disable(t_ctx->sbp, "mclk_0");
 }
-
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
 static void lt6911_get_size( void *ctx )
 {
     sensor_context_t *p_ctx = ctx;
@@ -286,7 +287,7 @@ static void lt6911_get_size( void *ctx )
 
     LOG(LOG_CRIT, "%s: read lt6911 vtotal %x vactive %x\n", __func__, vtotal, vactive);
 }
-
+#endif
 static sensor_context_t *sensor_global_parameter(void* sbp)
 {
     // Local sensor data structure
