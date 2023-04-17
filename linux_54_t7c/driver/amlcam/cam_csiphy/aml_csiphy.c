@@ -409,7 +409,7 @@ static int csiphy_subdev_stream_on(void *priv)
 	rtn = csiphy_subdev_get_casd(&csiphy_dev->sd.entity, &casd);
 	if (rtn || !casd)
 		return rtn;
-	return csiphy_dev->ops->hw_start(csiphy_dev, casd->phy_id, casd->data_lanes, link_freq);
+	return csiphy_dev->ops->hw_start(csiphy_dev, csiphy_dev->index, casd->data_lanes, link_freq);
 }
 
 static void csiphy_subdev_stream_off(void *priv)

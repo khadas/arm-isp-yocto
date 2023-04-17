@@ -1165,14 +1165,11 @@ static int ov13b10_parse_endpoint(struct ov13b10 *ov13b10)
 	int rtn = 0;
 	s64 fq;
 	struct fwnode_handle *endpoint = NULL;
-	struct device_node *node = NULL;
 
-	//endpoint = fwnode_graph_get_next_endpoint(dev_fwnode(ov13b10->dev), NULL);
-	for_each_endpoint_of_node(ov13b10->dev->of_node, node) {
-		if (strstr(node->name, "ov13b10")) {
-			endpoint = of_fwnode_handle(node);
-			break;
-		}
+	endpoint = fwnode_graph_get_next_endpoint(dev_fwnode(ov13b10->dev), NULL);
+	if (!endpoint) {
+		dev_err(ov13b10->dev, "Endpoint node not found\n");
+		return -EINVAL;
 	}
 
 	rtn = v4l2_fwnode_endpoint_alloc_parse(endpoint, &ov13b10->ep);
