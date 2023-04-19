@@ -1,19 +1,19 @@
 /* SPDX-License-Identifier: GPL-2.0
- *
- * Copyright (C) 2020 Amlogic or its affiliates
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; version 2.
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * for more details.
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- *
- */
+*
+* Copyright (C) 2020 Amlogic or its affiliates
+*
+* This program is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; version 2.
+* This program is distributed in the hope that it will be useful, but
+* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+* or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+* for more details.
+* You should have received a copy of the GNU General Public License along
+* with this program; if not, write to the Free Software Foundation, Inc.,
+* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+*
+*/
 #include "aml_isp_hw.h"
 #include "aml_isp_reg.h"
 #include <linux/fs.h>
@@ -24,13 +24,10 @@ void isp_hw_lut_wstart(struct isp_dev_t *isp_dev, u32 type)
 {
 	isp_dev->lutWr.lutSeq = LUT_WSTART;
 
-	if (isp_dev->lutWr.lutRegW[type] == 0)
-	{
+	if (isp_dev->lutWr.lutRegW[type] == 0) {
 		isp_dev->lutWr.lutRegW[type] = 1;
 		isp_dev->lutWr.lutRegAddr[type] = isp_dev->wreg_cnt;
-	}
-	else
-	{
+	} else {
 		isp_dev->wreg_cnt = isp_dev->lutWr.lutRegAddr[type];
 	}
 }
@@ -61,63 +58,50 @@ void isp_reg_write(struct isp_dev_t *isp_dev, u32 addr, u32 val)
 	struct aml_reg *rregs = isp_dev->rreg_buff.vaddr[AML_PLANE_A];
 	struct isp_global_info *g_info = isp_global_get_info();
 
-	if (isp_dev->apb_dma == 0)
-	{
+	if (isp_dev->apb_dma == 0) {
 		isp_hwreg_write(isp_dev, addr, val);
-	}
-	else if (isp_dev->apb_dma == 1)
-	{
+	} else if (isp_dev->apb_dma == 1) {
 		spin_lock_irqsave(&isp_dev->wreg_lock, flags);
 
 		rregs[(addr - ISP_BASE) >> 2].val = val;
 
-		if (g_info->mode == AML_ISP_SCAM)
-		{
+		if (g_info->mode == AML_ISP_SCAM) {
 			wregs[isp_dev->twreg_cnt].addr = isp_dev->phy_base + addr;
 			wregs[isp_dev->twreg_cnt].val = val;
-			isp_dev->wreg_cnt++;
-			isp_dev->twreg_cnt++;
-		}
-		else
-		{
-			if (isp_dev->isp_status == STATUS_STOP)
-			{
+			isp_dev->wreg_cnt ++;
+			isp_dev->twreg_cnt ++;
+		} else {
+			if (isp_dev->isp_status == STATUS_STOP) {
 				wregs[isp_dev->wreg_cnt].addr = isp_dev->phy_base + addr;
 				wregs[isp_dev->wreg_cnt].val = val;
-				isp_dev->wreg_cnt++;
-				isp_dev->fwreg_cnt++;
-				isp_dev->twreg_cnt++;
-			}
-			else
-			{
-				if (isp_dev->lutWr.lutSeq == LUT_WSTART)
-				{
+				isp_dev->wreg_cnt ++;
+				isp_dev->fwreg_cnt ++;
+				isp_dev->twreg_cnt ++;
+			} else {
+				if (isp_dev->lutWr.lutSeq == LUT_WSTART) {
 					wregs[isp_dev->wreg_cnt].addr = isp_dev->phy_base + addr;
 					wregs[isp_dev->wreg_cnt].val = val;
-					isp_dev->wreg_cnt++;
+					isp_dev->wreg_cnt ++;
 
 					if (isp_dev->wreg_cnt > isp_dev->twreg_cnt)
-						isp_dev->twreg_cnt++;
+						isp_dev->twreg_cnt ++;
 
 					spin_unlock_irqrestore(&isp_dev->wreg_lock, flags);
 					return;
 				}
 
-				for (i = isp_dev->fwreg_cnt; i < isp_dev->twreg_cnt; i++)
-				{
-					if (wregs[i].addr == (isp_dev->phy_base + addr))
-					{
+				for (i = isp_dev->fwreg_cnt; i < isp_dev->twreg_cnt; i ++) {
+					if (wregs[i].addr == (isp_dev->phy_base + addr)) {
 						wregs[i].addr = isp_dev->phy_base + addr;
 						wregs[i].val = val;
 						break;
 					}
 				}
 
-				if (i == isp_dev->twreg_cnt)
-				{
+				if (i == isp_dev->twreg_cnt) {
 					wregs[isp_dev->twreg_cnt].addr = isp_dev->phy_base + addr;
 					wregs[isp_dev->twreg_cnt].val = val;
-					isp_dev->twreg_cnt++;
+					isp_dev->twreg_cnt ++;
 				}
 			}
 		}
@@ -133,14 +117,11 @@ int isp_reg_update_bits(struct isp_dev_t *isp_dev, u32 addr, u32 val, u32 start,
 	u32 orig = 0;
 	u32 temp = 0;
 
-	if (start + len > 32)
-	{
+	if (start + len > 32) {
 		dump_stack();
 		pr_err("ISP: Error input start and len\n");
 		return rtn;
-	}
-	else if (start == 0 && len == 32)
-	{
+	} else if (start == 0 && len == 32) {
 		isp_reg_write(isp_dev, addr, val);
 		return 0;
 	}
@@ -165,14 +146,11 @@ int isp_hwreg_update_bits(struct isp_dev_t *isp_dev, u32 addr, u32 val, u32 star
 	u32 orig = 0;
 	u32 temp = 0;
 
-	if (start + len > 32)
-	{
+	if (start + len > 32) {
 		dump_stack();
 		pr_err("ISP: Error input start and len\n");
 		return rtn;
-	}
-	else if (start == 0 && len == 32)
-	{
+	} else if (start == 0 && len == 32) {
 		isp_hwreg_write(isp_dev, addr, val);
 		return 0;
 	}
@@ -196,19 +174,16 @@ int isp_reg_read_bits(struct isp_dev_t *isp_dev, u32 addr, u32 *val, u32 start, 
 	u32 mask = 0;
 	u32 orig = 0;
 
-	if (start + len > 32 || !val)
-	{
+	if (start + len > 32 || !val) {
 		dump_stack();
 		pr_err("ISP: Error input start and len\n");
 		return rtn;
-	}
-	else if (start == 0 && len == 32)
-	{
+	} else if (start == 0 && len == 32) {
 		*val = isp_reg_read(isp_dev, addr);
 		return 0;
 	}
 
-	mask = (1 << len) - 1;
+	mask = (1 << len) -1;
 	orig = isp_reg_read(isp_dev, addr);
 
 	*val = (orig >> start) & mask;
@@ -218,18 +193,17 @@ int isp_reg_read_bits(struct isp_dev_t *isp_dev, u32 addr, u32 *val, u32 start, 
 
 u32 isp_hw_float_convert(u32 data)
 {
-	u32 shift = (1 << 31);
-	int exp = 31 - 12 + 1;
+	u32 shift = (1<<31);
+	int exp = 31 -12 + 1;
 
 	if (data < (1 << 12))
 		return data;
 
-	for (exp = 31 - 12 + 1; exp > 0; exp--)
-	{
+	for (exp = 31 -12 + 1; exp > 0; exp--) {
 		if (data & shift)
 			break;
 
-		shift = (shift >> 1);
+		shift = (shift>>1);
 	}
 
 	return ((exp << 12) | (data >> exp));
@@ -242,32 +216,31 @@ int isp_hw_convert_fmt(struct aml_format *fmt)
 	if ((fmt->code == MEDIA_BUS_FMT_YVYU8_2X8) || (fmt->code == MEDIA_BUS_FMT_YUYV8_2X8))
 		return isp_fmt;
 
-	switch (fmt->code)
-	{
+	switch (fmt->code) {
 	case MEDIA_BUS_FMT_SBGGR8_1X8:
 	case MEDIA_BUS_FMT_SBGGR10_1X10:
 	case MEDIA_BUS_FMT_SBGGR12_1X12:
 	case MEDIA_BUS_FMT_SBGGR14_1X14:
 		isp_fmt = ISP_FMT_BGGR;
-		break;
+	break;
 	case MEDIA_BUS_FMT_SRGGB8_1X8:
 	case MEDIA_BUS_FMT_SRGGB10_1X10:
 	case MEDIA_BUS_FMT_SRGGB12_1X12:
 	case MEDIA_BUS_FMT_SRGGB14_1X14:
 		isp_fmt = ISP_FMT_RGGB;
-		break;
+	break;
 	case MEDIA_BUS_FMT_SGRBG8_1X8:
 	case MEDIA_BUS_FMT_SGRBG10_1X10:
 	case MEDIA_BUS_FMT_SGRBG12_1X12:
 	case MEDIA_BUS_FMT_SGRBG14_1X14:
 		isp_fmt = ISP_FMT_GRBG;
-		break;
+	break;
 	case MEDIA_BUS_FMT_SGBRG8_1X8:
 	case MEDIA_BUS_FMT_SGBRG10_1X10:
 	case MEDIA_BUS_FMT_SGBRG12_1X12:
 	case MEDIA_BUS_FMT_SGBRG14_1X14:
 		isp_fmt = ISP_FMT_GBRG;
-		break;
+	break;
 	default:
 		pr_err("ISP: Error input code\n");
 		isp_fmt = ISP_FMT_RGGB;
@@ -374,8 +347,7 @@ static int isp_hw_set_fmt(struct isp_dev_t *isp_dev, struct aml_format *fmt)
 	isp_fed_cfg_ofst(isp_dev);
 
 	isp_patgen_disable(isp_dev);
-	for (i = AML_ISP_STREAM_0; i < AML_ISP_STREAM_RAW; i++)
-	{
+	for (i = AML_ISP_STREAM_0; i < AML_ISP_STREAM_RAW; i++) {
 		isp_dev->video[i].acrop.hstart = 0;
 		isp_dev->video[i].acrop.vstart = 0;
 		isp_dev->video[i].acrop.hsize = fmt->width;

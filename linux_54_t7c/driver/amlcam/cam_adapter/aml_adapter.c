@@ -56,8 +56,6 @@ static const struct aml_format adap_support_formats[] = {
 	{0, 0, 0, 0, MEDIA_BUS_FMT_YVYU8_2X8, 0, 1, 8},
 };
 
-
-
 struct adapter_dev_t *adap_get_dev(int index)
 {
 	if (index >= 4) {
@@ -196,8 +194,6 @@ static int adap_alloc_raw_buffs(struct adapter_dev_t *a_dev)
 
 	INIT_LIST_HEAD(&param->free_list);
 
-	param->done_list = &g_info->done_list;
-
 	spin_lock_init(&param->ddr_lock);
 
 	spin_lock_irqsave(&param->ddr_lock, flags);
@@ -228,6 +224,7 @@ static void adap_free_raw_buffs(struct adapter_dev_t *a_dev)
 	int i = 0;
 	unsigned int fcnt = 0;
 	struct adapter_dev_param *param = &a_dev->param;
+	unsigned long flags;
 	u32 paddr = 0x0000;
 	void *page = NULL;
 
@@ -238,7 +235,9 @@ static void adap_free_raw_buffs(struct adapter_dev_t *a_dev)
 	else
 		return;
 
+	spin_lock_irqsave(&param->ddr_lock, flags);
 	INIT_LIST_HEAD(&param->free_list);
+	spin_unlock_irqrestore(&param->ddr_lock, flags);
 
 	paddr = a_dev->param.ddr_buf[0].addr[AML_PLANE_A];
 	page = phys_to_page(paddr);
@@ -340,7 +339,7 @@ int adap_fe_done_buf(struct adapter_dev_t *a_dev)
 		return -1;
 	}
 
-	list_add_tail(&param->cur_buf->list, param->done_list);
+	list_add_tail(&param->cur_buf->list, &g_info->done_list);
 
 	spin_unlock_irqrestore(&g_info->list_lock, flags);
 
@@ -441,8 +440,12 @@ static irqreturn_t adap_irq_handler_offline(int irq, void *dev)
 
 	status = adap_dev->ops->hw_interrupt_status(adap_dev);
 	if (status & (1 << 18)) {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
 		adap_fe_done_buf(adap_dev);
 		adap_fe_cfg_buf(adap_dev);
+#else
+		tasklet_schedule(&adap_dev->irq_tasklet);
+#endif
 	}
 
 	spin_unlock_irqrestore(&adap_dev->irq_lock, flags);
@@ -513,9 +516,11 @@ static void adap_subdev_stream_off(void *priv)
 {
 	struct adapter_dev_t *adap_dev = priv;
 
+	adap_dev->enWDRMode = WDR_MODE_NONE;
+	adap_dev->wstatus = STATUS_STOP;
+
 	aml_adap_global_destroy_thread();
 
-	adap_dev->enWDRMode = WDR_MODE_NONE;
 	if (adap_dev->ops->hw_stop)
 		adap_dev->ops->hw_stop(adap_dev);
 
@@ -523,8 +528,6 @@ static void adap_subdev_stream_off(void *priv)
 		adap_dev->ops->hw_irq_dis(adap_dev);
 
 	adap_free_raw_buffs(adap_dev);
-
-	adap_dev->wstatus = STATUS_STOP;
 }
 
 static int adap_subdev_convert_fmt(struct adapter_dev_t *adap_dev,

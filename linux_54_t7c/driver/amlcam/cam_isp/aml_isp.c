@@ -193,18 +193,18 @@ static int isp_subdev_mcnr_buf_alloc(struct isp_dev_t *isp_dev, struct aml_forma
 	width = fmt->width;
 	height = fmt->height;
 
-	iir_body_size = (((width  + 15) / 16) * 16) * height * 2;
+	iir_body_size = (width * isp_dev->tnr_bits + width / 10) * height / 8;
 	iir_body_size = ISP_SIZE_ALIGN(iir_body_size, 1 << 12);
 	iir_body_page = iir_body_size >> 12;
 
-	mix_body_size = (((width  + 15) / 16) * 16) * height / 4 * 12 / 8;
+	mix_body_size = (width * isp_dev->tnr_bits * 12 / 16 + width / 10) * height / 4 / 8;
 	mix_body_size = ISP_SIZE_ALIGN(mix_body_size, 1 << 12);
 	mix_body_page = mix_body_size >> 12;
 
-	meta_size = (((width  + 15) / 16) * 16) * height / 4 * 4 / 8;
+	meta_size = (((width / 2 * 4 + 127) / 128) * 16) * height / 2;
 	meta_size = ISP_SIZE_ALIGN(meta_size, 1 << 12);
 
-	mv_size = (((width  + 15) / 16) * 16) * height / 64 * 16 / 8;
+	mv_size = (((width  / 8 * 20 + 127) / 128) * 16) * height / 8;
 	mv_size = ISP_SIZE_ALIGN(mv_size, 1 << 12);
 
 	iir_slice_size = 16 * 1024;
@@ -457,7 +457,7 @@ static int isp_subdev_set_ctrl(struct v4l2_ctrl *ctrl)
 
 	switch (ctrl->id) {
 	case V4L2_CID_AML_MODE:
-		pr_err("isp_subdev_set_ctrl:%d\n", ctrl->val);
+		pr_info("isp_subdev_set_ctrl:%d\n", ctrl->val);
 		isp_dev->enWDRMode = ctrl->val;
 		g_info->mode = AML_ISP_SCAM;
 		if (isp_dev->enWDRMode == ISP_SDR_DCAM_MODE)
@@ -693,6 +693,8 @@ int aml_isp_subdev_init(void *c_dev)
 	isp_dev->apb_dma = 1;
 	isp_dev->slice = 0;
 	isp_dev->enWDRMode = WDR_MODE_NONE;
+	isp_dev->mcnr_en = 0;
+	isp_dev->tnr_bits = 8;
 	platform_set_drvdata(pdev, isp_dev);
 
 	rtn = isp_subdev_parse_dev(isp_dev);

@@ -121,6 +121,8 @@ int isp_global_reset(struct isp_dev_t *isp_dev)
 {
 	struct isp_global_info *g_info = isp_global_get_info();
 
+	spin_lock(&g_info->lock);
+
 	isp_dev->frm_cnt = 0;
 	isp_dev->wreg_cnt = 0;
 	isp_dev->fwreg_cnt = 0;
@@ -128,11 +130,15 @@ int isp_global_reset(struct isp_dev_t *isp_dev)
 	memset(isp_dev->lutWr.lutRegW, 0, sizeof(isp_dev->lutWr.lutRegW));
 	memset(isp_dev->lutWr.lutRegAddr, 0, sizeof(isp_dev->lutWr.lutRegAddr));
 
-	if (g_info->user)
+	if (g_info->user) {
+		spin_unlock(&g_info->lock);
 		return 0;
+	}
 
 	isp_dev->ops->hw_reset(isp_dev);
 	isp_dev->ops->hw_fill_gisp_rreg_buff(g_info);
+
+	spin_unlock(&g_info->lock);
 
 	return 0;
 }
@@ -141,19 +147,24 @@ void isp_global_stream_on(void)
 {
 	struct isp_global_info *g_info = isp_global_get_info();
 
+	spin_lock(&g_info->lock);
 	g_info->user ++;
+	spin_unlock(&g_info->lock);
 }
 
 void isp_global_stream_off(void)
 {
 	struct isp_global_info *g_info = isp_global_get_info();
 
+	spin_lock(&g_info->lock);
 	g_info->user --;
+	spin_unlock(&g_info->lock);
 }
 
 int isp_global_init(struct isp_dev_t *isp_dev)
 {
 	struct isp_global_info *g_info = isp_global_get_info();
+	spin_lock_init(&g_info->lock);
 
 	if (g_info->status == STATUS_START)
 		return 0;

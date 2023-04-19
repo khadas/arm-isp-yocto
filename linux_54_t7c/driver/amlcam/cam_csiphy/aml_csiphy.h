@@ -57,6 +57,7 @@ struct csiphy_dev_t {
 
 	void __iomem *csi_dphy;
 	void __iomem *csi_aphy;
+	u32 clock_mode;
 
 	struct clk *csiphy_clk;
 	struct clk *csiphy_clk1;

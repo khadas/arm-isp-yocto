@@ -122,7 +122,7 @@ struct isp_global_info {
 	u32 status;
 	u32 user;
 	struct aml_buffer rreg_buff;
-
+	spinlock_t lock;
 	struct isp_dev_t *isp_dev;
 };
 
@@ -136,6 +136,8 @@ struct isp_dev_t {
 	u32 phy_base;
 	u32 apb_dma;
 	u32 slice;
+	u32 mcnr_en;
+	u32 tnr_bits;
 	struct clk *isp_clk;
 	struct device *dev;
 	struct platform_device *pdev;
