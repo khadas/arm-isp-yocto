@@ -40,7 +40,7 @@
 #endif
 
 #ifdef CONFIG_LINUX_OS
-#define VIDEO_NODE_NUM    -1
+#define VIDEO_NODE_NUM    50
 #endif
 
 #ifdef CONFIG_ANDROID_OS
