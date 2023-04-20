@@ -35,6 +35,7 @@
 #include "imx415_api.h"
 #include "ov13b10_api.h"
 #include "ov13855_api.h"
+#include "logs.h"
 
 
 #define ARRAY_SIZE(array)   (sizeof(array) / sizeof((array)[0]))
@@ -205,7 +206,7 @@ static int log2file(const char* name, const char* fmt, ...)
 
     auto fp = fopen(name, "ab+");
     if (!fp) {
-        printf("open file %s fail, error: %s !!!", name, strerror(errno));
+        INFO("open file %s fail, error: %s !!!", name, strerror(errno));
         return -1;
     }
     fwrite(buf, 1 , ret, fp);
@@ -220,7 +221,7 @@ LookupTable *GET_LOOKUP_PTR( aisp_calib_info_t *p_cali, uint32_t idx )
         result = p_cali->calibrations[idx];
     } else {
         result = NULL;
-        printf("no find current lut\n");
+        INFO("no find current lut\n");
     }
     return result;
 }
@@ -231,7 +232,7 @@ struct sensorConfig *matchSensorConfig(media_stream_t *stream) {
             return supportedCfgs[i];
         }
     }
-    printf("fail to match sensorConfig");
+    INFO("fail to match sensorConfig");
     return nullptr;
 }
 
@@ -241,7 +242,7 @@ struct sensorConfig *matchSensorConfig(const char* sensorEntityName) {
             return supportedCfgs[i];
         }
     }
-    printf("fail to match sensorConfig %s", sensorEntityName);
+    INFO("fail to match sensorConfig %s", sensorEntityName);
     return nullptr;
 }
 
@@ -260,9 +261,10 @@ void cmos_set_sensor_entity(struct sensorConfig *cfg, struct media_entity *senso
     (cfg->cmos_set_sensor_entity)(sensor_ent, wdr);
 }
 
-void cmos_get_sensor_calibration(struct sensorConfig *cfg, aisp_calib_info_t *calib)
+void cmos_get_sensor_calibration(struct sensorConfig *cfg, struct media_entity * sensor_ent, aisp_calib_info_t *calib)
+
 {
-    (cfg->cmos_get_sensor_calibration)(calib);
+    (cfg->cmos_get_sensor_calibration)(sensor_ent, calib);;
 }
 
 void cmos_get_sensor_otp_data(struct sensorConfig *cfg, aisp_calib_info_t *otp)
@@ -280,18 +282,18 @@ void cmos_get_sensor_otp_data(struct sensorConfig *cfg, aisp_calib_info_t *otp)
     lib = ::dlopen("libispaml.so", RTLD_NOW);
     if (!lib) {
         char const* err_str = ::dlerror();
-        printf("dlopen: error:%s", (err_str ? err_str : "unknown"));
+        INFO("dlopen: error:%s", (err_str ? err_str : "unknown"));
         return;
     }
     auto decompress = (fn_aml_mesh_shading_decompress)::dlsym(lib, "aml_mesh_shading_decompress");
     if (!decompress) {
         char const* err_str = ::dlerror();
-        printf("dlsym: error:%s", (err_str ? err_str : "unknown"));
+        ERR("dlsym: error:%s", (err_str ? err_str : "unknown"));
         dlclose(lib);
         return;
     }
     if (i2c_init(cfg->otpDevNum, cfg->otpDevAddr) < 0) {
-        printf("i2c init fail");
+        ERR("i2c init fail");
         return;
     }
     {

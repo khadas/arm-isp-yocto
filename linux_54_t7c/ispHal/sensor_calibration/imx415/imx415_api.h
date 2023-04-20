@@ -43,6 +43,6 @@ void cmos_inttime_calc_table_imx415(int ViPipe, uint32_t pu32ExpL, uint32_t pu32
 void cmos_fps_set_imx415(int ViPipe, float f32Fps, ALG_SENSOR_DEFAULT_S *pstAeSnsDft);
 void cmos_alg_update_imx415(int ViPipe);
 void cmos_set_sensor_entity_imx415(struct media_entity * sensor_ent, int wdr);
-void cmos_get_sensor_calibration_imx415(aisp_calib_info_t * calib);
+void cmos_get_sensor_calibration_imx415(struct media_entity * sensor_ent, aisp_calib_info_t * calib);
 
 #endif

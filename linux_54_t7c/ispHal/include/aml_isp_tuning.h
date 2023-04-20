@@ -217,6 +217,7 @@ typedef enum
     AML_MBI_ISP_SNRAttr,
     AML_MBI_ISP_TNRAttr,
     AML_MBI_ISP_CNRAttr,
+    AML_MBI_ISP_PURPLEAttr,
     AML_MBI_ISP_DMSAttr,
     AML_MBI_ISP_NPAttr,
     AML_MBI_ISP_CrAttr,
