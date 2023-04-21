@@ -469,8 +469,8 @@ static const struct imx415_mode imx415_modes_4lanes[] = {
 		.height = 2160,
 		.hmax = 0x0898,
 		.link_freq_index = FREQ_INDEX_1080P,
-		.data = imx415_1080p_settings,
-		.data_size = ARRAY_SIZE(imx415_1080p_settings),
+		.data = linear_4k_30fps_1440Mbps_4lane_10bits,
+		.data_size = ARRAY_SIZE(linear_4k_30fps_1440Mbps_4lane_10bits),
 	},
 	{
 		.width = 3840,
