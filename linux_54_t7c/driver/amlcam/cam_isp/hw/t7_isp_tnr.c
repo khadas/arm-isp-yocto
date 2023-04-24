@@ -96,6 +96,9 @@ static void tnr_cfg_param(struct isp_dev_t *isp_dev, void *param)
 		(tnr_cfg->ma_sad_luma_adj_y[4] << 0);
 	isp_reg_update_bits(isp_dev, ISP_CUBICT_SAD_LUMA_GAIN_Y, val, 0, 30);
 
+	val = tnr_cfg->ma_mix_th_iso_gain;
+	isp_reg_update_bits(isp_dev, ISP_CUBICT_TNR_WINS_CRTL, val, 12, 8);
+
 	val = (tnr_cfg->ma_sad_pdtl4_x0 << 8) |
 		(tnr_cfg->ma_sad_pdtl4_x1 << 4) |
 		(tnr_cfg->ma_sad_pdtl4_x2 << 0);

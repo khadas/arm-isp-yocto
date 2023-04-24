@@ -1041,6 +1041,7 @@ typedef struct aisp_tnr_cfg_s {
 	u32 me_meta_sad_th1[3];
 	u32 ma_sad_luma_adj_x[4];
 	u32 ma_sad_luma_adj_y[5];
+	u32 ma_mix_th_iso_gain;
 } aisp_tnr_cfg_t;
 
 typedef struct aisp_snr_cfg_s {
