@@ -118,5 +118,26 @@ static int reset_am_enable(struct device *dev, const char* propname, int val)
 
 	return ret;
 }
+static inline int pwdn_am_enable(struct device *dev, const char* propname, int val)
+{
+	int ret = -1;
 
+	int reset = of_get_named_gpio(dev->of_node, propname, 0);
+	ret = reset;
+
+	if (ret >= 0) {
+		devm_gpio_request(dev, reset, "PWDN");
+		if (gpio_is_valid(reset)) {
+			gpio_direction_output(reset, val);
+			pr_info("reset init\n");
+		} else {
+			pr_err("reset_enable: gpio %s is not valid\n", propname);
+			return -1;
+		}
+	} else {
+		pr_err("reset_enable: get_named_gpio %s fail\n", propname);
+	}
+
+	return ret;
+}
 #endif

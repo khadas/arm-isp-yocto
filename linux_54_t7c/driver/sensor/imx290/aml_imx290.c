@@ -31,15 +31,11 @@
 #define IMX290_XMSTA 0x3002
 #define IMX290_GAIN 0x3014
 #define IMX290_EXPOSURE 0x3020
-#define IMX290_ID 0xb201
-
-#define IMX290_BLKLEVEL_LOW 0x300a
-#define IMX290_BLKLEVEL_HIGH 0x300b
+#define IMX290_SUB_ID 0xb201
+#define IMX290_ID 0x0290
 
 #define IMX290_HMAX_LOW 0x301c
 #define IMX290_HMAX_HIGH 0x301d
-
-#define IMX290_PGCTRL 0x308c
 
 #define IMX290_FR_FDG_SEL 0x3009
 #define IMX290_PHY_LANE_NUM 0x3407
@@ -750,20 +746,32 @@ static int imx290_get_id(struct imx290 *imx290)
 	u32 id = 0;
 	u8 val = 0;
 
+	imx290_read_reg(imx290, 0x348F, &val);
+	id |= (val << 8);
+
+	imx290_read_reg(imx290, 0x348E, &val);
+	id |= val;
+	if (id == IMX290_ID) {
+		dev_err(imx290->dev, "success get imx290 id 0x%x", id);
+		return 0;
+	}
+
+	id = 0;
+	val = 0;
 	imx290_read_reg(imx290, 0x301e, &val);
 	id |= (val << 8);
 
 	imx290_read_reg(imx290, 0x301f, &val);
 	id |= val;
 
-	if (id != IMX290_ID)
+	if (id != IMX290_SUB_ID)
 	{
-		dev_err(imx290->dev, "Failed to get imx290 id: 0x%x\n", id);
+		dev_err(imx290->dev, "Failed to get imx307 id: 0x%x\n", id);
 		return rtn;
 	}
 	else
 	{
-		dev_err(imx290->dev, "success get imx290 id 0x%x", id);
+		dev_err(imx290->dev, "success get imx307 id 0x%x", id);
 	}
 
 	return 0;
@@ -1264,6 +1272,7 @@ static int imx290_power_on(struct imx290 *imx290)
 	int ret;
 
 	reset_am_enable(imx290->dev, "reset", 1);
+	pwdn_am_enable(imx290->dev, "pwdn", 1);
 
 	ret = mclk_enable(imx290->dev, 37125000);
 	if (ret < 0)
