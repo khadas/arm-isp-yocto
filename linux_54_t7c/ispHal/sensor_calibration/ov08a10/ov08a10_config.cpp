@@ -32,6 +32,8 @@
 #include "ov08a10_sdr_calibration.h"
 #include "ov08a10_wdr_calibration.h"
 #include "ov08a10_api.h"
+#include "logs.h"
+
 
 typedef struct
 {
@@ -48,7 +50,7 @@ void cmos_set_sensor_entity_ov08a10(struct media_entity * sensor_ent, int wdr)
     sensor.enWDRMode = wdr;
 }
 
-void cmos_get_sensor_calibration_ov08a10(aisp_calib_info_t * calib)
+void cmos_get_sensor_calibration_ov08a10(struct media_entity *sensor_ent, aisp_calib_info_t *calib)
 {
     if (sensor.enWDRMode == 1)
         Ov08a10WdrCalibration::dynamic_wdr_calibrations_init_ov08a10(calib);
@@ -58,7 +60,7 @@ void cmos_get_sensor_calibration_ov08a10(aisp_calib_info_t * calib)
 
 int cmos_get_ae_default_ov08a10(int ViPipe, ALG_SENSOR_DEFAULT_S *pstAeSnsDft)
 {
-    printf("cmos_get_ae_default\n");
+    INFO("cmos_get_ae_default\n");
 
     sensor.snsAlgInfo.active.width = 3840;
     sensor.snsAlgInfo.active.height = 2160;
@@ -112,7 +114,7 @@ int cmos_get_ae_default_ov08a10(int ViPipe, ALG_SENSOR_DEFAULT_S *pstAeSnsDft)
 
 void cmos_again_calc_table_ov08a10(int ViPipe, uint32_t *pu32AgainLin, uint32_t *pu32AgainDb)
 {
-    //printf("cmos_again_calc_table: %d, %d\n", *pu32AgainLin, *pu32AgainDb);
+    //INFO("cmos_again_calc_table: %d, %d\n", *pu32AgainLin, *pu32AgainDb);
     uint32_t again_reg;
     uint32_t u32AgainDb;
 
@@ -120,7 +122,7 @@ void cmos_again_calc_table_ov08a10(int ViPipe, uint32_t *pu32AgainLin, uint32_t 
     u32AgainDb = ((u32AgainDb*20)>>LOG2_GAIN_SHIFT);
 
     again_reg = (uint32_t)(u32AgainDb);
-       printf("again_reg = %d \n",again_reg);
+       INFO("again_reg = %d \n",again_reg);
     if (again_reg > 1984) //72dB, 0.3dB step.
         again_reg = 1984;
 
@@ -133,18 +135,18 @@ void cmos_again_calc_table_ov08a10(int ViPipe, uint32_t *pu32AgainLin, uint32_t 
 
 void cmos_dgain_calc_table_ov08a10(int ViPipe, uint32_t *pu32DgainLin, uint32_t *pu32DgainDb)
 {
-    //printf("cmos_dgain_calc_table: %d, %d\n", *pu32DgainLin, *pu32DgainDb);
+    //INFO("cmos_dgain_calc_table: %d, %d\n", *pu32DgainLin, *pu32DgainDb);
 }
 
 void cmos_inttime_calc_table_ov08a10(int ViPipe, uint32_t pu32ExpL, uint32_t pu32ExpS, uint32_t pu32ExpVS, uint32_t pu32ExpVVS)
 {
-    //printf("cmos_inttime_calc_table: %d, %d, %d, %d\n", pu32ExpL, pu32ExpS, pu32ExpVS, pu32ExpVVS);
+    //INFO("cmos_inttime_calc_table: %d, %d, %d, %d\n", pu32ExpL, pu32ExpS, pu32ExpVS, pu32ExpVVS);
     uint32_t shutter_time_lines = pu32ExpL >> SHUTTER_TIME_SHIFT;
     uint32_t shutter_time_line_each_frame = sensor.snsAlgInfo.total.height;
 
     uint32_t shutter_time_lines_short = pu32ExpS >> SHUTTER_TIME_SHIFT;
 
-    printf("expo: %d\n", shutter_time_lines);
+    INFO("expo: %d\n", shutter_time_lines);
     shutter_time_lines = shutter_time_lines_short;
     if (sensor.enWDRMode == 0) {
         if (shutter_time_lines > shutter_time_line_each_frame)
@@ -170,7 +172,7 @@ void cmos_inttime_calc_table_ov08a10(int ViPipe, uint32_t pu32ExpL, uint32_t pu3
 
 void cmos_fps_set_ov08a10(int ViPipe, float f32Fps, ALG_SENSOR_DEFAULT_S *pstAeSnsDft)
 {
-    printf("cmos_fps_set: %f\n", f32Fps);
+    INFO("cmos_fps_set: %f\n", f32Fps);
 }
 
 void cmos_alg_update_ov08a10(int ViPipe)
@@ -184,7 +186,7 @@ void cmos_alg_update_ov08a10(int ViPipe)
             struct v4l2_ext_control gain;
             gain.id = V4L2_CID_GAIN;
             gain.value = sensor.snsAlgInfo.u32AGain[sensor.snsAlgInfo.gain_apply_delay];
-            printf("gain value = %d \n",gain.value);
+            INFO("gain value = %d \n",gain.value);
             v4l2_subdev_set_ctrls(sensor.sensor_ent, &gain, 1);
         }
 
@@ -196,7 +198,7 @@ void cmos_alg_update_ov08a10(int ViPipe)
                 struct v4l2_ext_control expo;
                 expo.id = V4L2_CID_EXPOSURE;
                 expo.value = shutter_time_lines;
-                printf("expo.value = %d \n",expo.value);
+                INFO("expo.value = %d \n",expo.value);
                 v4l2_subdev_set_ctrls(sensor.sensor_ent, &expo, 1);
             }
 
@@ -206,7 +208,7 @@ void cmos_alg_update_ov08a10(int ViPipe)
                 //ov08a10_write_register(ViPipe, 0x3021, (shutter_time_lines_short>>8) & 0xff);
                 //ov08a10_write_register(ViPipe, 0x3024, shutter_time_lines&0xff);
                 //ov08a10_write_register(ViPipe, 0x3025, (shutter_time_lines>>8) & 0xff);
-                //printf("sensor expo: %d, %d\n", shutter_time_lines, shutter_time_lines_short);
+                //INFO("sensor expo: %d, %d\n", shutter_time_lines, shutter_time_lines_short);
             }
         }
     }

@@ -5,6 +5,8 @@
 #include <vector>
 
 #include "staticPipe.h"
+#include "logs.h"
+
 
 
 namespace android {
@@ -14,10 +16,10 @@ int staticPipe::fetchPipeMaxResolution(media_stream_t *stream, uint32_t& width, 
     if (cfg) {
         width = cfg->sensorWidth;
         height = cfg->sensorHeight;
-        printf("find matched sensor configs %dx%d", width, height);
+        INFO("find matched sensor configs %dx%d", width, height);
         return 0;
     }
-    printf("do not find matched sensor configs");
+    ERR("do not find matched sensor configs");
     return -1;
 }
 
@@ -26,7 +28,7 @@ int staticPipe::fetchSensorFormat(media_stream_t *stream, int hdrEnable) {
     if (cfg) {
         return hdrEnable ? cfg->wdrFormat : cfg->sdrFormat;
     }
-    printf("do not find matched");
+    ERR("do not find matched");
     return -1;
 }
 sensorType staticPipe::fetchSensorType(media_stream_t * stream) {

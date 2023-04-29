@@ -31,6 +31,8 @@
 
 #include "imx290_api.h"
 #include "ov08a10_api.h"
+#include "logs.h"
+
 
 
 
@@ -81,7 +83,7 @@ struct sensorConfig *matchSensorConfig(media_stream_t *stream) {
             return supportedCfgs[i];
         }
     }
-    printf("fail to match sensorConfig");
+    ERR("fail to match sensorConfig");
     return nullptr;
 }
 
@@ -91,7 +93,7 @@ struct sensorConfig *matchSensorConfig(const char* sensorEntityName) {
             return supportedCfgs[i];
         }
     }
-    printf("fail to match sensorConfig %s", sensorEntityName);
+    ERR("fail to match sensorConfig %s", sensorEntityName);
     return nullptr;
 }
 
@@ -110,8 +112,9 @@ void cmos_set_sensor_entity(struct sensorConfig *cfg, struct media_entity *senso
     (cfg->cmos_set_sensor_entity)(sensor_ent, wdr);
 }
 
-void cmos_get_sensor_calibration(struct sensorConfig *cfg, aisp_calib_info_t *calib)
+void cmos_get_sensor_calibration(struct sensorConfig *cfg, struct media_entity * sensor_ent, aisp_calib_info_t *calib)
+
 {
-    (cfg->cmos_get_sensor_calibration)(calib);
+    (cfg->cmos_get_sensor_calibration)(sensor_ent, calib);
 }
 

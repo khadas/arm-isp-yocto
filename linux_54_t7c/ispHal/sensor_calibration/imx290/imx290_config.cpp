@@ -32,6 +32,8 @@
 #include "imx290_sdr_calibration.h"
 #include "imx290_wdr_calibration.h"
 #include "imx290_api.h"
+#include "logs.h"
+
 
 typedef struct
 {
@@ -48,7 +50,7 @@ void cmos_set_sensor_entity_imx290(struct media_entity * sensor_ent, int wdr)
     sensor.enWDRMode = wdr;
 }
 
-void cmos_get_sensor_calibration_imx290(aisp_calib_info_t * calib)
+void cmos_get_sensor_calibration_imx290(struct media_entity *sensor_ent, aisp_calib_info_t *calib)
 {
     if (sensor.enWDRMode == 1)
         Imx290WdrCalibration::dynamic_wdr_calibrations_init_imx290(calib);
@@ -58,7 +60,7 @@ void cmos_get_sensor_calibration_imx290(aisp_calib_info_t * calib)
 
 int cmos_get_ae_default_imx290(int ViPipe, ALG_SENSOR_DEFAULT_S *pstAeSnsDft)
 {
-    printf("cmos_get_ae_default\n");
+    INFO("cmos_get_ae_default\n");
 
     sensor.snsAlgInfo.active.width = 1920;
     sensor.snsAlgInfo.active.height = 1080;
@@ -121,7 +123,7 @@ int cmos_get_ae_default_imx290(int ViPipe, ALG_SENSOR_DEFAULT_S *pstAeSnsDft)
 
     sensor.snsAlgInfo.gain_apply_delay = 0;
     sensor.snsAlgInfo.integration_time_apply_delay = 0;
-    printf("cmos_get_ae_default++++++\n");
+    INFO("cmos_get_ae_default++++++\n");
 
     memcpy(pstAeSnsDft, &sensor.snsAlgInfo, sizeof(ALG_SENSOR_DEFAULT_S));
 
@@ -130,7 +132,7 @@ int cmos_get_ae_default_imx290(int ViPipe, ALG_SENSOR_DEFAULT_S *pstAeSnsDft)
 
 void cmos_again_calc_table_imx290(int ViPipe, uint32_t *pu32AgainLin, uint32_t *pu32AgainDb)
 {
-    printf("cmos_again_calc_table: %d, %d\n", *pu32AgainLin, *pu32AgainDb);
+    INFO("cmos_again_calc_table: %d, %d\n", *pu32AgainLin, *pu32AgainDb);
     uint32_t again_reg;
     uint32_t u32AgainDb;
 
@@ -150,18 +152,18 @@ void cmos_again_calc_table_imx290(int ViPipe, uint32_t *pu32AgainLin, uint32_t *
 
 void cmos_dgain_calc_table_imx290(int ViPipe, uint32_t *pu32DgainLin, uint32_t *pu32DgainDb)
 {
-    //printf("cmos_dgain_calc_table: %d, %d\n", *pu32DgainLin, *pu32DgainDb);
+    //INFO("cmos_dgain_calc_table: %d, %d\n", *pu32DgainLin, *pu32DgainDb);
 }
 
 void cmos_inttime_calc_table_imx290(int ViPipe, uint32_t pu32ExpL, uint32_t pu32ExpS, uint32_t pu32ExpVS, uint32_t pu32ExpVVS)
 {
-    printf("cmos_inttime_calc_table: %d, %d, %d, %d\n", pu32ExpL, pu32ExpS, pu32ExpVS, pu32ExpVVS);
+    INFO("cmos_inttime_calc_table: %d, %d, %d, %d\n", pu32ExpL, pu32ExpS, pu32ExpVS, pu32ExpVVS);
     uint32_t shutter_time_lines = pu32ExpL >> SHUTTER_TIME_SHIFT;
     uint32_t shutter_time_line_each_frame = sensor.snsAlgInfo.total.height;
 
     uint32_t shutter_time_lines_short = pu32ExpS >> SHUTTER_TIME_SHIFT;
 
-    //printf("expo: %d, %d\n", shutter_time_lines, shutter_time_lines_short);
+    //INFO("expo: %d, %d\n", shutter_time_lines, shutter_time_lines_short);
     if (sensor.enWDRMode == 0) {
         if (shutter_time_lines > shutter_time_line_each_frame)
             shutter_time_lines = shutter_time_line_each_frame;
@@ -186,7 +188,7 @@ void cmos_inttime_calc_table_imx290(int ViPipe, uint32_t pu32ExpL, uint32_t pu32
 
 void cmos_fps_set_imx290(int ViPipe, float f32Fps, ALG_SENSOR_DEFAULT_S *pstAeSnsDft)
 {
-    printf("cmos_fps_set: %f\n", f32Fps);
+    INFO("cmos_fps_set: %f\n", f32Fps);
 }
 
 void cmos_alg_update_imx290(int ViPipe)
@@ -220,7 +222,7 @@ void cmos_alg_update_imx290(int ViPipe)
                 //imx290_write_register(ViPipe, 0x3021, (shutter_time_lines_short>>8) & 0xff);
                 //imx290_write_register(ViPipe, 0x3024, shutter_time_lines&0xff);
                 //imx290_write_register(ViPipe, 0x3025, (shutter_time_lines>>8) & 0xff);
-                //printf("cmos expo: %d, %d, %x\n", shutter_time_lines, shutter_time_lines_short, (shutter_time_lines << 16) | shutter_time_lines_short);
+                //INFO("cmos expo: %d, %d, %x\n", shutter_time_lines, shutter_time_lines_short, (shutter_time_lines << 16) | shutter_time_lines_short);
                 struct v4l2_ext_control expo;
                 expo.id = V4L2_CID_EXPOSURE;
                 expo.value = (shutter_time_lines << 16) | shutter_time_lines_short;
