@@ -43,6 +43,7 @@ void cmos_inttime_calc_table_ov08a10(int ViPipe, uint32_t pu32ExpL, uint32_t pu3
 void cmos_fps_set_ov08a10(int ViPipe, float f32Fps, ALG_SENSOR_DEFAULT_S *pstAeSnsDft);
 void cmos_alg_update_ov08a10(int ViPipe);
 void cmos_set_sensor_entity_ov08a10(struct media_entity * sensor_ent, int wdr);
-void cmos_get_sensor_calibration_ov08a10(aisp_calib_info_t * calib);
+void cmos_get_sensor_calibration_ov08a10(struct media_entity *sensor_ent, aisp_calib_info_t *calib);
+
 
 #endif

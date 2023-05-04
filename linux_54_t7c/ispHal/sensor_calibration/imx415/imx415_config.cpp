@@ -27,17 +27,18 @@
 #include <signal.h>
 #include <semaphore.h>
 
-
 #include "aml_isp_api.h"
 
 #include "imx415_sdr_calibration.h"
 #include "imx415_wdr_calibration.h"
 
 #include "imx415_api.h"
+#include "logs.h"
+
 
 typedef struct
 {
-    int  enWDRMode;
+    int  enWDRMode = 0;
     ALG_SENSOR_DEFAULT_S snsAlgInfo;
     struct media_entity  * sensor_ent;
 } ISP_SNS_STATE_S;
@@ -50,7 +51,7 @@ void cmos_set_sensor_entity_imx415(struct media_entity * sensor_ent,int wdr)
     sensor.enWDRMode = wdr;
 }
 
-void cmos_get_sensor_calibration_imx415(aisp_calib_info_t * calib)
+void cmos_get_sensor_calibration_imx415(struct media_entity *sensor_ent, aisp_calib_info_t *calib)
 {
     if (sensor.enWDRMode == 1)
         Imx415WdrCalibration::dynamic_wdr_calibrations_init_imx415(calib);
@@ -60,7 +61,7 @@ void cmos_get_sensor_calibration_imx415(aisp_calib_info_t * calib)
 
 int cmos_get_ae_default_imx415(int ViPipe, ALG_SENSOR_DEFAULT_S *pstAeSnsDft)
 {
-    printf("cmos_get_ae_default\n");
+    INFO("cmos_get_ae_default\n");
 
     sensor.snsAlgInfo.active.width = 1920;
     sensor.snsAlgInfo.active.height = 1080;
@@ -69,25 +70,25 @@ int cmos_get_ae_default_imx415(int ViPipe, ALG_SENSOR_DEFAULT_S *pstAeSnsDft)
     sensor.snsAlgInfo.bits = 12;
 
     sensor.snsAlgInfo.sensor_gain_number = 1;
-    sensor.snsAlgInfo.total.width = 2028;
-    sensor.snsAlgInfo.total.height = 1220;
+    sensor.snsAlgInfo.total.width = 545;
+    sensor.snsAlgInfo.total.height = 4503;
 
     sensor.snsAlgInfo.lines_per_second = sensor.snsAlgInfo.total.height*30;
     sensor.snsAlgInfo.pixels_per_line = sensor.snsAlgInfo.total.width;
 
     if (sensor.enWDRMode == 1) {
-        sensor.snsAlgInfo.integration_time_long_max = (sensor.snsAlgInfo.total.height*2 - 24) <<SHUTTER_TIME_SHIFT;
-        sensor.snsAlgInfo.integration_time_limit = 198<<SHUTTER_TIME_SHIFT;
+        sensor.snsAlgInfo.integration_time_long_max = (sensor.snsAlgInfo.total.height*2 - (225+3)) <<SHUTTER_TIME_SHIFT;
+        sensor.snsAlgInfo.integration_time_limit = (225-3)<<SHUTTER_TIME_SHIFT;
 
         sensor.snsAlgInfo.integration_time_min = 1<<SHUTTER_TIME_SHIFT;
-        sensor.snsAlgInfo.integration_time_max = 198<<SHUTTER_TIME_SHIFT;
-        sensor.snsAlgInfo.integration_time_long_max = (sensor.snsAlgInfo.total.height*2 - 24) <<SHUTTER_TIME_SHIFT;
-        sensor.snsAlgInfo.integration_time_limit = 198<<SHUTTER_TIME_SHIFT;
+        sensor.snsAlgInfo.integration_time_max = (225-3)<<SHUTTER_TIME_SHIFT;
+        sensor.snsAlgInfo.integration_time_long_max = (sensor.snsAlgInfo.total.height*2 - (225+3)) <<SHUTTER_TIME_SHIFT;
+        sensor.snsAlgInfo.integration_time_limit = (225-3)<<SHUTTER_TIME_SHIFT;
     } else {
-        sensor.snsAlgInfo.integration_time_min = 1<<SHUTTER_TIME_SHIFT;
-        sensor.snsAlgInfo.integration_time_max = sensor.snsAlgInfo.total.height<<SHUTTER_TIME_SHIFT;
-        sensor.snsAlgInfo.integration_time_long_max = sensor.snsAlgInfo.total.height<<SHUTTER_TIME_SHIFT;
-        sensor.snsAlgInfo.integration_time_limit = sensor.snsAlgInfo.total.height<<SHUTTER_TIME_SHIFT;
+        sensor.snsAlgInfo.integration_time_min = 4<<SHUTTER_TIME_SHIFT;
+        sensor.snsAlgInfo.integration_time_max = (sensor.snsAlgInfo.total.height - 8)<<SHUTTER_TIME_SHIFT;
+        sensor.snsAlgInfo.integration_time_long_max = (sensor.snsAlgInfo.total.height - 8)<<SHUTTER_TIME_SHIFT;
+        sensor.snsAlgInfo.integration_time_limit = (sensor.snsAlgInfo.total.height - 8)<<SHUTTER_TIME_SHIFT;
     }
 
     sensor.snsAlgInfo.again_log2_max = (72/6)<<(LOG2_GAIN_SHIFT);
@@ -109,7 +110,7 @@ int cmos_get_ae_default_imx415(int ViPipe, ALG_SENSOR_DEFAULT_S *pstAeSnsDft)
 
     sensor.snsAlgInfo.gain_apply_delay = 0;
     sensor.snsAlgInfo.integration_time_apply_delay = 0;
-    printf("cmos_get_ae_default++++++\n");
+    INFO("cmos_get_ae_default++++++\n");
 
     memcpy(pstAeSnsDft, &sensor.snsAlgInfo, sizeof(ALG_SENSOR_DEFAULT_S));
 
@@ -118,7 +119,7 @@ int cmos_get_ae_default_imx415(int ViPipe, ALG_SENSOR_DEFAULT_S *pstAeSnsDft)
 
 void cmos_again_calc_table_imx415(int ViPipe, uint32_t *pu32AgainLin, uint32_t *pu32AgainDb)
 {
-    printf("cmos_again_calc_table: %d, %d\n", *pu32AgainLin, *pu32AgainDb);
+    INFO("cmos_again_calc_table: %d, %d\n", *pu32AgainLin, *pu32AgainDb);
     uint32_t again_reg;
     uint32_t u32AgainDb;
 
@@ -138,31 +139,31 @@ void cmos_again_calc_table_imx415(int ViPipe, uint32_t *pu32AgainLin, uint32_t *
 
 void cmos_dgain_calc_table_imx415(int ViPipe, uint32_t *pu32DgainLin, uint32_t *pu32DgainDb)
 {
-    //printf("cmos_dgain_calc_table: %d, %d\n", *pu32DgainLin, *pu32DgainDb);
+    //CAMHAL_LOGD("cmos_dgain_calc_table: %d, %d\n", *pu32DgainLin, *pu32DgainDb);
 }
 
 void cmos_inttime_calc_table_imx415(int ViPipe, uint32_t pu32ExpL, uint32_t pu32ExpS, uint32_t pu32ExpVS, uint32_t pu32ExpVVS)
 {
-    printf("cmos_inttime_calc_table: %d, %d, %d, %d\n", pu32ExpL, pu32ExpS, pu32ExpVS, pu32ExpVVS);
+    INFO("cmos_inttime_calc_table: %d, %d, %d, %d\n", pu32ExpL, pu32ExpS, pu32ExpVS, pu32ExpVVS);
     uint32_t shutter_time_lines = pu32ExpL >> SHUTTER_TIME_SHIFT;
     uint32_t shutter_time_line_each_frame = sensor.snsAlgInfo.total.height;
 
     uint32_t shutter_time_lines_short = pu32ExpS >> SHUTTER_TIME_SHIFT;
 
-    //printf("expo: %d, %d\n", shutter_time_lines, shutter_time_lines_short);
+    //CAMHAL_LOGD("expo: %d, %d\n", shutter_time_lines, shutter_time_lines_short);
     if (sensor.enWDRMode == 0) {
         if (shutter_time_lines > shutter_time_line_each_frame)
             shutter_time_lines = shutter_time_line_each_frame;
         shutter_time_lines = shutter_time_line_each_frame - shutter_time_lines;
         if (shutter_time_lines)
             shutter_time_lines = shutter_time_lines - 1;
-        if (shutter_time_lines < 1)
-            shutter_time_lines = 1;
+        if (shutter_time_lines < 8)
+            shutter_time_lines = 8;
     } else {
         if (shutter_time_lines_short < 1)
             shutter_time_lines_short = 1;
-        shutter_time_lines_short = 201 - shutter_time_lines_short - 1;
-        shutter_time_lines = shutter_time_line_each_frame * 2  - shutter_time_lines - 1 - 26;
+        shutter_time_lines_short = 225 - shutter_time_lines_short - 1;
+        shutter_time_lines = shutter_time_line_each_frame * 2  - shutter_time_lines - 1;
     }
 
     if (sensor.snsAlgInfo.u32Inttime[0][0] != shutter_time_lines || sensor.snsAlgInfo.u32Inttime[1][0] != shutter_time_lines_short) {
@@ -174,7 +175,7 @@ void cmos_inttime_calc_table_imx415(int ViPipe, uint32_t pu32ExpL, uint32_t pu32
 
 void cmos_fps_set_imx415(int ViPipe, float f32Fps, ALG_SENSOR_DEFAULT_S *pstAeSnsDft)
 {
-    printf("cmos_fps_set: %f\n", f32Fps);
+    INFO("cmos_fps_set: %f\n", f32Fps);
 }
 
 void cmos_alg_update_imx415(int ViPipe)
@@ -208,7 +209,7 @@ void cmos_alg_update_imx415(int ViPipe)
                 //imx415_write_register(ViPipe, 0x3021, (shutter_time_lines_short>>8) & 0xff);
                 //imx415_write_register(ViPipe, 0x3024, shutter_time_lines&0xff);
                 //imx415_write_register(ViPipe, 0x3025, (shutter_time_lines>>8) & 0xff);
-                //printf("sensor expo: %d, %d\n", shutter_time_lines, shutter_time_lines_short);
+                //CAMHAL_LOGD("sensor expo: %d, %d\n", shutter_time_lines, shutter_time_lines_short);
             }
         }
     }

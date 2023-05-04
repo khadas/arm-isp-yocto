@@ -5,6 +5,8 @@
 #include <vector>
 
 #include "staticPipe.h"
+#include "logs.h"
+
 
 namespace android {
 
@@ -13,10 +15,10 @@ int staticPipe::fetchPipeMaxResolution(media_stream_t *stream, uint32_t& width, 
     if (cfg) {
         width = cfg->sensorWidth;
         height = cfg->sensorHeight;
-        printf("find matched sensor configs %dx%d", width, height);
+        INFO("find matched sensor configs %dx%d", width, height);
         return 0;
     }
-    printf("do not find matched sensor configs");
+    INFO("do not find matched sensor configs");
     return -1;
 }
 
@@ -25,7 +27,7 @@ int staticPipe::fetchSensorFormat(media_stream_t *stream, int hdrEnable, uint32_
     if (cfg) {
         return hdrEnable ? cfg->wdrFormat : (fps == 60 ? cfg->sdrFormat60HZ : cfg->sdrFormat);
     }
-    printf("do not find matched");
+    INFO("do not find matched");
     return -1;
 }
 sensorType staticPipe::fetchSensorType(media_stream_t * stream) {
@@ -45,11 +47,11 @@ int staticPipe::fetchSensorOTP(media_stream_t * stream, aisp_calib_info_t *otp) 
             if (src) {
                 if (i == CALIBRATION_AWB_WB_OTP_D50) {
                     for (int j = 0; j < src->cols*src->width; ++j) {
-                        printf("WB_OTP value 0x%x", ((uint8_t *)(src->ptr))[j]);
+                        INFO("WB_OTP value 0x%x", ((uint8_t *)(src->ptr))[j]);
                     }
                 } else if (i == CALIBRATION_AWB_WB_GOLDEN_D50) {
                     for (int j = 0; j < src->cols*src->width; ++j) {
-                        printf("WB_GOLDEN value 0x%x", ((uint8_t *)(src->ptr))[j]);
+                        INFO("WB_GOLDEN value 0x%x", ((uint8_t *)(src->ptr))[j]);
                     }
                 }
             }
