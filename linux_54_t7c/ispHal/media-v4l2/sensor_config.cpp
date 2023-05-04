@@ -264,7 +264,7 @@ void cmos_set_sensor_entity(struct sensorConfig *cfg, struct media_entity *senso
 void cmos_get_sensor_calibration(struct sensorConfig *cfg, struct media_entity * sensor_ent, aisp_calib_info_t *calib)
 
 {
-    (cfg->cmos_get_sensor_calibration)(sensor_ent, calib);;
+    (cfg->cmos_get_sensor_calibration)(sensor_ent, calib);
 }
 
 void cmos_get_sensor_otp_data(struct sensorConfig *cfg, aisp_calib_info_t *otp)
