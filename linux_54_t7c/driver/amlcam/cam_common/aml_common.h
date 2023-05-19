@@ -172,6 +172,7 @@ struct aml_subdev {
 	const struct aml_format *formats;
 	struct v4l2_mbus_framefmt *pfmt;
 	const struct aml_sub_ops *ops;
+	struct proc_dir_entry *proc_node_entry;
 	void *priv;
 };
 
