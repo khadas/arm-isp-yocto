@@ -62,7 +62,7 @@ static int32_t _CALIBRATION_TOP_CTL[50] = {
     2, // awb stat switch 0:from FE 1:from GE 2:before WB 3:after WB 4:from DRC 5 or else:from peak
     1, // ae stat enable 0:off 1:on
     1, // ae stat switch 0:from GE 1:from LSC 2:before DRC 3:after DRC
-    0, // af stat enable 0:off 1:on
+    1, // af stat enable 0:off 1:on
     0, // af stat switch 0:from SNR 1:from DMS 2or3:from peak
     1, // WDR stat enable 0:off 1:on
     0, // debug path output 0:off 1:on
@@ -193,27 +193,27 @@ static int32_t _CALIBRATION_DAYNIGHT_DETECT[14] = {
 //aisp_af_t
 static uint32_t _CALIBRATION_AF_CTL[22] = {
     1, //af_en;
-    70 << 6,  //af_pos_min_down;
-    70 << 6,  //af_pos_min;
-    70 << 6,  //af_pos_min_up;
-    112 << 6, //af_pos_inf_down;
-    112 << 6, //af_pos_inf;
-    112 << 6, //af_pos_inf_up;
-    832 << 6, //af_pos_macro_down;
-    832 << 6, //af_pos_macro;
-    832 << 6, //af_pos_macro_up;
-    915 << 6, //af_pos_max_down;
-    915 << 6, //af_pos_max;
-    915 << 6, //af_pos_max_up;
-    11,  //af_fast_search_positions;
+    1,  //af_pos_min_down;
+    8 << 6,  //af_pos_min;
+    0,  //af_pos_min_up;
+    0, //af_pos_inf_down;
+    10 << 6, //af_pos_inf;
+    0, //af_pos_inf_up;
+    0, //af_pos_macro_down;
+    340 << 6, //af_pos_macro;
+    0, //af_pos_macro_up;
+    0, //af_pos_max_down;
+    350 << 6, //af_pos_max;
+    0, //af_pos_max_up;
+    50,  //af_fast_search_positions;
     6,   //af_skip_frames_init;
-    2,   //af_skip_frames_move;
-    30,  //af_dynamic_range_th;
-    2 << ( 12 - 2 ),  //af_spot_tolerance;
-    1 << ( 12 - 1 ),  //af_exit_th;
-    16 << ( 12 - 4 ), //af_caf_trigger_th;
-    4 << ( 12 - 4 ),  //af_caf_stable_th;
-    0,//af_print_debug;
+    1,   //af_skip_frames_move;
+    0,  //af_dynamic_range_th;
+    10000,//2 << ( 12 - 2 ),  //af_spot_tolerance;
+    8000, //1 << ( 12 - 1 ),  //af_exit_th;
+    10000, //16 << ( 12 - 4 ), //af_caf_trigger_th;
+    4000 << ( 12 - 4 ),  //af_caf_stable_th;
+    1,//af_print_debug;
 };
 
 static uint8_t _CALIBRATION_AF_WEIGHT_H[17] = {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16};

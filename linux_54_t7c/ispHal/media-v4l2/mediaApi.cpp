@@ -73,6 +73,8 @@ int mediaStreamInit(media_stream_t *stream, struct media_device * dev)
                 || strstr(ent->info.name, "ov")
                 || strstr(ent->info.name, "os")) {
             sprintf(stream->sensor_ent_name, "%s", ent->info.name);
+        } else if (strstr(ent->info.name, "dw")) {
+            sprintf(stream->lens_ent_name, "%s", ent->info.name);
         } else if (strstr(ent->info.name, "core")) {
             sprintf(stream->isp_ent_name, "%s", ent->info.name);
         } else if (strstr(ent->info.name, "stats")) {
@@ -98,6 +100,11 @@ int mediaStreamInit(media_stream_t *stream, struct media_device * dev)
     if (NULL == stream->sensor_ent) {
         ERR("get  sensor_ent fail");
         return -1;
+    }
+
+    stream->lens_ent = media_get_entity_by_name(stream->media_dev, stream->lens_ent_name, strlen(stream->lens_ent_name));
+    if (NULL == stream->lens_ent) {
+        ERR("get  lens_ent fail");
     }
 
     //mandatory
@@ -164,6 +171,11 @@ int mediaStreamInit(media_stream_t *stream, struct media_device * dev)
     if (stream->video_ent3) {
         ret = v4l2_video_open(stream->video_ent3);
         INFO("%s open video3 fd %d ", __FUNCTION__, stream->video_ent3->fd);
+    }
+
+    if (stream->lens_ent) {
+        ret = v4l2_video_open(stream->lens_ent);
+        ERR("%s open lens fd %d ", __FUNCTION__, stream->lens_ent->fd);
     }
 
     INFO("media stream init success");
