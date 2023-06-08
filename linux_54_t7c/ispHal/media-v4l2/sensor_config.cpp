@@ -31,6 +31,7 @@
 
 #include "imx290_api.h"
 #include "ov08a10_api.h"
+#include "imx415_api.h"
 #include "logs.h"
 
 
@@ -54,6 +55,24 @@ struct sensorConfig imx290Cfg = {
     imx290Cfg.sdrFormat        = MEDIA_BUS_FMT_SRGGB12_1X12,
     imx290Cfg.type             = sensor_raw,
 };
+
+struct sensorConfig imx415Cfg = {
+    imx415Cfg.expFunc.pfn_cmos_fps_set = cmos_fps_set_imx415,
+    imx415Cfg.expFunc.pfn_cmos_get_alg_default = cmos_get_ae_default_imx415,
+    imx415Cfg.expFunc.pfn_cmos_alg_update = cmos_alg_update_imx415,
+    imx415Cfg.expFunc.pfn_cmos_again_calc_table = cmos_again_calc_table_imx415,
+    imx415Cfg.expFunc.pfn_cmos_dgain_calc_table = cmos_dgain_calc_table_imx415,
+    imx415Cfg.expFunc.pfn_cmos_inttime_calc_table = cmos_inttime_calc_table_imx415,
+    imx415Cfg.cmos_set_sensor_entity = cmos_set_sensor_entity_imx415,
+    imx415Cfg.cmos_get_sensor_calibration = cmos_get_sensor_calibration_imx415,
+    imx415Cfg.sensorWidth      = 3840,
+    imx415Cfg.sensorHeight     = 2160,
+    imx415Cfg.sensorName       = "imx415",
+    imx415Cfg.wdrFormat        = MEDIA_BUS_FMT_SRGGB10_1X10,
+    imx415Cfg.sdrFormat        = MEDIA_BUS_FMT_SRGGB12_1X12,
+    imx415Cfg.type             = sensor_raw,
+};
+
 struct sensorConfig ov08a10Cfg = {
     ov08a10Cfg.expFunc.pfn_cmos_fps_set = cmos_fps_set_ov08a10,
     ov08a10Cfg.expFunc.pfn_cmos_get_alg_default = cmos_get_ae_default_ov08a10,
@@ -71,9 +90,9 @@ struct sensorConfig ov08a10Cfg = {
     ov08a10Cfg.type             = sensor_raw,
 };
 
-
 struct sensorConfig *supportedCfgs[] = {
     &imx290Cfg,
+    &imx415Cfg,
     &ov08a10Cfg,
 };
 

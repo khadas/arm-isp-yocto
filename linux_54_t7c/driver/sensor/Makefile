@@ -4,6 +4,7 @@ obj-m		+= ov13b10/
 obj-m		+= ov08a10/
 obj-m		+= ov9285/
 obj-m		+= ov5640/
+obj-m		+= dw9714/
 
 KBUILD_CFLAGS_MODULE += $(GKI_EXT_MODULE_PREDEFINE)
 

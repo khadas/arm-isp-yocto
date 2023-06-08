@@ -36,7 +36,7 @@
 
 #include "staticPipe.h"
 #include "ispMgr.h"
-
+#include "lens_config.h"
 
 //#define WDR_ENABLE
 #define DUAL_CAMERA
@@ -83,6 +83,7 @@ struct thread_param {
     int                          param_buf_length;
     int                          stats_buf_length;
     struct sensorConfig          *sensorCfg;
+    struct lensConfig            *lensCfg;
 
     char                        *mediadevname;
     /* video device info */
@@ -374,6 +375,12 @@ void isp_param_init(struct media_stream v4l2_media_stream, struct thread_param *
     if (tparm->sensorCfg == nullptr) {
         ERR("Failed to matchSensorConfig");
         return ;
+    }
+
+    tparm->lensCfg = matchLensConfig(&v4l2_media_stream);
+    if (tparm->lensCfg != nullptr) {
+        lens_set_entity(tparm->lensCfg, v4l2_media_stream.lens_ent);
+        lens_control_cb(tparm->lensCfg, &tparm->info.pstAlgCtx.stLensFunc);
     }
 
 #ifdef WDR_ENABLE
