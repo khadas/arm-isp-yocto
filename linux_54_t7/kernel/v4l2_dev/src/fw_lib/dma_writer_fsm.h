@@ -57,7 +57,7 @@ typedef struct _frame_buffer_t {
 } frame_buffer_t;
 
 void frame_buffer_initialize( dma_writer_fsm_ptr_t p_fsm );
-void dma_writer_deinit( dma_writer_fsm_ptr_t p_fsm );
+void dma_writer_deinit( void * fsm );
 void frame_buffer_prepare_metadata( dma_writer_fsm_ptr_t p_fsm );
 void frame_buffer_fr_finished( dma_writer_fsm_ptr_t p_fsm );
 void frame_buffer_ds_finished( dma_writer_fsm_ptr_t p_fsm );

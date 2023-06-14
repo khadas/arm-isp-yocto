@@ -236,8 +236,10 @@ void AF_init( AF_fsm_ptr_t p_fsm )
     }
 }
 
-void AF_deinit( AF_fsm_ptr_t p_fsm )
+void AF_deinit( void * fsm )
 {
+    AF_fsm_ptr_t p_fsm = (AF_fsm_ptr_t) fsm;
+
     if ( ACAMERA_FSM2CTX_PTR( p_fsm )->settings.lens_deinit )
         ACAMERA_FSM2CTX_PTR( p_fsm )
             ->settings.lens_deinit( p_fsm->lens_ctx );

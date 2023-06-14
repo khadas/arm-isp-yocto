@@ -109,7 +109,7 @@ typedef struct _fps_counter_t {
 
 void cmos_update_exposure_partitioning_lut( cmos_fsm_ptr_t p_fsm );
 void cmos_init( cmos_fsm_ptr_t p_fsm );
-void cmos_deinit( cmos_fsm_ptr_t p_fsm );
+void cmos_deinit( void * fsm );
 void cmos_inttime_write( cmos_fsm_const_ptr_t p_fsm );
 void cmos_gains_write( cmos_fsm_const_ptr_t p_fsm );
 void cmos_inttime_update( cmos_fsm_ptr_t p_fsm );

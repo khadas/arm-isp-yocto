@@ -1806,8 +1806,9 @@ void sbuf_fsm_initialize( sbuf_fsm_t *p_fsm )
     return;
 }
 
-void sbuf_deinit( sbuf_fsm_ptr_t p_fsm )
+void sbuf_deinit( void * fsm )
 {
+    sbuf_fsm_ptr_t p_fsm = (sbuf_fsm_ptr_t) fsm;
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 3, 0))
     int rc;
 #endif

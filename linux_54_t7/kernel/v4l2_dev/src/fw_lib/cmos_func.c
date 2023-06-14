@@ -1273,7 +1273,8 @@ void cmos_set_exposure_target( cmos_fsm_ptr_t p_fsm, int32_t exposure_log2, uint
 #endif
 }
 
-void cmos_deinit( cmos_fsm_ptr_t p_fsm )
+void cmos_deinit( void * fsm )
 {
+    cmos_fsm_ptr_t p_fsm = (cmos_fsm_ptr_t) fsm;
     system_spinlock_destroy( p_fsm->exp_lock );
 }
