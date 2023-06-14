@@ -36,7 +36,7 @@ uint32_t sensor_boot_init( sensor_fsm_ptr_t p_fsm );
 void sensor_configure_buffers( sensor_fsm_ptr_t p_fsm );
 void sensor_hw_init( sensor_fsm_ptr_t p_fsm );
 void sensor_sw_init( sensor_fsm_ptr_t p_fsm );
-void sensor_deinit( sensor_fsm_ptr_t p_fsm );
+void sensor_deinit( void * fsm );
 void sensor_update_black( sensor_fsm_ptr_t p_fsm );
 uint32_t sensor_get_lines_second( sensor_fsm_ptr_t p_fsm );
 void sensor_isp_algorithm( sensor_fsm_ptr_t p_fsm, int module_id );

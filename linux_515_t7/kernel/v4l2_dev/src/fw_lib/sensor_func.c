@@ -458,8 +458,9 @@ uint32_t sensor_get_lines_second( sensor_fsm_ptr_t p_fsm )
     return param->lines_per_second;
 }
 
-void sensor_deinit( sensor_fsm_ptr_t p_fsm )
+void sensor_deinit( void * fsm )
 {
+    sensor_fsm_ptr_t p_fsm = (sensor_fsm_ptr_t) fsm;
     ACAMERA_FSM2CTX_PTR( p_fsm )
         ->settings.sensor_deinit( p_fsm->sensor_ctx );
 }

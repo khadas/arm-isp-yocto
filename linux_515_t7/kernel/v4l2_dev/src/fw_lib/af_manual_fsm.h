@@ -65,7 +65,7 @@ typedef struct _af_lms_param_t {
 
 
 void AF_init( AF_fsm_ptr_t p_fsm );
-void AF_deinit( AF_fsm_ptr_t p_fsm );
+void AF_deinit( void * p_fsm );
 void AF_request_irq( AF_fsm_ptr_t p_fsm );
 void af_notify_status( AF_fsm_ptr_t p_fsm );
 

@@ -27,7 +27,7 @@ typedef struct _sbuf_fsm_t *sbuf_fsm_ptr_t;
 typedef const struct _sbuf_fsm_t *sbuf_fsm_const_ptr_t;
 
 void sbuf_fsm_initialize( sbuf_fsm_ptr_t p_fsm );
-void sbuf_deinit( sbuf_fsm_ptr_t p_fsm );
+void sbuf_deinit( void * fsm );
 void sbuf_update_ae_idx( sbuf_fsm_ptr_t p_fsm );
 void sbuf_update_awb_idx( sbuf_fsm_ptr_t p_fsm );
 void sbuf_update_af_idx( sbuf_fsm_ptr_t p_fsm );

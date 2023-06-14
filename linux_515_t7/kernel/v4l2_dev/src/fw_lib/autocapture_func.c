@@ -659,8 +659,9 @@ void autocapture_initialize( autocapture_fsm_t *p_fsm )
 	return;
 }
 
-void autocapture_deinit( autocapture_fsm_ptr_t p_fsm )
+void autocapture_deinit( void * fsm )
 {
+	autocapture_fsm_ptr_t p_fsm = (autocapture_fsm_ptr_t) fsm;
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 3, 0))
 	int rc;
 #endif

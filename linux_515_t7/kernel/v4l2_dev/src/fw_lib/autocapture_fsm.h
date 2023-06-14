@@ -45,7 +45,7 @@ struct module_cfg_info {
 void autocapture_fsm_clear( autocapture_fsm_ptr_t p_fsm );
 
 void autocapture_fsm_init( void *fsm, fsm_init_param_t *init_param );
-void autocapture_deinit( autocapture_fsm_ptr_t p_fsm );
+void autocapture_deinit( void * fsm );
 void autocapture_hwreset(autocapture_fsm_ptr_t p_fsm );
 
 int autocapture_fsm_set_param( void *fsm, uint32_t param_id, void *input, uint32_t input_size );

@@ -529,7 +529,9 @@ void dma_writer_update_address_interrupt( dma_writer_fsm_const_ptr_t p_fsm, uint
     dma_writer_process_interrupt( p_fsm->handle, irq_event );
 }
 
-void dma_writer_deinit( dma_writer_fsm_ptr_t p_fsm )
+void dma_writer_deinit( void * fsm )
 {
+    dma_writer_fsm_ptr_t p_fsm = (dma_writer_fsm_ptr_t) fsm;
+
     dma_writer_exit( p_fsm->handle );
 }
