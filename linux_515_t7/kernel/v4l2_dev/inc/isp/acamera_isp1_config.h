@@ -7904,7 +7904,7 @@ static __inline uint8_t acamera_isp_temper_dma_format_read(uintptr_t base) {
 //19    Writer fail (Outstanding Transactions)
 //20    Reader fail (AR wait)
 //21    Reader fail (R resp)
-//22    Reader fail (Oustanding Transfers)
+//22    Reader fail (outstanding Transfers)
 //23    0
 //24    intw_fail_user_intfc_sig
 //25    intr_fail_user_intfc_sig
@@ -8338,7 +8338,7 @@ static __inline uint8_t acamera_isp_temper_dma_writer_axi_max_awlen_read(uintptr
 
 //------------------------------------------------------------------------------ //
 //
-//active high, enables posting of pagewarm dummy writes to SMMU for early page translation of upcomming 4K pages.
+//active high, enables posting of pagewarm dummy writes to SMMU for early page translation of upcoming 4K pages.
 //Recommend SMMU has min 8 page cache to avoid translation miss. Pagewarms are posted as dummy writes with wstrb= 0
 //
 //------------------------------------------------------------------------------ //
@@ -8500,7 +8500,7 @@ static __inline uint8_t acamera_isp_temper_dma_reader_axi_max_arlen_read(uintptr
 
 //------------------------------------------------------------------------------ //
 //
-//active high, enables posting of pagewarm dummy writes to SMMU for early page translation of upcomming 4K pages.
+//active high, enables posting of pagewarm dummy writes to SMMU for early page translation of upcoming 4K pages.
 //Recommend SMMU has min 8 page cache to avoid translation miss. Pagewarms are posted as dummy writes with wstrb= 0
 //
 //------------------------------------------------------------------------------ //
@@ -10865,7 +10865,7 @@ static __inline uint16_t acamera_isp_demosaic_rgb_vh_thresh_read(uintptr_t base)
 //The threshold defines the difference of 45 and 135 gradients at which the 45 gradient will start to be taken into account in the
 //blending (if AA Offset is set to 0).
 //Setting the offset not null (or the slope low) will include proportion of the 45 gradient in the blending before
-//even the gradient difierence reaches the threshold (see AA Offset for more details).
+//even the gradient difference reaches the threshold (see AA Offset for more details).
 //
 //------------------------------------------------------------------------------ //
 
@@ -16874,7 +16874,7 @@ static __inline uint8_t acamera_isp_fr_gamma_rgb_enable_read(uintptr_t base) {
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//gain applied to the R chanel in 4.8 format
+//gain applied to the R channel in 4.8 format
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_ISP_FR_GAMMA_RGB_GAIN_R_DEFAULT (0x100)
@@ -16895,7 +16895,7 @@ static __inline uint16_t acamera_isp_fr_gamma_rgb_gain_r_read(uintptr_t base) {
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//gain applied to the G chanel in 4.8 format
+//gain applied to the G channel in 4.8 format
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_ISP_FR_GAMMA_RGB_GAIN_G_DEFAULT (0x100)
@@ -16916,7 +16916,7 @@ static __inline uint16_t acamera_isp_fr_gamma_rgb_gain_g_read(uintptr_t base) {
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//gain applied to the B chanel in 4.8 format
+//gain applied to the B channel in 4.8 format
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_ISP_FR_GAMMA_RGB_GAIN_B_DEFAULT (0x100)
@@ -16937,7 +16937,7 @@ static __inline uint16_t acamera_isp_fr_gamma_rgb_gain_b_read(uintptr_t base) {
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//Offset subtracted from the R chanel
+//Offset subtracted from the R channel
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_ISP_FR_GAMMA_RGB_OFFSET_R_DEFAULT (0)
@@ -16958,7 +16958,7 @@ static __inline uint16_t acamera_isp_fr_gamma_rgb_offset_r_read(uintptr_t base) 
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//Offset subtracted from the G chanel
+//Offset subtracted from the G channel
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_ISP_FR_GAMMA_RGB_OFFSET_G_DEFAULT (0)
@@ -16979,7 +16979,7 @@ static __inline uint16_t acamera_isp_fr_gamma_rgb_offset_g_read(uintptr_t base) 
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//Offset subtracted from the B chanel
+//Offset subtracted from the B channel
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_ISP_FR_GAMMA_RGB_OFFSET_B_DEFAULT (0)
@@ -17176,7 +17176,7 @@ static __inline uint16_t acamera_isp_fr_sharpen_luma_slope_low_read(uintptr_t ba
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//Luma threshold above this value, sharpening level will be dicreased.
+//Luma threshold above this value, sharpening level will be decreased.
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_ISP_FR_SHARPEN_LUMA_THRESH_HIGH_DEFAULT (0x332)
@@ -17954,7 +17954,7 @@ static __inline uint8_t acamera_isp_fr_dma_writer_single_frame_read(uintptr_t ba
 //------------------------------------------------------------------------------ //
 //
 //0 = no frames written(when switched from 1, current frame completes writing before stopping),
-//1= write frame(s) (write single or continous frame(s) )
+//1= write frame(s) (write single or continuous frame(s) )
 //
 //------------------------------------------------------------------------------ //
 
@@ -18238,7 +18238,7 @@ static __inline uint8_t acamera_isp_fr_dma_writer_wbank_active_read(uintptr_t ba
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//count of incomming frames (starts) to vdma_writer on video input, non resetable, rolls over, updates at pixel 1 of new frame on video in
+//count of incoming frames (starts) to vdma_writer on video input, non resetable, rolls over, updates at pixel 1 of new frame on video in
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_ISP_FR_DMA_WRITER_FRAME_ICOUNT_DEFAULT (0x0)
@@ -18567,7 +18567,7 @@ static __inline uint16_t acamera_isp_fr_dma_writer_linetick_delay_read(uintptr_t
 
 //------------------------------------------------------------------------------ //
 //
-//active high, enables posting of pagewarm dummy writes to SMMU for early page translation of upcomming 4K pages.
+//active high, enables posting of pagewarm dummy writes to SMMU for early page translation of upcoming 4K pages.
 //Recommend SMMU has min 8 page cache to avoid translation miss. Pagewarms are posted as dummy writes with wstrb= 0
 //
 //------------------------------------------------------------------------------ //
@@ -18822,7 +18822,7 @@ static __inline uint8_t acamera_isp_fr_uv_dma_writer_single_frame_read(uintptr_t
 //------------------------------------------------------------------------------ //
 //
 //0 = no frames written(when switched from 1, current frame completes writing before stopping),
-//1= write frame(s) (write single or continous frame(s) )
+//1= write frame(s) (write single or continuous frame(s) )
 //
 //------------------------------------------------------------------------------ //
 
@@ -19106,7 +19106,7 @@ static __inline uint8_t acamera_isp_fr_uv_dma_writer_wbank_active_read(uintptr_t
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//count of incomming frames (starts) to vdma_writer on video input, non resetable, rolls over, updates at pixel 1 of new frame on video in
+//count of incoming frames (starts) to vdma_writer on video input, non resetable, rolls over, updates at pixel 1 of new frame on video in
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_ISP_FR_UV_DMA_WRITER_FRAME_ICOUNT_DEFAULT (0x0)
@@ -19435,7 +19435,7 @@ static __inline uint16_t acamera_isp_fr_uv_dma_writer_linetick_delay_read(uintpt
 
 //------------------------------------------------------------------------------ //
 //
-//active high, enables posting of pagewarm dummy writes to SMMU for early page translation of upcomming 4K pages.
+//active high, enables posting of pagewarm dummy writes to SMMU for early page translation of upcoming 4K pages.
 //Recommend SMMU has min 8 page cache to avoid translation miss. Pagewarms are posted as dummy writes with wstrb= 0
 //
 //------------------------------------------------------------------------------ //
@@ -20089,7 +20089,7 @@ static __inline uint8_t acamera_isp_ds1_gamma_rgb_enable_read(uintptr_t base) {
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//gain applied to the R chanel in 4.8 format
+//gain applied to the R channel in 4.8 format
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_ISP_DS1_GAMMA_RGB_GAIN_R_DEFAULT (0x100)
@@ -20110,7 +20110,7 @@ static __inline uint16_t acamera_isp_ds1_gamma_rgb_gain_r_read(uintptr_t base) {
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//gain applied to the G chanel in 4.8 format
+//gain applied to the G channel in 4.8 format
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_ISP_DS1_GAMMA_RGB_GAIN_G_DEFAULT (0x100)
@@ -20131,7 +20131,7 @@ static __inline uint16_t acamera_isp_ds1_gamma_rgb_gain_g_read(uintptr_t base) {
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//gain applied to the B chanel in 4.8 format
+//gain applied to the B channel in 4.8 format
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_ISP_DS1_GAMMA_RGB_GAIN_B_DEFAULT (0x100)
@@ -20152,7 +20152,7 @@ static __inline uint16_t acamera_isp_ds1_gamma_rgb_gain_b_read(uintptr_t base) {
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//Offset subtracted from the R chanel
+//Offset subtracted from the R channel
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_ISP_DS1_GAMMA_RGB_OFFSET_R_DEFAULT (0)
@@ -20173,7 +20173,7 @@ static __inline uint16_t acamera_isp_ds1_gamma_rgb_offset_r_read(uintptr_t base)
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//Offset subtracted from the G chanel
+//Offset subtracted from the G channel
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_ISP_DS1_GAMMA_RGB_OFFSET_G_DEFAULT (0)
@@ -20194,7 +20194,7 @@ static __inline uint16_t acamera_isp_ds1_gamma_rgb_offset_g_read(uintptr_t base)
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//Offset subtracted from the B chanel
+//Offset subtracted from the B channel
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_ISP_DS1_GAMMA_RGB_OFFSET_B_DEFAULT (0)
@@ -20391,7 +20391,7 @@ static __inline uint16_t acamera_isp_ds1_sharpen_luma_slope_low_read(uintptr_t b
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//Luma threshold above this value, sharpening level will be dicreased.
+//Luma threshold above this value, sharpening level will be decreased.
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_ISP_DS1_SHARPEN_LUMA_THRESH_HIGH_DEFAULT (0x332)
@@ -21169,7 +21169,7 @@ static __inline uint8_t acamera_isp_ds1_dma_writer_single_frame_read(uintptr_t b
 //------------------------------------------------------------------------------ //
 //
 //0 = no frames written(when switched from 1, current frame completes writing before stopping),
-//1= write frame(s) (write single or continous frame(s) )
+//1= write frame(s) (write single or continuous frame(s) )
 //
 //------------------------------------------------------------------------------ //
 
@@ -21453,7 +21453,7 @@ static __inline uint8_t acamera_isp_ds1_dma_writer_wbank_active_read(uintptr_t b
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//count of incomming frames (starts) to vdma_writer on video input, non resetable, rolls over, updates at pixel 1 of new frame on video in
+//count of incoming frames (starts) to vdma_writer on video input, non resetable, rolls over, updates at pixel 1 of new frame on video in
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_ISP_DS1_DMA_WRITER_FRAME_ICOUNT_DEFAULT (0x0)
@@ -21782,7 +21782,7 @@ static __inline uint16_t acamera_isp_ds1_dma_writer_linetick_delay_read(uintptr_
 
 //------------------------------------------------------------------------------ //
 //
-//active high, enables posting of pagewarm dummy writes to SMMU for early page translation of upcomming 4K pages.
+//active high, enables posting of pagewarm dummy writes to SMMU for early page translation of upcoming 4K pages.
 //Recommend SMMU has min 8 page cache to avoid translation miss. Pagewarms are posted as dummy writes with wstrb= 0
 //
 //------------------------------------------------------------------------------ //
@@ -22037,7 +22037,7 @@ static __inline uint8_t acamera_isp_ds1_uv_dma_writer_single_frame_read(uintptr_
 //------------------------------------------------------------------------------ //
 //
 //0 = no frames written(when switched from 1, current frame completes writing before stopping),
-//1= write frame(s) (write single or continous frame(s) )
+//1= write frame(s) (write single or continuous frame(s) )
 //
 //------------------------------------------------------------------------------ //
 
@@ -22321,7 +22321,7 @@ static __inline uint8_t acamera_isp_ds1_uv_dma_writer_wbank_active_read(uintptr_
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//count of incomming frames (starts) to vdma_writer on video input, non resetable, rolls over, updates at pixel 1 of new frame on video in
+//count of incoming frames (starts) to vdma_writer on video input, non resetable, rolls over, updates at pixel 1 of new frame on video in
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_ISP_DS1_UV_DMA_WRITER_FRAME_ICOUNT_DEFAULT (0x0)
@@ -22650,7 +22650,7 @@ static __inline uint16_t acamera_isp_ds1_uv_dma_writer_linetick_delay_read(uintp
 
 //------------------------------------------------------------------------------ //
 //
-//active high, enables posting of pagewarm dummy writes to SMMU for early page translation of upcomming 4K pages.
+//active high, enables posting of pagewarm dummy writes to SMMU for early page translation of upcoming 4K pages.
 //Recommend SMMU has min 8 page cache to avoid translation miss. Pagewarms are posted as dummy writes with wstrb= 0
 //
 //------------------------------------------------------------------------------ //

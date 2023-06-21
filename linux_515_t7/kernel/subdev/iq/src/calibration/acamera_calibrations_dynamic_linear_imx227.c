@@ -342,7 +342,7 @@ static uint32_t _calibration_iridix8_strength_dk_enh_control[] = {
 };
 
 static uint32_t _calibration_ae_control[] = {
-    30,  // AE convergance
+    30,  // AE convergence
     236, // LDR AE target -> this should match the 18% grey of teh output gamma
     0,   // AE tail weight
     0,   // WDR mode only: Max percentage of clipped pixels for long exposure: WDR mode only: 256 = 100% clipped pixels

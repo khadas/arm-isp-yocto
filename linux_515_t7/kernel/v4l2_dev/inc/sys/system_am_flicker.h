@@ -76,7 +76,7 @@
 //Bit 13: 0        reg_flkr_stat_xed         // unsigned ,    RW, default = 4095  column end for flicker statistic
 #define ISP_DEFLICKER_DIV_COEF                     (0x000e  << 2)
 //Bit 31:16        reserved
-//Bit 15: 0        reg_flkr_stat_div_coef    // unsigned ,    RW, default = 1920  divide coefficent for sum diff for row statistic for flicker detection
+//Bit 15: 0        reg_flkr_stat_div_coef    // unsigned ,    RW, default = 1920  divide coefficient for sum diff for row statistic for flicker detection
 #define ISP_DEFLICKER_WDR_RATIO                    (0x000f  << 2)
 //Bit 31:15        reserved
 //Bit 14: 0        reg_flkr_wdr_ratio        // unsigned ,    RW, default = 64  exposure ratio between long and short1 for wdr mode. T7 wdr mode short frame input=long_expo/short_expo, else=1. default 64

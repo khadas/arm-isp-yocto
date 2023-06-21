@@ -44,7 +44,7 @@ void AF_fsm_clear( AF_fsm_t *p_fsm )
     p_fsm->last_sharp_done = 0;
 	p_fsm->zone_weight = NULL;
 	p_fsm->zone_process_statistic = NULL;
-	p_fsm->zone_process_reliablility = NULL;
+	p_fsm->zone_process_reliability = NULL;
     memset( &p_fsm->lens_ctrl, 0, sizeof( p_fsm->lens_ctrl ) );
 }
 

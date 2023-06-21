@@ -77,7 +77,7 @@ struct _AF_fsm_t {
     uint32_t zone_raw_statistic[AF_ZONES_COUNT_MAX][2];
     uint8_t *zone_weight;
     uint64_t *zone_process_statistic;
-    uint32_t *zone_process_reliablility;
+    uint32_t *zone_process_reliability;
     uint32_t pos_min;
     uint32_t pos_inf;
     uint32_t pos_macro;
