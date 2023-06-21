@@ -2884,7 +2884,7 @@ static __inline uint8_t acamera_fpga_video_capture1_dma_writer_single_frame_read
 // ------------------------------------------------------------------------------ //
 // 
 //    0 = no frames written(when switched from 1, current frame completes writing before stopping),
-//    1= write frame(s) (write single or continous frame(s) )
+//    1= write frame(s) (write single or continuous frame(s) )
 //    
 // ------------------------------------------------------------------------------ //
 
@@ -6833,7 +6833,7 @@ static __inline uint8_t acamera_fpga_video_capture2_dma_writer_single_frame_read
 // ------------------------------------------------------------------------------ //
 // 
 //    0 = no frames written(when switched from 1, current frame completes writing before stopping),
-//    1= write frame(s) (write single or continous frame(s) )
+//    1= write frame(s) (write single or continuous frame(s) )
 //    
 // ------------------------------------------------------------------------------ //
 
@@ -9199,7 +9199,7 @@ static __inline uint8_t acamera_fpga_video_capture3_dma_writer_single_frame_read
 // ------------------------------------------------------------------------------ //
 // 
 //    0 = no frames written(when switched from 1, current frame completes writing before stopping),
-//    1= write frame(s) (write single or continous frame(s) )
+//    1= write frame(s) (write single or continuous frame(s) )
 //    
 // ------------------------------------------------------------------------------ //
 
@@ -11565,7 +11565,7 @@ static __inline uint8_t acamera_fpga_video_capture4_dma_writer_single_frame_read
 // ------------------------------------------------------------------------------ //
 // 
 //    0 = no frames written(when switched from 1, current frame completes writing before stopping),
-//    1= write frame(s) (write single or continous frame(s) )
+//    1= write frame(s) (write single or continuous frame(s) )
 //    
 // ------------------------------------------------------------------------------ //
 

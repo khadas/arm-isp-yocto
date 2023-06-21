@@ -17954,7 +17954,7 @@ static __inline uint8_t acamera_isp_fr_dma_writer_single_frame_read(uintptr_t ba
 // ------------------------------------------------------------------------------ //
 // 
 //        0 = no frames written(when switched from 1, current frame completes writing before stopping),
-//        1= write frame(s) (write single or continous frame(s) )
+//        1= write frame(s) (write single or continuous frame(s) )
 //        
 // ------------------------------------------------------------------------------ //
 
@@ -18822,7 +18822,7 @@ static __inline uint8_t acamera_isp_fr_uv_dma_writer_single_frame_read(uintptr_t
 // ------------------------------------------------------------------------------ //
 // 
 //        0 = no frames written(when switched from 1, current frame completes writing before stopping),
-//        1= write frame(s) (write single or continous frame(s) )
+//        1= write frame(s) (write single or continuous frame(s) )
 //        
 // ------------------------------------------------------------------------------ //
 
@@ -21169,7 +21169,7 @@ static __inline uint8_t acamera_isp_ds1_dma_writer_single_frame_read(uintptr_t b
 // ------------------------------------------------------------------------------ //
 // 
 //        0 = no frames written(when switched from 1, current frame completes writing before stopping),
-//        1= write frame(s) (write single or continous frame(s) )
+//        1= write frame(s) (write single or continuous frame(s) )
 //        
 // ------------------------------------------------------------------------------ //
 
@@ -22037,7 +22037,7 @@ static __inline uint8_t acamera_isp_ds1_uv_dma_writer_single_frame_read(uintptr_
 // ------------------------------------------------------------------------------ //
 // 
 //        0 = no frames written(when switched from 1, current frame completes writing before stopping),
-//        1= write frame(s) (write single or continous frame(s) )
+//        1= write frame(s) (write single or continuous frame(s) )
 //        
 // ------------------------------------------------------------------------------ //
 
