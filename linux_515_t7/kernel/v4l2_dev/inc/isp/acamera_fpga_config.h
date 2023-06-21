@@ -2884,7 +2884,7 @@ static __inline uint8_t acamera_fpga_video_capture1_dma_writer_single_frame_read
 //------------------------------------------------------------------------------ //
 //
 //0 = no frames written(when switched from 1, current frame completes writing before stopping),
-//1= write frame(s) (write single or continous frame(s) )
+//1= write frame(s) (write single or continuous frame(s) )
 //
 //------------------------------------------------------------------------------ //
 
@@ -3316,7 +3316,7 @@ static __inline uint32_t acamera_fpga_video_capture1_dma_writer_wbase_last_read(
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//count of incomming frames (starts) to vdma_writer on video input, non resetable, rolls over, updates at pixel 1 of new frame on video in
+//count of incoming frames (starts) to vdma_writer on video input, non resetable, rolls over, updates at pixel 1 of new frame on video in
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_FPGA_VIDEO_CAPTURE1_DMA_WRITER_FRAME_ICOUNT_DEFAULT (0x0)
@@ -3414,7 +3414,7 @@ static __inline uint8_t acamera_fpga_video_capture1_dma_writer_max_burst_length_
 
 //------------------------------------------------------------------------------ //
 //
-//At end of frame an optional timeout is applied to wait for AXI writes to completed/accepted befotre caneclling and flushing.
+//At end of frame an optional timeout is applied to wait for AXI writes to completed/accepted before caneclling and flushing.
 //0= Timeout Enabled, timeout count can decrement.
 //1 = Disable timeout, timeout count can't decrement.
 //
@@ -6833,7 +6833,7 @@ static __inline uint8_t acamera_fpga_video_capture2_dma_writer_single_frame_read
 //------------------------------------------------------------------------------ //
 //
 //0 = no frames written(when switched from 1, current frame completes writing before stopping),
-//1= write frame(s) (write single or continous frame(s) )
+//1= write frame(s) (write single or continuous frame(s) )
 //
 //------------------------------------------------------------------------------ //
 
@@ -7265,7 +7265,7 @@ static __inline uint32_t acamera_fpga_video_capture2_dma_writer_wbase_last_read(
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//count of incomming frames (starts) to vdma_writer on video input, non resetable, rolls over, updates at pixel 1 of new frame on video in
+//count of incoming frames (starts) to vdma_writer on video input, non resetable, rolls over, updates at pixel 1 of new frame on video in
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_FPGA_VIDEO_CAPTURE2_DMA_WRITER_FRAME_ICOUNT_DEFAULT (0x0)
@@ -7363,7 +7363,7 @@ static __inline uint8_t acamera_fpga_video_capture2_dma_writer_max_burst_length_
 
 //------------------------------------------------------------------------------ //
 //
-//At end of frame an optional timeout is applied to wait for AXI writes to completed/accepted befotre caneclling and flushing.
+//At end of frame an optional timeout is applied to wait for AXI writes to completed/accepted before caneclling and flushing.
 //0= Timeout Enabled, timeout count can decrement.
 //1 = Disable timeout, timeout count can't decrement.
 //
@@ -9199,7 +9199,7 @@ static __inline uint8_t acamera_fpga_video_capture3_dma_writer_single_frame_read
 //------------------------------------------------------------------------------ //
 //
 //0 = no frames written(when switched from 1, current frame completes writing before stopping),
-//1= write frame(s) (write single or continous frame(s) )
+//1= write frame(s) (write single or continuous frame(s) )
 //
 //------------------------------------------------------------------------------ //
 
@@ -9631,7 +9631,7 @@ static __inline uint32_t acamera_fpga_video_capture3_dma_writer_wbase_last_read(
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//count of incomming frames (starts) to vdma_writer on video input, non resetable, rolls over, updates at pixel 1 of new frame on video in
+//count of incoming frames (starts) to vdma_writer on video input, non resetable, rolls over, updates at pixel 1 of new frame on video in
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_FPGA_VIDEO_CAPTURE3_DMA_WRITER_FRAME_ICOUNT_DEFAULT (0x0)
@@ -9729,7 +9729,7 @@ static __inline uint8_t acamera_fpga_video_capture3_dma_writer_max_burst_length_
 
 //------------------------------------------------------------------------------ //
 //
-//At end of frame an optional timeout is applied to wait for AXI writes to completed/accepted befotre caneclling and flushing.
+//At end of frame an optional timeout is applied to wait for AXI writes to completed/accepted before caneclling and flushing.
 //0= Timeout Enabled, timeout count can decrement.
 //1 = Disable timeout, timeout count can't decrement.
 //
@@ -11565,7 +11565,7 @@ static __inline uint8_t acamera_fpga_video_capture4_dma_writer_single_frame_read
 //------------------------------------------------------------------------------ //
 //
 //0 = no frames written(when switched from 1, current frame completes writing before stopping),
-//1= write frame(s) (write single or continous frame(s) )
+//1= write frame(s) (write single or continuous frame(s) )
 //
 //------------------------------------------------------------------------------ //
 
@@ -11997,7 +11997,7 @@ static __inline uint32_t acamera_fpga_video_capture4_dma_writer_wbase_last_read(
 //------------------------------------------------------------------------------ //
 
 //------------------------------------------------------------------------------ //
-//count of incomming frames (starts) to vdma_writer on video input, non resetable, rolls over, updates at pixel 1 of new frame on video in
+//count of incoming frames (starts) to vdma_writer on video input, non resetable, rolls over, updates at pixel 1 of new frame on video in
 //------------------------------------------------------------------------------ //
 
 #define ACAMERA_FPGA_VIDEO_CAPTURE4_DMA_WRITER_FRAME_ICOUNT_DEFAULT (0x0)
@@ -12095,7 +12095,7 @@ static __inline uint8_t acamera_fpga_video_capture4_dma_writer_max_burst_length_
 
 //------------------------------------------------------------------------------ //
 //
-//At end of frame an optional timeout is applied to wait for AXI writes to completed/accepted befotre caneclling and flushing.
+//At end of frame an optional timeout is applied to wait for AXI writes to completed/accepted before caneclling and flushing.
 //0= Timeout Enabled, timeout count can decrement.
 //1 = Disable timeout, timeout count can't decrement.
 //
