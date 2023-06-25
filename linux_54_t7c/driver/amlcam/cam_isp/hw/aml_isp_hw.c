@@ -24,13 +24,10 @@ void isp_hw_lut_wstart(struct isp_dev_t *isp_dev, u32 type)
 {
 	isp_dev->lutWr.lutSeq = LUT_WSTART;
 
-	if (isp_dev->lutWr.lutRegW[type] == 0)
-	{
+	if (isp_dev->lutWr.lutRegW[type] == 0) {
 		isp_dev->lutWr.lutRegW[type] = 1;
 		isp_dev->lutWr.lutRegAddr[type] = isp_dev->wreg_cnt;
-	}
-	else
-	{
+	} else {
 		isp_dev->wreg_cnt = isp_dev->lutWr.lutRegAddr[type];
 	}
 }
@@ -61,37 +58,27 @@ void isp_reg_write(struct isp_dev_t *isp_dev, u32 addr, u32 val)
 	struct aml_reg *rregs = isp_dev->rreg_buff.vaddr[AML_PLANE_A];
 	struct isp_global_info *g_info = isp_global_get_info();
 
-	if (isp_dev->apb_dma == 0)
-	{
+	if (isp_dev->apb_dma == 0) {
 		isp_hwreg_write(isp_dev, addr, val);
-	}
-	else if (isp_dev->apb_dma == 1)
-	{
+	} else if (isp_dev->apb_dma == 1) {
 		spin_lock_irqsave(&isp_dev->wreg_lock, flags);
 
 		rregs[(addr - ISP_BASE) >> 2].val = val;
 
-		if (g_info->mode == AML_ISP_SCAM)
-		{
+		if (g_info->mode == AML_ISP_SCAM) {
 			wregs[isp_dev->twreg_cnt].addr = isp_dev->phy_base + addr;
 			wregs[isp_dev->twreg_cnt].val = val;
 			isp_dev->wreg_cnt++;
 			isp_dev->twreg_cnt++;
-		}
-		else
-		{
-			if (isp_dev->isp_status == STATUS_STOP)
-			{
+		} else {
+			if (isp_dev->isp_status == STATUS_STOP) {
 				wregs[isp_dev->wreg_cnt].addr = isp_dev->phy_base + addr;
 				wregs[isp_dev->wreg_cnt].val = val;
 				isp_dev->wreg_cnt++;
 				isp_dev->fwreg_cnt++;
 				isp_dev->twreg_cnt++;
-			}
-			else
-			{
-				if (isp_dev->lutWr.lutSeq == LUT_WSTART)
-				{
+			} else {
+				if (isp_dev->lutWr.lutSeq == LUT_WSTART) {
 					wregs[isp_dev->wreg_cnt].addr = isp_dev->phy_base + addr;
 					wregs[isp_dev->wreg_cnt].val = val;
 					isp_dev->wreg_cnt++;
@@ -103,18 +90,15 @@ void isp_reg_write(struct isp_dev_t *isp_dev, u32 addr, u32 val)
 					return;
 				}
 
-				for (i = isp_dev->fwreg_cnt; i < isp_dev->twreg_cnt; i++)
-				{
-					if (wregs[i].addr == (isp_dev->phy_base + addr))
-					{
+				for (i = isp_dev->fwreg_cnt; i < isp_dev->twreg_cnt; i++) {
+					if (wregs[i].addr == (isp_dev->phy_base + addr)) {
 						wregs[i].addr = isp_dev->phy_base + addr;
 						wregs[i].val = val;
 						break;
 					}
 				}
 
-				if (i == isp_dev->twreg_cnt)
-				{
+				if (i == isp_dev->twreg_cnt) {
 					wregs[isp_dev->twreg_cnt].addr = isp_dev->phy_base + addr;
 					wregs[isp_dev->twreg_cnt].val = val;
 					isp_dev->twreg_cnt++;
@@ -133,14 +117,11 @@ int isp_reg_update_bits(struct isp_dev_t *isp_dev, u32 addr, u32 val, u32 start,
 	u32 orig = 0;
 	u32 temp = 0;
 
-	if (start + len > 32)
-	{
+	if (start + len > 32) {
 		dump_stack();
 		pr_err("ISP: Error input start and len\n");
 		return rtn;
-	}
-	else if (start == 0 && len == 32)
-	{
+	} else if (start == 0 && len == 32) {
 		isp_reg_write(isp_dev, addr, val);
 		return 0;
 	}
@@ -165,14 +146,11 @@ int isp_hwreg_update_bits(struct isp_dev_t *isp_dev, u32 addr, u32 val, u32 star
 	u32 orig = 0;
 	u32 temp = 0;
 
-	if (start + len > 32)
-	{
+	if (start + len > 32) {
 		dump_stack();
 		pr_err("ISP: Error input start and len\n");
 		return rtn;
-	}
-	else if (start == 0 && len == 32)
-	{
+	} else if (start == 0 && len == 32) {
 		isp_hwreg_write(isp_dev, addr, val);
 		return 0;
 	}
@@ -196,14 +174,11 @@ int isp_reg_read_bits(struct isp_dev_t *isp_dev, u32 addr, u32 *val, u32 start, 
 	u32 mask = 0;
 	u32 orig = 0;
 
-	if (start + len > 32 || !val)
-	{
+	if (start + len > 32 || !val) {
 		dump_stack();
 		pr_err("ISP: Error input start and len\n");
 		return rtn;
-	}
-	else if (start == 0 && len == 32)
-	{
+	} else if (start == 0 && len == 32) {
 		*val = isp_reg_read(isp_dev, addr);
 		return 0;
 	}
@@ -224,8 +199,7 @@ u32 isp_hw_float_convert(u32 data)
 	if (data < (1 << 12))
 		return data;
 
-	for (exp = 31 - 12 + 1; exp > 0; exp--)
-	{
+	for (exp = 31 -12 + 1; exp > 0; exp--) {
 		if (data & shift)
 			break;
 
@@ -242,8 +216,7 @@ int isp_hw_convert_fmt(struct aml_format *fmt)
 	if ((fmt->code == MEDIA_BUS_FMT_YVYU8_2X8) || (fmt->code == MEDIA_BUS_FMT_YUYV8_2X8))
 		return isp_fmt;
 
-	switch (fmt->code)
-	{
+	switch (fmt->code) {
 	case MEDIA_BUS_FMT_SBGGR8_1X8:
 	case MEDIA_BUS_FMT_SBGGR10_1X10:
 	case MEDIA_BUS_FMT_SBGGR12_1X12:
@@ -374,8 +347,7 @@ static int isp_hw_set_fmt(struct isp_dev_t *isp_dev, struct aml_format *fmt)
 	isp_fed_cfg_ofst(isp_dev);
 
 	isp_patgen_disable(isp_dev);
-	for (i = AML_ISP_STREAM_0; i < AML_ISP_STREAM_RAW; i++)
-	{
+	for (i = AML_ISP_STREAM_0; i < AML_ISP_STREAM_RAW; i++) {
 		isp_dev->video[i].acrop.hstart = 0;
 		isp_dev->video[i].acrop.vstart = 0;
 		isp_dev->video[i].acrop.hsize = fmt->width;
@@ -413,8 +385,7 @@ static int isp_hw_set_slice_fmt(struct isp_dev_t *isp_dev, struct aml_format *fm
 	int hsize_isp = 0;
 	int ovlp = 0;
 
-	switch (fmt->bpp)
-	{
+	switch (fmt->bpp) {
 	case 6:
 		multiple = 128;
 		break;
@@ -443,8 +414,7 @@ static int isp_hw_set_slice_fmt(struct isp_dev_t *isp_dev, struct aml_format *fm
 	hsize_isp = (hsize_org / 2) + ovlp;
 	if ((hsize_isp * pixel_bit) % multiple == 0)
 		hsize_mipi = hsize_isp;
-	else
-	{
+	else {
 		temp = hsize_isp * pixel_bit / multiple + 1;
 		hsize_mipi = temp * multiple / pixel_bit;
 	}
@@ -501,8 +471,7 @@ static int isp_hw_cfg_slice(struct isp_dev_t *isp_dev, int pos)
 {
 	int i = 0;
 
-	switch (pos)
-	{
+	switch (pos) {
 	case 0:
 		isp_ofe_cfg_slice_size(isp_dev, &isp_dev->lfmt);
 		break;
@@ -515,8 +484,7 @@ static int isp_hw_cfg_slice(struct isp_dev_t *isp_dev, int pos)
 		break;
 	}
 
-	for (i = 0; i < 1; i++)
-	{
+	for (i = 0; i < 1; i++) {
 		isp_dev->aslice[i].pos = pos;
 		isp_disp_cfg_slice(isp_dev, i, &isp_dev->aslice[i]);
 		isp_wrmifx3_cfg_slice(isp_dev, i, &isp_dev->aslice[i]);
@@ -549,8 +517,7 @@ static int isp_hw_cfg_pattern(struct isp_dev_t *isp_dev, struct aml_format *fmt)
 	int rtn = -EINVAL;
 	struct aml_format timgen;
 
-	switch (isp_dev->index)
-	{
+	switch (isp_dev->index) {
 	case 0:
 	case 1:
 		fmt->width = 1920;
@@ -584,8 +551,7 @@ static int isp_hw_cfg_timgen(struct isp_dev_t *isp_dev)
 	int rtn = -EINVAL;
 	struct aml_format timgen;
 
-	switch (isp_dev->index)
-	{
+	switch (isp_dev->index) {
 	case 0:
 	case 1:
 		timgen.width = 2592 + 1726;
@@ -607,8 +573,7 @@ static int isp_hw_cfg_timgen(struct isp_dev_t *isp_dev)
 
 static int isp_stream_set_fmt(struct aml_video *video, struct aml_format *fmt)
 {
-	switch (video->id)
-	{
+	switch (video->id) {
 	case AML_ISP_STREAM_DDR:
 		isp_rdmif0_cfg_frm_size(video->priv, fmt);
 		break;
@@ -631,8 +596,7 @@ static int isp_stream_set_fmt(struct aml_video *video, struct aml_format *fmt)
 
 static int isp_stream_cfg_buf(struct aml_video *video, struct aml_buffer *buff)
 {
-	switch (video->id)
-	{
+	switch (video->id) {
 	case AML_ISP_STREAM_DDR:
 		isp_rdmif0_cfg_frm_buff(video->priv, buff);
 		break;
@@ -655,8 +619,7 @@ static int isp_stream_bilateral_cfg(struct aml_video *video, struct aml_buffer *
 {
 	int rtn = 0;
 
-	switch (video->id)
-	{
+	switch (video->id) {
 	case AML_ISP_STREAM_PARAM:
 		isp_fed_cfg_param(video->priv, buff);
 		isp_lens_cfg_param(video->priv, buff);
@@ -706,8 +669,7 @@ static int isp_stream_bilateral_cfg(struct aml_video *video, struct aml_buffer *
 
 static void isp_hw_stream_crop(struct aml_video *video)
 {
-	switch (video->id)
-	{
+	switch (video->id) {
 	case AML_ISP_STREAM_0:
 	case AML_ISP_STREAM_1:
 	case AML_ISP_STREAM_2:
@@ -722,8 +684,7 @@ static void isp_hw_stream_on(struct aml_video *video)
 {
 	struct isp_dev_t *isp_dev = video->priv;
 
-	switch (video->id)
-	{
+	switch (video->id) {
 	case AML_ISP_STREAM_DDR:
 		isp_rdmif0_module_enable(video->priv, 1);
 		isp_hw_cfg_timgen(isp_dev);
@@ -756,8 +717,7 @@ static void isp_hw_stream_off(struct aml_video *video)
 {
 	struct isp_dev_t *isp_dev = video->priv;
 
-	switch (video->id)
-	{
+	switch (video->id) {
 	case AML_ISP_STREAM_DDR:
 		isp_rdmif0_module_enable(video->priv, 0);
 		isp_timgen_disable(isp_dev);
@@ -847,27 +807,26 @@ static int isp_hw_enable_mcnr_mif(struct isp_dev_t *isp_dev, int enable)
 static int isp_hw_enable_rot(struct aml_video *video, int enable)
 {
 
-	switch (video->rot_type)
-	{
-	case AML_MIRROR_NONE:
-		isp_wrmifx3_mirror_enable(video->priv, video->id - 3, 0);
-		isp_wrmifx3_flip_enable(video->priv, video->id - 3, 0);
-		break;
-	case AML_MIRROR_HORIZONTAL:
-		isp_wrmifx3_mirror_enable(video->priv, video->id - 3, enable);
-		isp_wrmifx3_flip_enable(video->priv, video->id - 3, 0);
-		break;
-	case AML_MIRROR_VERTICAL:
-		isp_wrmifx3_mirror_enable(video->priv, video->id - 3, 0);
-		isp_wrmifx3_flip_enable(video->priv, video->id - 3, enable);
-		break;
-	case AML_MIRROR_BOTH:
-		isp_wrmifx3_mirror_enable(video->priv, video->id - 3, enable);
-		isp_wrmifx3_flip_enable(video->priv, video->id - 3, enable);
-		break;
-	default:
-		pr_err("Failed to support rot type %d\n", video->rot_type);
-		return -1;
+	switch (video->rot_type) {
+		case AML_MIRROR_NONE:
+			isp_wrmifx3_mirror_enable(video->priv, video->id - 3, 0);
+			isp_wrmifx3_flip_enable(video->priv, video->id - 3, 0);
+			break;
+		case AML_MIRROR_HORIZONTAL:
+			isp_wrmifx3_mirror_enable(video->priv, video->id - 3, enable);
+			isp_wrmifx3_flip_enable(video->priv, video->id - 3, 0);
+			break;
+		case AML_MIRROR_VERTICAL:
+			isp_wrmifx3_mirror_enable(video->priv, video->id - 3, 0);
+			isp_wrmifx3_flip_enable(video->priv, video->id - 3, enable);
+			break;
+		case AML_MIRROR_BOTH:
+			isp_wrmifx3_mirror_enable(video->priv, video->id - 3, enable);
+			isp_wrmifx3_flip_enable(video->priv, video->id - 3, enable);
+			break;
+		default:
+			pr_err("Failed to support rot type %d\n", video->rot_type);
+			return -1;
 	}
 
 	return 0;
