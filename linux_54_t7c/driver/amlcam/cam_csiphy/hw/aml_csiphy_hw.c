@@ -31,24 +31,23 @@ static int mipi_reg_write(void *c_dev, int idx, u32 addr, u32 val)
 	void __iomem *base = NULL;
 	struct csiphy_dev_t *csiphy_dev = c_dev;
 
-	switch (idx)
-	{
-	case DPHY_MD:
-		base = csiphy_dev->csi_dphy + MPPI_DPHY_BASE;
-		break;
-	case HOST_MD:
-		base = csiphy_dev->csi_dphy + MPPI_HOST_BASE;
-		break;
-	case APHY_MD:
-		base = csiphy_dev->csi_aphy;
-		break;
-	case PROC_MD:
-		base = csiphy_dev->csi_dphy + MPPI_PROC_BASE;
-		break;
+	switch (idx) {
+		case DPHY_MD:
+			base = csiphy_dev->csi_dphy + MPPI_DPHY_BASE;
+			break;
+		case HOST_MD:
+			base = csiphy_dev->csi_dphy + MPPI_HOST_BASE;
+			break;
+		case APHY_MD:
+			base = csiphy_dev->csi_aphy;
+			break;
+		case PROC_MD:
+			base = csiphy_dev->csi_dphy + MPPI_PROC_BASE;
+			break;
 
-	default:
-		pr_err("Error input idx\n");
-		return rtn;
+		default:
+			pr_err("Error input idx\n");
+			return rtn;
 	}
 
 	writel(val, base + addr);
@@ -62,24 +61,23 @@ static int mipi_reg_read(void *c_dev, int idx, u32 addr, u32 *val)
 	void __iomem *base = NULL;
 	struct csiphy_dev_t *csiphy_dev = c_dev;
 
-	switch (idx)
-	{
-	case DPHY_MD:
-		base = csiphy_dev->csi_dphy + MPPI_DPHY_BASE;
-		break;
-	case HOST_MD:
-		base = csiphy_dev->csi_dphy + MPPI_HOST_BASE;
-		break;
-	case APHY_MD:
-		base = csiphy_dev->csi_aphy;
-		break;
-	case PROC_MD:
-		base = csiphy_dev->csi_dphy + MPPI_PROC_BASE;
-		break;
+	switch (idx) {
+		case DPHY_MD:
+			base = csiphy_dev->csi_dphy + MPPI_DPHY_BASE;
+			break;
+		case HOST_MD:
+			base = csiphy_dev->csi_dphy + MPPI_HOST_BASE;
+			break;
+		case APHY_MD:
+			base = csiphy_dev->csi_aphy;
+			break;
+		case PROC_MD:
+			base = csiphy_dev->csi_dphy + MPPI_PROC_BASE;
+			break;
 
-	default:
-		pr_err("Error input idx\n");
-		return rtn;
+		default:
+			pr_err("Error input idx\n");
+			return rtn;
 	}
 
 	*val = readl(base + addr);
@@ -91,35 +89,24 @@ static int aphy_cfg(void *c_dev, int idx, int lanes, int bps)
 {
 	int module = APHY_MD;
 
-	if (idx < 2)
-	{
+	if (idx < 2) {
 		mipi_reg_write(c_dev, module, MIPI_CSI_2M_PHY2_CNTL1, 0x3f425c00);
-		if (lanes == 4)
-		{
+		if (lanes == 4) {
 			mipi_reg_write(c_dev, module, MIPI_CSI_2M_PHY2_CNTL2, 0x033a0000);
-		}
-		else
-		{
+		} else {
 			mipi_reg_write(c_dev, module, MIPI_CSI_2M_PHY2_CNTL2, 0x333a0000);
 		}
-		if (lanes <= 2)
-		{
+		if (lanes <= 2) {
 			mipi_reg_write(c_dev, module, MIPI_CSI_2M_PHY2_CNTL3, 0x3800000);
 		}
-	}
-	else
-	{
+	} else {
 		mipi_reg_write(c_dev, module, MIPI_CSI_2M_PHY2_CNTL4, 0x3f425c00);
-		if (lanes == 4)
-		{
+		if (lanes == 4) {
 			mipi_reg_write(c_dev, module, MIPI_CSI_2M_PHY2_CNTL5, 0x033a0000);
-		}
-		else
-		{
+		} else {
 			mipi_reg_write(c_dev, module, MIPI_CSI_2M_PHY2_CNTL5, 0x333a0000);
 		}
-		if (lanes <= 2)
-		{
+		if (lanes <= 2) {
 			mipi_reg_write(c_dev, module, MIPI_CSI_2M_PHY2_CNTL6, 0x3800000);
 		}
 	}
@@ -143,12 +130,9 @@ static int dphy_cfg(void *c_dev, int idx, int lanes, u32 bps)
 
 	// mipi_reg_write(c_dev, module, MIPI_PHY_CTRL, 0x80000000);//soft reset bit
 	// mipi_reg_write(c_dev, module, MIPI_PHY_CTRL, 0);//release soft reset bit
-	if (csiphy_dev->clock_mode)
-	{
+	if (csiphy_dev->clock_mode) {
 		mipi_reg_write(c_dev, module, MIPI_PHY_CLK_LANE_CTRL, 0x58); // MIPI_PHY_CLK_LANE_CTRL
-	}
-	else
-	{
+	} else {
 		mipi_reg_write(c_dev, module, MIPI_PHY_CLK_LANE_CTRL, 0x3d8); // 3d8:continue mode
 	}
 	mipi_reg_write(c_dev, module, MIPI_PHY_TCLK_MISS, 0x9);		// clck miss = 50 ns --(x< 60 ns)

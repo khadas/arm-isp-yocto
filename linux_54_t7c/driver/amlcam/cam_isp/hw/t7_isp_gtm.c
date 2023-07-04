@@ -48,7 +48,7 @@ void isp_gtm_cfg_param(struct isp_dev_t *isp_dev, u32 idx, struct aml_buffer *bu
 {
 	aisp_param_t *param = buff->vaddr[AML_PLANE_A];
 
-	if (param->pvalid.aisp_base)
+	if (param->pvalid.aisp_gtm)
 		gtm_cfg_base(isp_dev, &param->base_cfg);
 }
 
