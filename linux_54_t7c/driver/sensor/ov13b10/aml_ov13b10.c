@@ -598,6 +598,8 @@ static int ov13b10_set_fps(struct ov13b10 *ov13b10, u32 value)
 	u32 vts = 0;
 	u8 vts_h, vts_l;
 
+	dev_err(ov13b10->dev, "ov13b10_set_fps = %d \n", value);
+
 	vts = 30 * 0x0cc0 / value;
 	vts_h = (vts >> 8) & 0x7f;
 	vts_l = vts & 0xff;
@@ -1091,6 +1093,7 @@ static struct v4l2_ctrl_config fps_cfg = {
 	.id = V4L2_CID_AML_ORIG_FPS,
 	.name = "sensor fps",
 	.type = V4L2_CTRL_TYPE_INTEGER,
+	.flags = V4L2_CTRL_FLAG_VOLATILE | V4L2_CTRL_FLAG_EXECUTE_ON_WRITE,
 	.min = 1,
 	.max = 30,
 	.step = 1,
