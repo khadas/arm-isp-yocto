@@ -597,7 +597,8 @@ void isp_disp_set_csc2_fmt(struct isp_dev_t *isp_dev, u32 idx, struct aml_format
 
 	isp_reg_update_bits(isp_dev, DISP0_TOP_TOP_CTRL + (idx * 0x100), 0, 1, 1);
 
-	if (fmt->code != V4L2_PIX_FMT_RGB24) {
+	if (!(fmt->code == V4L2_PIX_FMT_RGB24 ||
+		fmt->code == V4L2_PIX_FMT_BGR24)) {
 		pr_debug("Error to support disp%u csc2\n", idx);
 		return;
 	}
