@@ -150,21 +150,15 @@ static int dphy_cfg(void *c_dev, int idx, int lanes, u32 bps)
 	mipi_reg_write(c_dev, module, MIPI_PHY_TWD_HS, 0x400000);
 	mipi_reg_write(c_dev, module, MIPI_PHY_DATA_LANE_CTRL, 0x0);
 	mipi_reg_write(c_dev, module, MIPI_PHY_DATA_LANE_CTRL1, 0x3 | (0x1f << 2) | (0x3 << 7)); // 446mbps 5ff, 223mbps 1ff    // enable data lanes pipe line and hs sync bit err.
-	if (lanes <= 2)
-	{
-		if ((idx & 0x01) == 0)
-		{
+	if (lanes <= 2) {
+		if ((idx & 0x01) == 0) {
 			mipi_reg_write(c_dev, module, MIPI_PHY_MUX_CTRL0, 0x000001ff);
 			mipi_reg_write(c_dev, module, MIPI_PHY_MUX_CTRL1, 0x000201ff);
-		}
-		else
-		{
+		} else {
 			mipi_reg_write(c_dev, module, MIPI_PHY_MUX_CTRL0, 0x123ff);
 			mipi_reg_write(c_dev, module, MIPI_PHY_MUX_CTRL1, 0x1ff01);
 		}
-	}
-	else
-	{
+	} else {
 		mipi_reg_write(c_dev, module, MIPI_PHY_MUX_CTRL0, 0x00000123);
 		mipi_reg_write(c_dev, module, MIPI_PHY_MUX_CTRL1, 0x00020123);
 	}

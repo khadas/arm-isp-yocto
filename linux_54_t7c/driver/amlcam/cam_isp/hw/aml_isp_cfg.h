@@ -575,6 +575,7 @@ typedef struct aisp_setting_fixed_cfg_s {
 	u32 eotf1_num[8];
 	u32 eotf1_stp[8];
 	u32 lns_center_xy[2];
+	u32 wb_stats_local_mode;
 } aisp_setting_fixed_cfg_t;
 
 typedef struct aisp_lut_fixed_cfg_s {
