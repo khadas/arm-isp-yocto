@@ -28,6 +28,7 @@
 #include <linux/irqreturn.h>
 #include <linux/seq_file.h>
 #include <linux/proc_fs.h>
+#include <linux/timex.h>
 
 #include "aml_isp.h"
 #include "aml_cam.h"
@@ -507,13 +508,17 @@ int isp_subdev_ctrls_init(struct isp_dev_t *isp_dev)
 
 }
 
+//#define  IRQ_TIME_DEBUG
 static irqreturn_t isp_subdev_irq_handler(int irq, void *dev)
 {
 	int status = 0, id = 0;
 	unsigned long flags;
 	struct isp_dev_t *isp_dev = dev;
 	struct aml_video *video;
-
+	#ifdef IRQ_TIME_DEBUG
+	u64 start_time, end_time, diff;
+	start_time = ktime_get_real_ns();
+	#endif
 	if (isp_dev->isp_status == STATUS_STOP) {
 		if (aml_adap_global_get_vdev() == isp_dev->index) {
 			pr_err("ISP%d: Stoped and Irq ignore\n", isp_dev->index);
@@ -539,7 +544,11 @@ static irqreturn_t isp_subdev_irq_handler(int irq, void *dev)
 	}
 
 	spin_unlock_irqrestore(&isp_dev->irq_lock, flags);
-
+	#ifdef IRQ_TIME_DEBUG
+	end_time = ktime_get_real_ns();
+	diff = end_time - start_time;
+	printk(KERN_ERR"time consumed------------ = %lld ns\n", diff);
+	#endif
 	return IRQ_HANDLED;
 }
 
