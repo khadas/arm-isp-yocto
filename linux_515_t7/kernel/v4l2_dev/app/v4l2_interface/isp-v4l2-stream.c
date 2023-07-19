@@ -24,6 +24,8 @@
 #include <linux/random.h>
 #include <asm/div64.h>
 #include <linux/sched.h>
+#include <uapi/linux/sched/types.h>
+#include <linux/sched/prio.h>
 
 #include <linux/videodev2.h>
 #include <media/videobuf2-core.h>
@@ -711,20 +713,20 @@ void callback_sc0( uint32_t ctx_num, tframe_t *tframe, const metadata_t *metadat
     unsigned long flags;
     int rc;
     if ( !metadata ) {
-        LOG( LOG_ERR, "callback_sc0: metadata is NULL" );
+        LOG( LOG_CRIT, "callback_sc0: metadata is NULL" );
         return;
     }
 
     /* find stream pointer */
     rc = isp_v4l2_find_stream( &pstream, ctx_num, V4L2_STREAM_TYPE_SC0 );
     if ( rc < 0 ) {
-        LOG( LOG_DEBUG, "can't find stream on ctx %d (errno = %d)", ctx_num, rc );
+        LOG( LOG_CRIT, "can't find stream on ctx %d (errno = %d)", ctx_num, rc );
         return;
     }
 
     /* check if stream is on */
     if ( !pstream->stream_started ) {
-        LOG( LOG_DEBUG, "[Stream#%d] stream SC0 is not started yet on ctx %d", pstream->stream_id, ctx_num );
+        LOG( LOG_CRIT, "[Stream#%d] stream SC0 is not started yet on ctx %d", pstream->stream_id, ctx_num );
         return;
     }
 /*system_am_sc.c also need #define ENABLE_DI_YUV_DNR*/
@@ -784,6 +786,9 @@ void callback_sc0( uint32_t ctx_num, tframe_t *tframe, const metadata_t *metadat
     /* wake up the kernel thread to copy the frame data  */
     if ( wake_up )
         wake_up_interruptible( &frame_mgr->frame_wq );
+    else
+       pr_err("%s error callback without wake up", __func__);
+
 
     if ( metadata )
         LOG( LOG_DEBUG, "metadata: width: %u, height: %u, line_size: %u, frame_number: %u.",
@@ -1259,7 +1264,7 @@ static int isp_v4l2_stream_copy_thread( void *data )
         }
 
         if ((s_list != t_list) || (t_list == NULL) || (s_list == NULL)) {
-            LOG(LOG_ERR, "[Stream#%d] Failed to find vb2 buffer on stream buffer list, s_list:%p, t_list:%p", pstream->stream_id, s_list, t_list);
+            LOG(LOG_CRIT, "[Stream#%d] Failed to find vb2 buffer on stream buffer list, s_list:%p, t_list:%p", pstream->stream_id, s_list, t_list);
             spin_unlock( &pstream->slock );
 #if V4L2_FRAME_ID_SYNC
             {
@@ -1607,6 +1612,8 @@ int isp_v4l2_stream_on( isp_v4l2_stream_t *pstream )
     if ( pstream->stream_type != V4L2_STREAM_TYPE_META )
 #endif
     {
+        struct sched_param param = { .sched_priority =  MAX_RT_PRIO - 1 };
+        int  ret = 0;
         /* Resets frame counters */
         pstream->fw_frame_seq_count = 0;
 
@@ -1615,6 +1622,10 @@ int isp_v4l2_stream_on( isp_v4l2_stream_t *pstream )
         if ( IS_ERR( pstream->kthread_stream ) ) {
             LOG( LOG_ERR, "[Stream#%d] create kernel_thread() failed", pstream->stream_id );
             return PTR_ERR( pstream->kthread_stream );
+        }
+        ret = sched_setscheduler_nocheck(pstream->kthread_stream, SCHED_FIFO, &param);
+        if (ret != 0) {
+            LOG( LOG_CRIT, "[Stream#%d] set isp-stream thread priority failed", pstream->stream_id );
         }
     }
 #if ISP_HAS_META_CB

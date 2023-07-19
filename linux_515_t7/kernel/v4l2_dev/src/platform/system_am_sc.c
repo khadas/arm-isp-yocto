@@ -733,6 +733,7 @@ static void sc_do_tasklet( unsigned long data )
         metadata.frame_id = am_ctx[ctx_id].frame_id;
         metadata.frame_number = am_ctx[ctx_id].frame_id;
         metadata.line_size = (((3 * am_ctx[ctx_id].info.out_w) + 127) & (~127));
+        //pr_info("debug, dq success - obj addr 0x%px, primary addr 0x%px", f_buff, f_buff->primary.address);
         am_ctx[ctx_id].callback(am_ctx[ctx_id].ctx, f_buff, &metadata );
         am_ctx[ctx_id].frame_id++;
     }
@@ -820,8 +821,8 @@ static irqreturn_t isp_sc_isr(int irq, void *data)
             int retval;
 
             sc_reg_rd(ISP_SCWR_TOP_DBG0, &flag);
-
             flag_ready = (flag & (1 << 6)) ? 1 : 0;
+
             if (flag_ready == g_sc->last_end_frame) {
                 if (am_ctx[g_sc->cam_id_current].temp_buf) {
                     pr_info("%d, sc last fifo no ready %d.\n", __LINE__, g_sc->cam_id_current);
@@ -840,7 +841,7 @@ static irqreturn_t isp_sc_isr(int irq, void *data)
             if (kfifo_len(&am_ctx[g_sc->cam_id_next].sc_fifo_in) > 0) {
                 retval = kfifo_out(&am_ctx[g_sc->cam_id_next].sc_fifo_in, &f_buf, sizeof(tframe_t*));
                 if (retval != sizeof(tframe_t*))
-                    pr_info("%d, fifo out failed %d.\n", __LINE__, g_sc->cam_id_next);
+                    pr_err("%d, fifo out failed %d.\n", __LINE__, g_sc->cam_id_next);
             } else {
                 //also output stream into camera dummy fifo. it can keep correct cam seq
                 if (am_ctx[g_sc->cam_id_next].temp_buf)
@@ -851,6 +852,7 @@ static irqreturn_t isp_sc_isr(int irq, void *data)
                     f_buf = am_ctx[g_sc->cam_id_current].temp_buf;
                 else if (am_ctx[g_sc->cam_id_last].temp_buf)
                     f_buf = am_ctx[g_sc->cam_id_last].temp_buf;
+                pr_err("sc fifo-in is empty. use temp_buf");
             }
             spin_unlock_irqrestore( &g_sc->sc_lock, flags );
 
@@ -892,15 +894,19 @@ static irqreturn_t isp_sc_isr(int irq, void *data)
             }
             g_sc->multi_camera.pre_frame[0] = f_buf;
             g_sc->multi_camera.cam_id[0] = g_sc->cam_id_next;
+
+
             g_sc->last_end_frame = flag_ready;
             //reserve dummy buffer
             if (f_buf == am_ctx[g_sc->cam_id_last].temp_buf ||
                 f_buf == am_ctx[g_sc->cam_id_next].temp_buf ||
                 f_buf == am_ctx[g_sc->cam_id_current].temp_buf ||
-                f_buf == am_ctx[g_sc->cam_id_next_next].temp_buf)
-                g_sc->multi_camera.pre_frame[0] = NULL;
-        }
-    }
+                f_buf == am_ctx[g_sc->cam_id_next_next].temp_buf) {
+                    g_sc->multi_camera.pre_frame[0] = NULL;
+                    pr_warn("using temp buf for hw output; set pre_frame to NULL");
+                }
+        } //end else (g_sc->start_delay_cnt == START_DELAY_THR)
+    } // end else (g_sc->start_delay_cnt < START_DELAY_THR)
     g_sc->working = 0;
     return IRQ_HANDLED;
 }
@@ -1033,7 +1039,11 @@ void am_sc_api_dma_buffer(int ctx_id, tframe_t * data, unsigned int index)
 {
     unsigned long flags;
 
-    if (am_ctx[ctx_id].temp_buf == NULL) return;
+    if (am_ctx[ctx_id].temp_buf == NULL) {
+        pr_err("bufs has not inited yet");
+        return;
+    }
+
     spin_lock_irqsave(&g_sc->sc_lock, flags);
     tframe_t *buf = am_ctx[ctx_id].temp_buf + index;
     memcpy(buf, data, sizeof(tframe_t));
@@ -1044,10 +1054,12 @@ void am_sc_api_dma_buffer(int ctx_id, tframe_t * data, unsigned int index)
     }
 
     if (!kfifo_is_full(&am_ctx[ctx_id].sc_fifo_in)) {
+        //pr_info("debug fifo-in idx %d obj addr 0x%px, primary addr 0x%px", index, buf, buf->primary.address);
         kfifo_in(&am_ctx[ctx_id].sc_fifo_in, &buf, sizeof(tframe_t*));
     } else {
-        pr_info("sc fifo is full .\n");
+        pr_err("sc fifo is full .\n");
     }
+
     //pr_err("sc dma buffer:%d, %d, %x\n", ctx_id, index, buf->primary.address);
     spin_unlock_irqrestore(&g_sc->sc_lock, flags);
 }
@@ -1270,6 +1282,7 @@ int am_sc_system_init(int ctx_id)
 
     if (!am_ctx[ctx_id].temp_buf) {
         am_ctx[ctx_id].temp_buf = (tframe_t*)kmalloc( sizeof(tframe_t) * (am_ctx[ctx_id].req_buf_num), GFP_KERNEL | __GFP_NOFAIL);
+        pr_info("alloc %d tframe_t objs at 0x%px, per obj size %d bytes", (am_ctx[ctx_id].req_buf_num), am_ctx[ctx_id].temp_buf, sizeof(tframe_t));
     }
 
     if (g_sc->stop_flag == false) return 0;
