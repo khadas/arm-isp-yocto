@@ -138,8 +138,8 @@ typedef enum {
 #define PHASE_BITS      16
 
 #define CAM_CTX_NUM       FIRMWARE_CONTEXT_NUMBER
-#define START_DELAY_THR   2
-#define FRAME_DELAY_QUEUE 3
+#define START_DELAY_THR   1
+#define FRAME_DELAY_QUEUE 2
 
 #define ENABLE_SC_BOTTOM_HALF_TASKLET
 

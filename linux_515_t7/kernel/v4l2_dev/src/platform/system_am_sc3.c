@@ -841,7 +841,8 @@ static irqreturn_t isp_sc_isr(int irq, void *data)
                     kfifo_in(&am3_ctx[g_sc3->multi_camera.cam_id[FRAME_DELAY_QUEUE-1]].sc_fifo_out, &(g_sc3->multi_camera.pre_frame[FRAME_DELAY_QUEUE-1]), sizeof(tframe_t*));
                 }
                 g_sc3->sc_tasklet.ctx_id = g_sc3->multi_camera.cam_id[FRAME_DELAY_QUEUE-1];
-                tasklet_schedule(&g_sc3->sc_tasklet.tasklet_obj);
+                //tasklet_schedule(&g_sc3->sc_tasklet.tasklet_obj);
+                sc_do_tasklet((unsigned long)&g_sc3->sc_tasklet);
 #endif
             } else {
                 if (am3_ctx[g_sc3->multi_camera.cam_id[FRAME_DELAY_QUEUE-1]].temp_buf) {
