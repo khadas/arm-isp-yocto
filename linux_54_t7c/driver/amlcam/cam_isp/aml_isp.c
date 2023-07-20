@@ -74,22 +74,25 @@ static int isp_subdrv_reg_buf_alloc(struct isp_dev_t *isp_dev)
 	u32 wsize, rsize;
 	u32 bsize = 0;
 	dma_addr_t paddr = 0x0000;
-	void *virtaddr = NULL;
+	void *virtaddr = NULL, *vmaddr = NULL;
 
 	wsize = 256 * 1024;
 	rsize = 128 * 1024;
 	bsize = wsize + rsize;
 
 	virtaddr = dma_alloc_coherent(isp_dev->dev, bsize, &paddr, GFP_KERNEL);
+	vmaddr = vmalloc(bsize);
 
 	isp_dev->wreg_buff.nplanes = 1;
 	isp_dev->wreg_buff.bsize = wsize;
 	isp_dev->wreg_buff.addr[AML_PLANE_A] = paddr;
 	isp_dev->wreg_buff.vaddr[AML_PLANE_A] = virtaddr;
+	isp_dev->wreg_buff.vmaddr[AML_PLANE_A] = vmaddr;
 
 	isp_dev->rreg_buff.nplanes = 1;
 	isp_dev->rreg_buff.addr[AML_PLANE_A] = paddr + wsize;
 	isp_dev->rreg_buff.vaddr[AML_PLANE_A] = virtaddr + wsize;
+	isp_dev->rreg_buff.vmaddr[AML_PLANE_A] = vmaddr + wsize;
 
 	pr_debug("reg alloc\n");
 
@@ -109,11 +112,17 @@ static int isp_subdrv_reg_buf_free(struct isp_dev_t *isp_dev)
 	if (vaddr)
 		dma_free_coherent(isp_dev->dev, bsize, vaddr, (dma_addr_t)paddr);
 
+	vaddr = isp_dev->wreg_buff.vmaddr[AML_PLANE_A];
+	if (vaddr)
+		vfree(vaddr);
+
 	isp_dev->wreg_buff.addr[AML_PLANE_A] = 0x0000;
 	isp_dev->wreg_buff.vaddr[AML_PLANE_A] = NULL;
+	isp_dev->wreg_buff.vmaddr[AML_PLANE_A] = NULL;
 
 	isp_dev->rreg_buff.addr[AML_PLANE_A] = 0x0000;
 	isp_dev->rreg_buff.vaddr[AML_PLANE_A] = NULL;
+	isp_dev->rreg_buff.vmaddr[AML_PLANE_A] = NULL;
 
 	pr_debug("reg free\n");
 
@@ -275,7 +284,8 @@ int isp_subdev_start_manual_dma(struct isp_dev_t *isp_dev)
 		(g_info->user > 1))
 		return 0;
 
-	dma_sync_single_for_device(isp_dev->dev,isp_dev->wreg_buff.addr[AML_PLANE_A], isp_dev->wreg_buff.bsize, DMA_TO_DEVICE);
+	memcpy(isp_dev->wreg_buff.vaddr[AML_PLANE_A], isp_dev->wreg_buff.vmaddr[AML_PLANE_A], isp_dev->wreg_buff.bsize);
+	dma_sync_single_for_device(isp_dev->dev, isp_dev->wreg_buff.addr[AML_PLANE_A], isp_dev->wreg_buff.bsize, DMA_TO_DEVICE);
 
 	isp_dev->ops->hw_start_apb_dma(isp_dev);
 	isp_dev->ops->hw_manual_trigger_apb_dma(isp_dev);
@@ -291,6 +301,9 @@ int isp_subdev_start_auto_dma(struct isp_dev_t *isp_dev)
 {
 	if (isp_dev->apb_dma == 0)
 		return 0;
+
+	memcpy(isp_dev->wreg_buff.vaddr[AML_PLANE_A], isp_dev->wreg_buff.vmaddr[AML_PLANE_A], isp_dev->wreg_buff.bsize);
+	dma_sync_single_for_device(isp_dev->dev, isp_dev->wreg_buff.addr[AML_PLANE_A], isp_dev->wreg_buff.bsize, DMA_TO_DEVICE);
 
 	isp_dev->ops->hw_start_apb_dma(isp_dev);
 	isp_dev->ops->hw_auto_trigger_apb_dma(isp_dev);
@@ -314,7 +327,8 @@ int isp_subdev_update_auto_dma(struct isp_dev_t *isp_dev)
 	if ((isp_dev->apb_dma == 0) || (isp_dev->twreg_cnt == 0))
 		return 0;
 
-	dma_sync_single_for_device(isp_dev->dev,isp_dev->wreg_buff.addr[AML_PLANE_A], isp_dev->wreg_buff.bsize, DMA_TO_DEVICE);
+	memcpy(isp_dev->wreg_buff.vaddr[AML_PLANE_A], isp_dev->wreg_buff.vmaddr[AML_PLANE_A], isp_dev->twreg_cnt * 8);
+	//dma_sync_single_for_device(isp_dev->dev,isp_dev->wreg_buff.addr[AML_PLANE_A], isp_dev->twreg_cnt * 8, DMA_TO_DEVICE);
 
 	isp_dev->ops->hw_start_apb_dma(isp_dev);
 
@@ -515,10 +529,10 @@ static irqreturn_t isp_subdev_irq_handler(int irq, void *dev)
 	unsigned long flags;
 	struct isp_dev_t *isp_dev = dev;
 	struct aml_video *video;
-	#ifdef IRQ_TIME_DEBUG
+#ifdef IRQ_TIME_DEBUG
 	u64 start_time, end_time, diff;
 	start_time = ktime_get_real_ns();
-	#endif
+#endif
 	if (isp_dev->isp_status == STATUS_STOP) {
 		if (aml_adap_global_get_vdev() == isp_dev->index) {
 			pr_err("ISP%d: Stoped and Irq ignore\n", isp_dev->index);
@@ -544,11 +558,11 @@ static irqreturn_t isp_subdev_irq_handler(int irq, void *dev)
 	}
 
 	spin_unlock_irqrestore(&isp_dev->irq_lock, flags);
-	#ifdef IRQ_TIME_DEBUG
+#ifdef IRQ_TIME_DEBUG
 	end_time = ktime_get_real_ns();
 	diff = end_time - start_time;
-	printk(KERN_ERR"time consumed------------ = %lld ns\n", diff);
-	#endif
+	pr_err("time consumed = %lld ns\n", diff);
+#endif
 	return IRQ_HANDLED;
 }
 

@@ -111,6 +111,7 @@ struct aml_buffer {
 	u32 bsize;
 	u32 devno;
 	void *vaddr[AML_PLANE_MAX];
+	void *vmaddr[AML_PLANE_MAX];
 	dma_addr_t addr[AML_PLANE_MAX];
 	struct aml_dbuffer dbuffer;
 	struct list_head list;

@@ -40,7 +40,7 @@ void isp_hw_lut_wend(struct isp_dev_t *isp_dev)
 u32 isp_reg_read(struct isp_dev_t *isp_dev, u32 addr)
 {
 	u32 val = 0;
-	struct aml_reg *rregs = isp_dev->rreg_buff.vaddr[AML_PLANE_A];
+	struct aml_reg *rregs = isp_dev->rreg_buff.vmaddr[AML_PLANE_A];
 
 	if (isp_dev->apb_dma == 0)
 		val = isp_hwreg_read(isp_dev, addr);
@@ -54,8 +54,8 @@ void isp_reg_write(struct isp_dev_t *isp_dev, u32 addr, u32 val)
 {
 	u32 i = 0;
 	unsigned long flags = 0;
-	struct aml_reg *wregs = isp_dev->wreg_buff.vaddr[AML_PLANE_A];
-	struct aml_reg *rregs = isp_dev->rreg_buff.vaddr[AML_PLANE_A];
+	struct aml_reg *wregs = isp_dev->wreg_buff.vmaddr[AML_PLANE_A];
+	struct aml_reg *rregs = isp_dev->rreg_buff.vmaddr[AML_PLANE_A];
 	struct isp_global_info *g_info = isp_global_get_info();
 
 	if (isp_dev->apb_dma == 0) {
