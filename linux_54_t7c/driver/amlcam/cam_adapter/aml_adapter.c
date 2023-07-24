@@ -200,16 +200,16 @@ static int adap_alloc_raw_buffs(struct adapter_dev_t *a_dev)
 
 	switch (param->format) {
 	case ADAP_RAW10:
-		fsize = param->width * param->height * 10 / 8;
+		fsize = ((((param->width * 10 + 127 ) >> 7)  << 7 ) / 8) * param->height;
 	break;
 	case ADAP_RAW12:
-		fsize = param->width * param->height * 12 / 8;
+		fsize = ((((param->width * 12 + 127 ) >> 7)  << 7 ) / 8) * param->height;
 	break;
 	case ADAP_YUV422_8BIT:
-		fsize = param->width * param->height * 16 / 8;
+		fsize = ((((param->width * 16 + 127 ) >> 7)  << 7 ) / 8) * param->height;
 	break;
 	default:
-		fsize = param->width * param->height * 10 / 8;
+		fsize = ((((param->width * 10 + 127 ) >> 7)  << 7 ) / 8) * param->height;
 	break;
 	}
 
