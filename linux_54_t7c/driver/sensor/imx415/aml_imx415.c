@@ -598,6 +598,7 @@ static int imx415_write_buffered_reg(struct imx415 *imx415, u16 address_low,
 static int imx415_set_gain(struct imx415 *imx415, u32 value)
 {
 	int ret;
+	//dev_err(imx415->dev, "imx415_set_gain = 0x%x \n", value);
 
 	ret = imx415_write_buffered_reg(imx415, IMX415_GAIN, 1, value);
 	if (ret)
@@ -609,6 +610,7 @@ static int imx415_set_gain(struct imx415 *imx415, u32 value)
 static int imx415_set_exposure(struct imx415 *imx415, u32 value)
 {
 	int ret;
+	//dev_err(imx415->dev, "imx415_set_exposure = 0x%x \n", value);
 
 	ret = imx415_write_buffered_reg(imx415, IMX415_EXPOSURE, 2, value);
 	if (ret)
@@ -617,6 +619,22 @@ static int imx415_set_exposure(struct imx415 *imx415, u32 value)
 	return ret;
 }
 
+static int imx415_set_fps(struct imx415 *imx415, u32 value)
+{
+	u32 vts = 0;
+	u8 vts_h, vts_l;
+
+	//dev_err(imx415->dev, "-imx415-value = %d\n", value);
+
+	vts = 30 * 4503 / value;
+	vts_h = (vts >> 8) & 0x7f;
+	vts_l = vts & 0xff;
+
+	imx415_write_reg(imx415, 0x3025, vts_h);
+	imx415_write_reg(imx415, 0x3024, vts_l);
+
+	return 0;
+}
 
 /* Stop streaming */
 static int imx415_stop_streaming(struct imx415 *imx415)
@@ -646,6 +664,9 @@ static int imx415_set_ctrl(struct v4l2_ctrl *ctrl)
 		break;
 	case V4L2_CID_AML_MODE:
 		imx415->enWDRMode = ctrl->val;
+		break;
+	case V4L2_CID_AML_ORIG_FPS:
+		ret = imx415_set_fps(imx415, ctrl->val);
 		break;
 	default:
 		dev_err(imx415->dev, "Error ctrl->id %u, flag 0x%lx\n",
@@ -1056,6 +1077,18 @@ static struct v4l2_ctrl_config wdr_cfg = {
 	.def = 0,
 };
 
+
+static struct v4l2_ctrl_config fps_cfg = {
+	.ops = &imx415_ctrl_ops,
+	.id = V4L2_CID_AML_ORIG_FPS,
+	.name = "sensor fps",
+	.type = V4L2_CTRL_TYPE_INTEGER,
+	.flags = V4L2_CTRL_FLAG_VOLATILE | V4L2_CTRL_FLAG_EXECUTE_ON_WRITE,
+	.min = 1,
+	.max = 30,
+	.step = 1,
+	.def = 1,
+};
 static int imx415_ctrls_init(struct imx415 *imx415)
 {
 	int rtn = 0;
@@ -1084,6 +1117,8 @@ static int imx415_ctrls_init(struct imx415 *imx415)
 					       imx415_calc_pixel_rate(imx415));
 
 	imx415->wdr = v4l2_ctrl_new_custom(&imx415->ctrls, &wdr_cfg, NULL);
+
+	v4l2_ctrl_new_custom(&imx415->ctrls, &fps_cfg, NULL);
 
 	imx415->sd.ctrl_handler = &imx415->ctrls;
 
@@ -1364,7 +1399,7 @@ static struct i2c_driver imx415_i2c_driver = {
 
 module_i2c_driver(imx415_i2c_driver);
 
-MODULE_DESCRIPTION("Sony IMX290 CMOS Image Sensor Driver");
+MODULE_DESCRIPTION("Sony IMX415 CMOS Image Sensor Driver");
 MODULE_AUTHOR("keke.li");
 MODULE_AUTHOR("keke.li <keke.li@amlogic.com>");
 MODULE_LICENSE("GPL v2");
