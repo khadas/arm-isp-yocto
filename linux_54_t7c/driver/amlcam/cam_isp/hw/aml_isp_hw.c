@@ -40,7 +40,7 @@ void isp_hw_lut_wend(struct isp_dev_t *isp_dev)
 u32 isp_reg_read(struct isp_dev_t *isp_dev, u32 addr)
 {
 	u32 val = 0;
-	struct aml_reg *rregs = isp_dev->rreg_buff.vaddr[AML_PLANE_A];
+	struct aml_reg *rregs = isp_dev->rreg_buff.vmaddr[AML_PLANE_A];
 
 	if (isp_dev->apb_dma == 0)
 		val = isp_hwreg_read(isp_dev, addr);
@@ -54,8 +54,8 @@ void isp_reg_write(struct isp_dev_t *isp_dev, u32 addr, u32 val)
 {
 	u32 i = 0;
 	unsigned long flags = 0;
-	struct aml_reg *wregs = isp_dev->wreg_buff.vaddr[AML_PLANE_A];
-	struct aml_reg *rregs = isp_dev->rreg_buff.vaddr[AML_PLANE_A];
+	struct aml_reg *wregs = isp_dev->wreg_buff.vmaddr[AML_PLANE_A];
+	struct aml_reg *rregs = isp_dev->rreg_buff.vmaddr[AML_PLANE_A];
 	struct isp_global_info *g_info = isp_global_get_info();
 
 	if (isp_dev->apb_dma == 0) {
@@ -900,6 +900,58 @@ static int isp_hw_auto_trigger_apb_dma(struct isp_dev_t *isp_dev)
 	return 0;
 }
 
+static u32 *isp_hw_status(struct isp_dev_t *isp_dev)
+{
+	static u32 ISP_debuginfo[38] = {0};
+
+	isp_reg_read_bits(isp_dev, ISP_TOP_INPUT_SIZE, &ISP_debuginfo[0], 0, 16);
+	isp_reg_read_bits(isp_dev, ISP_TOP_INPUT_SIZE, &ISP_debuginfo[1], 16, 16);
+
+	isp_reg_read_bits(isp_dev, ISP_WRMIFX3_0_FMT_SIZE, &ISP_debuginfo[2], 0, 16);
+	isp_reg_read_bits(isp_dev, ISP_WRMIFX3_0_FMT_SIZE, &ISP_debuginfo[3], 16, 16);
+	isp_reg_read_bits(isp_dev, ISP_WRMIFX3_1_FMT_SIZE, &ISP_debuginfo[4], 0, 16);
+	isp_reg_read_bits(isp_dev, ISP_WRMIFX3_1_FMT_SIZE, &ISP_debuginfo[5], 16, 16);
+	isp_reg_read_bits(isp_dev, ISP_WRMIFX3_2_FMT_SIZE, &ISP_debuginfo[6], 0, 16);
+	isp_reg_read_bits(isp_dev, ISP_WRMIFX3_2_FMT_SIZE, &ISP_debuginfo[7], 16, 16);
+	isp_reg_read_bits(isp_dev, ISP_WRMIFX3_3_FMT_SIZE, &ISP_debuginfo[8], 0, 16);
+	isp_reg_read_bits(isp_dev, ISP_WRMIFX3_3_FMT_SIZE, &ISP_debuginfo[9], 16, 16);
+
+	isp_reg_read_bits(isp_dev, ISP_TOP_PATH_EN, &ISP_debuginfo[10], 8, 5);
+
+	isp_reg_read_bits(isp_dev, DISP0_TOP_CRP2_SIZE, &ISP_debuginfo[11], 0, 16);
+	isp_reg_read_bits(isp_dev, DISP0_TOP_CRP2_SIZE, &ISP_debuginfo[12], 16, 16);
+	isp_reg_read_bits(isp_dev, DISP1_TOP_CRP2_SIZE, &ISP_debuginfo[13], 0, 16);
+	isp_reg_read_bits(isp_dev, DISP1_TOP_CRP2_SIZE, &ISP_debuginfo[14], 16, 16);
+	isp_reg_read_bits(isp_dev, DISP2_TOP_CRP2_SIZE, &ISP_debuginfo[15], 0, 16);
+	isp_reg_read_bits(isp_dev, DISP2_TOP_CRP2_SIZE, &ISP_debuginfo[16], 16, 16);
+
+	isp_reg_read_bits(isp_dev, ISP_AF_HV_SIZE, &ISP_debuginfo[17], 0, 16);
+	isp_reg_read_bits(isp_dev, ISP_AF_HV_SIZE, &ISP_debuginfo[18], 16, 16);
+	isp_reg_read_bits(isp_dev, ISP_AE_HV_SIZE, &ISP_debuginfo[19], 0, 16);
+	isp_reg_read_bits(isp_dev, ISP_AE_HV_SIZE, &ISP_debuginfo[20], 16, 16);
+	isp_reg_read_bits(isp_dev, ISP_AWB_HV_SIZE, &ISP_debuginfo[21], 0, 16);
+	isp_reg_read_bits(isp_dev, ISP_AWB_HV_SIZE, &ISP_debuginfo[22], 16, 16);
+
+	isp_reg_read_bits(isp_dev, VIU_DMAWR_SIZE0, &ISP_debuginfo[23], 0, 16);
+	isp_reg_read_bits(isp_dev, VIU_DMAWR_SIZE0, &ISP_debuginfo[24], 16, 16);
+	isp_reg_read_bits(isp_dev, VIU_DMAWR_SIZE1, &ISP_debuginfo[25], 0, 16);
+	isp_reg_read_bits(isp_dev, VIU_DMAWR_SIZE1, &ISP_debuginfo[26], 16, 16);
+	isp_reg_read_bits(isp_dev, VIU_DMAWR_SIZE2, &ISP_debuginfo[27], 0, 16);
+
+	isp_reg_read_bits(isp_dev, ISP_CHECKSUM_RO_DAT_0, &ISP_debuginfo[28], 0, 32);
+	isp_reg_read_bits(isp_dev, ISP_CHECKSUM_RO_DAT_1, &ISP_debuginfo[29], 0, 32);
+	isp_reg_read_bits(isp_dev, ISP_CHECKSUM_RO_DAT_2, &ISP_debuginfo[30], 0, 32);
+	isp_reg_read_bits(isp_dev, ISP_CHECKSUM_RO_DAT_3, &ISP_debuginfo[31], 0, 32);
+	isp_reg_read_bits(isp_dev, ISP_CHECKSUM_RO_DAT_4, &ISP_debuginfo[32], 0, 32);
+	isp_reg_read_bits(isp_dev, ISP_CHECKSUM_RO_DAT_5, &ISP_debuginfo[33], 0, 32);
+	isp_reg_read_bits(isp_dev, ISP_CHECKSUM_RO_DAT_6, &ISP_debuginfo[34], 0, 32);
+	isp_reg_read_bits(isp_dev, ISP_CHECKSUM_RO_DAT_7, &ISP_debuginfo[35], 0, 32);
+	isp_reg_read_bits(isp_dev, ISP_CHECKSUM_RO_DAT_8, &ISP_debuginfo[36], 0, 32);
+	isp_reg_read_bits(isp_dev, ISP_CHECKSUM_RO_DAT_9, &ISP_debuginfo[37], 0, 32);
+
+	return ISP_debuginfo;
+}
+
 const struct isp_dev_ops isp_hw_ops = {
 	.hw_init = isp_hw_init,
 	.hw_reset = isp_hw_reset,
@@ -932,5 +984,6 @@ const struct isp_dev_ops isp_hw_ops = {
 	.hw_auto_trigger_apb_dma = isp_hw_auto_trigger_apb_dma,
 	.hw_fill_rreg_buff = isp_hw_fill_rreg_buff,
 	.hw_fill_gisp_rreg_buff = isp_hw_fill_gisp_rreg_buff,
+	.hw_status = isp_hw_status,
 };
 EXPORT_SYMBOL(isp_hw_ops);

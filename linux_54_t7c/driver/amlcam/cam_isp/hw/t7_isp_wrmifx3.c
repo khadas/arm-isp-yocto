@@ -153,15 +153,23 @@ void isp_wrmifx3_cfg_frm_size(struct isp_dev_t *isp_dev, u32 idx,
 
 	raddr = ISP_WRMIFX3_0_FMT_CTRL + ((idx * 0x40) << 2);
 	isp_reg_update_bits(isp_dev, raddr, fmt->fourcc, 16, 3);
-	if (fmt->fourcc == AML_FMT_YUV422)
+	if (fmt->fourcc == AML_FMT_YUV422 && (fmt->code == V4L2_PIX_FMT_YUYV || fmt->code == V4L2_PIX_FMT_YVYU ))
 		isp_reg_update_bits(isp_dev, raddr, 1, 3, 1);
 	else
 		isp_reg_update_bits(isp_dev, raddr, 0, 3, 1);
 
-	if (isp_dev->fmt.code == MEDIA_BUS_FMT_YUYV8_2X8)
+	if (isp_dev->fmt.code == MEDIA_BUS_FMT_YUYV8_2X8 ||
+		fmt->code == V4L2_PIX_FMT_NV12 ||
+		fmt->code == V4L2_PIX_FMT_YVYU ||
+		fmt->code == V4L2_PIX_FMT_VYUY)
 		isp_reg_update_bits(isp_dev, raddr, 1, 2, 1);
 	else
 		isp_reg_update_bits(isp_dev, raddr, 0, 2, 1);
+
+	if (fmt->code == V4L2_PIX_FMT_BGR24)
+		isp_reg_update_bits(isp_dev, raddr, 1, 6, 1);
+	else if (fmt->code == V4L2_PIX_FMT_RGB24)
+		isp_reg_update_bits(isp_dev, raddr, 0, 6, 1);
 
 	isp_reg_update_bits(isp_dev, raddr, fmt->nplanes - 1, 4, 2);
 
