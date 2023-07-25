@@ -36,7 +36,7 @@ static int mclk_enable(struct device *dev, uint32_t rate)
 	int clk_val;
 
 	clk = devm_clk_get(dev, "mclk");
-	if (IS_ERR(clk)) {
+	if (IS_ERR_OR_NULL(clk)) {
 		dev_err(dev,"cannot get %s clk\n", "mclk");
 		clk = NULL;
 		return -1;
@@ -44,12 +44,14 @@ static int mclk_enable(struct device *dev, uint32_t rate)
 
 	if (rate == 24000000) {
 		clk_x = devm_clk_get(dev, "mclk_x");
-		if (IS_ERR(clk_x) == 0)
-			clk_set_parent(clk, clk_x);
+		if (!IS_ERR_OR_NULL(clk_x)) {
+			int ret = clk_set_parent(clk, clk_x);
+			dev_err(dev, "set parent to xtal, ret %d", ret);
+		}
 		clk_pre = devm_clk_get(dev, "mclk_pre");
 	} else {
 		clk_p = devm_clk_get(dev, "mclk_p");
-		if (IS_ERR(clk_p) == 0) {
+		if (!IS_ERR_OR_NULL(clk_p)) {
 			clk_set_parent(clk, clk_p);
 			clk_set_rate(clk_p, rate * 2);
 		}
@@ -63,30 +65,44 @@ static int mclk_enable(struct device *dev, uint32_t rate)
 	ret = clk_prepare_enable(clk);
 	if (ret < 0)
 		dev_err(dev, " clk_prepare_enable failed\n");
-	if (IS_ERR(clk_pre) == 0 && __clk_is_enabled(clk_pre)) {
+
+	// disable mclk_pre after mclk has been enabled. in this way, we got mclk == xtal == 24M;
+	if (!IS_ERR_OR_NULL(clk_pre) && __clk_is_enabled(clk_pre)) {
 		clk_disable_unprepare(clk_pre);
 	}
 
 	clk_val = clk_get_rate(clk);
-	dev_err(dev,"init mclk is %d MHZ\n",clk_val/1000000);
+	dev_err(dev,"init ok, mclk is %d MHZ\n",clk_val/1000000);
 
 	return 0;
 }
 
 static int mclk_disable(struct device *dev)
 {
-    struct clk *clk;
+    struct clk *clk = NULL;
+    struct clk *clk_pre = NULL;
     int clk_val;
 
     clk = devm_clk_get(dev, "mclk");
-    if (IS_ERR(clk)) {
+    if (IS_ERR_OR_NULL(clk)) {
         pr_err("cannot get %s clk\n", "mclk");
         clk = NULL;
         return -1;
     }
 
     clk_val = clk_get_rate(clk);
-    if ((clk_val != 12000000) && (clk_val != 24000000) && __clk_is_enabled(clk)) {
+    if (__clk_is_enabled(clk)) {
+        // ==== begin  avoiding warning callstack  ===================
+        // mclk_pre has been disabled
+        // mclk_pre has been unprepared
+        if ((clk_val == 12000000) || (clk_val == 24000000)) {
+            pr_err("enable mclk_pre to avoid callstack\n");
+            clk_pre = devm_clk_get(dev, "mclk_pre");
+            if ( !IS_ERR_OR_NULL(clk_pre) ) {
+                clk_prepare_enable(clk_pre);
+            }
+        }
+        // ========== end  avoiding warning callstack ================
         clk_disable_unprepare(clk);
     }
 
@@ -96,6 +112,7 @@ static int mclk_disable(struct device *dev)
 
     return 0;
 }
+
 static int reset_am_enable(struct device *dev, const char* propname, int val)
 {
 	int ret = -1;
