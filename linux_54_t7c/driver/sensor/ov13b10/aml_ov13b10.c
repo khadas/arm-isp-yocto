@@ -121,23 +121,23 @@ static struct ov13b10_regval setting_4208_3120_4lane_1080m_30fps[] = {
 	{0x0324, 0x01},
 	{0x0325, 0x50},
 	{0x0326, 0x81},
-	{0x0327, 0x04},
+	{0x0327, 0x05},
 	{0x3011, 0x7c},
 	{0x3012, 0x07},
 	{0x3013, 0x32},
 	{0x3107, 0x23},
-	{0x3501, 0x0c},
-	{0x3502, 0x10},
+	{0x3501, 0x03},
+	{0x3502, 0xd2},
 	{0x3504, 0x08},
-	{0x3508, 0x07},
-	{0x3509, 0xc0},
+	{0x3508, 0x00},
+	{0x3509, 0x80},
 	{0x3600, 0x16},
 	{0x3601, 0x54},
 	{0x3612, 0x4e},
 	{0x3620, 0x00},
-	{0x3621, 0x68},
-	{0x3622, 0x66},
-	{0x3623, 0x03},
+	{0x3621, 0x28},
+	{0x3622, 0xe6},
+	{0x3623, 0x00},
 	{0x3662, 0x92},
 	{0x3666, 0xbb},
 	{0x3667, 0x44},
@@ -160,6 +160,7 @@ static struct ov13b10_regval setting_4208_3120_4lane_1080m_30fps[] = {
 	{0x3725, 0x42},
 	{0x3739, 0x12},
 	{0x3767, 0x00},
+	{0x3774, 0x30},
 	{0x377a, 0x0d},
 	{0x3789, 0x18},
 	{0x3790, 0x40},
@@ -213,6 +214,8 @@ static struct ov13b10_regval setting_4208_3120_4lane_1080m_30fps[] = {
 	{0x3ca6, 0x01},
 	{0x3ca7, 0x00},
 	{0x3ca8, 0x00},
+	{0x3f02, 0x2a},
+	{0x3f03, 0x10},
 	{0x4008, 0x02},
 	{0x4009, 0x0f},
 	{0x400a, 0x01},
@@ -243,61 +246,6 @@ static struct ov13b10_regval setting_4208_3120_4lane_1080m_30fps[] = {
 	{0x5047, 0xa4},
 	{0x5048, 0x20},
 	{0x5049, 0xa4},
-
-	{0x0100, 0x00},
-	{0x0305, 0x46},
-	{0x0325, 0x50},
-	{0x0327, 0x05},
-	{0x3501, 0x0c},
-	{0x3502, 0x10},
-	{0x3621, 0x28},
-	{0x3622, 0xe6},
-	{0x3623, 0x00},
-	{0x3662, 0x92},
-	{0x3714, 0x24},
-	{0x371a, 0x3e},
-	{0x3739, 0x12},
-	{0x37c2, 0x04},
-	{0x37c5, 0x00},
-	{0x37d9, 0x0c},
-	{0x37e2, 0x0a},
-	{0x37e4, 0x04},
-	{0x3800, 0x00},
-	{0x3801, 0x00},
-	{0x3802, 0x00},
-	{0x3803, 0x08},
-	{0x3804, 0x10},
-	{0x3805, 0x8f},
-	{0x3806, 0x0c},
-	{0x3807, 0x47},
-	{0x3808, 0x10},
-	{0x3809, 0x70},
-	{0x380a, 0x0c},
-	{0x380b, 0x30},
-	{0x380c, 0x04},
-	{0x380d, 0x98},
-	{0x380e, 0x0c},
-	{0x380f, 0xc0},
-	{0x3811, 0x0f},
-	{0x3813, 0x08},
-	{0x3814, 0x01},
-	{0x3815, 0x01},
-	{0x3816, 0x01},
-	{0x3817, 0x01},
-	{0x3820, 0x88},
-	{0x3c8c, 0x19},
-	{0x3f02, 0x2a},
-	{0x3f03, 0x10},
-	{0x4008, 0x02},
-	{0x4009, 0x0f},
-	{0x4050, 0x02},
-	{0x4051, 0x09},
-	{0x4500, 0x0a},
-	{0x4501, 0x00},
-	{0x4505, 0x00},
-	{0x4837, 0x0e},
-	{0x5000, 0xfd},
-	{0x5001, 0x0d},
 	{0x0100, 0x01},
 };
 #endif
@@ -554,23 +502,93 @@ static int ov13b10_write_buffered_reg(struct ov13b10 *ov13b10, u16 address_low,
 }
 */
 
+static uint16_t again_table_1[16] =
+{
+	0x0,0x10,0x20,0x30,0x40,0x50,0x60,0x70,0x80,0x90,0xA0,0xB0,0xC0,0xD0,0xE0,0xF0
+};
+static uint16_t again_table_2[8] =
+{
+	0x0,0x20,0x40,0x60,0x80,0xA0,0xC0,0xE0
+};
+static uint16_t again_table_3[4] =
+{
+	0x0,0x40,0x80,0xC0
+};
+
 static int ov13b10_set_gain(struct ov13b10 *ov13b10, u32 value)
 {
 	int ret = 0;
+	int i = 0;
 	u8 value_H = 0;
 	u8 value_L = 0;
-	//value = 256;
+
 	dev_err(ov13b10->dev, "ov13b10_set_gain = 0x%x \n", value);
-	ret = ov13b10_write_reg(ov13b10, OV13B10_GAIN, (value >> 8) & 0xFF);
+	value_H = (value << 1) >> 8;
+	value_L = (value << 1) & 0xFF;
+
+	if ( value_H == 1) {
+		for ( i = 0; i < 15; i++ ) {
+			if ( value_L < ((again_table_1[i] + again_table_1[i + 1])/2) ) {
+				value_L = again_table_1[i];
+				break;
+			} else {
+				if ((value_L < again_table_1[i + 1]) || (value_L == again_table_1[i + 1])) {
+					value_L = again_table_1[i + 1];
+					break;
+				}
+			}
+		}
+		if (value_L >  again_table_1[15]) {
+			value_L = again_table_1[15];
+		}
+	} else if (value_H > 1 && value_H < 4) {
+			for ( i = 0; i < 7; i++ ) {
+				if ( value_L < ((again_table_2[i] + again_table_2[i + 1])/2) ) {
+					value_L = again_table_2[i];
+					break;
+				} else {
+					if ((value_L < again_table_2[i + 1]) || (value_L == again_table_2[i + 1])) {
+						value_L = again_table_2[i + 1];
+						break;
+					}
+				}
+			}
+			if (value_L >  again_table_1[7]) {
+				value_L = again_table_1[7];
+			}
+		} else if (((value_H == 4 || value_H > 4) && value_H < 8)) {
+				for ( i = 0; i < 3; i++ ) {
+					if ( value_L < ((again_table_3[i] + again_table_3[i + 1])/2) ) {
+						value_L = again_table_3[i];
+						break;
+					} else {
+						if ((value_L < again_table_3[i + 1]) || (value_L == again_table_3[i + 1])) {
+							value_L = again_table_3[i + 1];
+							break;
+						}
+					}
+				}
+				if (value_L >  again_table_1[4]) {
+					value_L = again_table_1[4];
+				}
+			} else {
+				if ( value_L < (0x80/2)) {
+						value_L = 0;
+					} else {
+						value_L = 0x80;
+			        }
+	            }
+
+	ret = ov13b10_write_reg(ov13b10, OV13B10_GAIN, value_H);
 	if (ret)
 		dev_err(ov13b10->dev, "Unable to write OV13B10_GAIN_H \n");
-	ret = ov13b10_write_reg(ov13b10, OV13B10_GAIN_L, value & 0xFF);
+	ret = ov13b10_write_reg(ov13b10, OV13B10_GAIN_L, value_L);
 	if (ret)
 		dev_err(ov13b10->dev, "Unable to write OV13B10_GAIN_L \n");
 
 	ov13b10_read_reg(ov13b10, OV13B10_GAIN, &value_H);
 	ov13b10_read_reg(ov13b10, OV13B10_GAIN_L, &value_L);
-	dev_err(ov13b10->dev, "ov13b10 read gain = 0x%x \n", (value_H << 8) | value_L);
+	dev_err(ov13b10->dev, "ov13b10 read gain = 0x%x \n", (((value_H << 8) | value_L) >> 1));
 	return ret;
 }
 

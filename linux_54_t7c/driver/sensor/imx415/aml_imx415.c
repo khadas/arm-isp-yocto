@@ -1077,7 +1077,6 @@ static struct v4l2_ctrl_config wdr_cfg = {
 	.def = 0,
 };
 
-
 static struct v4l2_ctrl_config fps_cfg = {
 	.ops = &imx415_ctrl_ops,
 	.id = V4L2_CID_AML_ORIG_FPS,
@@ -1089,6 +1088,7 @@ static struct v4l2_ctrl_config fps_cfg = {
 	.step = 1,
 	.def = 1,
 };
+
 static int imx415_ctrls_init(struct imx415 *imx415)
 {
 	int rtn = 0;

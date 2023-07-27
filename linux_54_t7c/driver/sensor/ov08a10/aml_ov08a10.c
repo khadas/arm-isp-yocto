@@ -1057,6 +1057,22 @@ static int ov08a10_set_exposure(struct ov08a10 *ov08a10, u32 value)
 	return ret;
 }
 
+static int ov08a10_set_fps(struct ov08a10 *ov08a10, u32 value)
+{
+	u32 vts = 0;
+	u8 vts_h, vts_l;
+
+	dev_err(ov08a10->dev, "ov13b10_set_fps = %d \n", value);
+
+	vts = 30 * 2314 / value;
+	vts_h = (vts >> 8) & 0x7f;
+	vts_l = vts & 0xff;
+
+	ov08a10_write_reg(ov08a10, 0x380e, vts_h);
+	ov08a10_write_reg(ov08a10, 0x380f, vts_l);
+
+	return 0;
+}
 
 /* Stop streaming */
 static int ov08a10_stop_streaming(struct ov08a10 *ov08a10)
@@ -1086,6 +1102,9 @@ static int ov08a10_set_ctrl(struct v4l2_ctrl *ctrl)
 		break;
 	case V4L2_CID_AML_MODE:
 		ov08a10->enWDRMode = ctrl->val;
+		break;
+	case V4L2_CID_AML_ORIG_FPS:
+		ret = ov08a10_set_fps(ov08a10, ctrl->val);
 		break;
 	default:
 		dev_err(ov08a10->dev, "Error ctrl->id %u, flag 0x%lx\n",
@@ -1502,6 +1521,18 @@ static struct v4l2_ctrl_config wdr_cfg = {
 	.def = 0,
 };
 
+static struct v4l2_ctrl_config fps_cfg = {
+	.ops = &ov08a10_ctrl_ops,
+	.id = V4L2_CID_AML_ORIG_FPS,
+	.name = "sensor fps",
+	.type = V4L2_CTRL_TYPE_INTEGER,
+	.flags = V4L2_CTRL_FLAG_VOLATILE | V4L2_CTRL_FLAG_EXECUTE_ON_WRITE,
+	.min = 1,
+	.max = 30,
+	.step = 1,
+	.def = 1,
+};
+
 static int ov08a10_ctrls_init(struct ov08a10 *ov08a10)
 {
 	int rtn = 0;
@@ -1530,6 +1561,8 @@ static int ov08a10_ctrls_init(struct ov08a10 *ov08a10)
 					       ov08a10_calc_pixel_rate(ov08a10));
 
 	ov08a10->wdr = v4l2_ctrl_new_custom(&ov08a10->ctrls, &wdr_cfg, NULL);
+
+	v4l2_ctrl_new_custom(&ov08a10->ctrls, &fps_cfg, NULL);
 
 	ov08a10->sd.ctrl_handler = &ov08a10->ctrls;
 

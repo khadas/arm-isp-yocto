@@ -247,6 +247,22 @@ static int ov13855_set_exposure(struct ov13855 *ov13855, u32 value)
 	return ret;
 }
 
+static int ov13855_set_fps(struct ov13855 *ov13855, u32 value)
+{
+	u32 vts = 0;
+	u8 vts_h, vts_l;
+
+	dev_err(ov13855->dev, "ov13855_set_fps = %d \n", value);
+
+	vts = 30 * 0xCA0 / value;
+	vts_h = (vts >> 8) & 0x7f;
+	vts_l = vts & 0xff;
+
+	ov13855_write_reg(ov13855, 0x380e, vts_h);
+	ov13855_write_reg(ov13855, 0x380f, vts_l);
+
+	return 0;
+}
 
 /* Stop streaming */
 static int ov13855_stop_streaming(struct ov13855 *ov13855)
@@ -276,6 +292,9 @@ static int ov13855_set_ctrl(struct v4l2_ctrl *ctrl)
 		break;
 	case V4L2_CID_AML_MODE:
 		ov13855->enWDRMode = ctrl->val;
+		break;
+	case V4L2_CID_AML_ORIG_FPS:
+		ret = ov13855_set_fps(ov13855, ctrl->val);
 		break;
 	default:
 		dev_err(ov13855->dev, "Error ctrl->id %u, flag 0x%lx\n",
@@ -687,6 +706,18 @@ static struct v4l2_ctrl_config wdr_cfg = {
 	.def = 0,
 };
 
+static struct v4l2_ctrl_config fps_cfg = {
+	.ops = &ov13855_ctrl_ops,
+	.id = V4L2_CID_AML_ORIG_FPS,
+	.name = "sensor fps",
+	.type = V4L2_CTRL_TYPE_INTEGER,
+	.flags = V4L2_CTRL_FLAG_VOLATILE | V4L2_CTRL_FLAG_EXECUTE_ON_WRITE,
+	.min = 1,
+	.max = 30,
+	.step = 1,
+	.def = 1,
+};
+
 static int ov13855_ctrls_init(struct ov13855 *ov13855)
 {
 	int rtn = 0;
@@ -715,6 +746,8 @@ static int ov13855_ctrls_init(struct ov13855 *ov13855)
 					       ov13855_calc_pixel_rate(ov13855));
 
 	ov13855->wdr = v4l2_ctrl_new_custom(&ov13855->ctrls, &wdr_cfg, NULL);
+
+	v4l2_ctrl_new_custom(&ov13855->ctrls, &fps_cfg, NULL);
 
 	ov13855->sd.ctrl_handler = &ov13855->ctrls;
 

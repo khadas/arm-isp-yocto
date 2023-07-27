@@ -77,7 +77,6 @@ struct imx378
 	struct v4l2_ctrl *link_freq;
 	struct v4l2_ctrl *pixel_rate;
 	struct v4l2_ctrl *wdr;
-	struct v4l2_ctrl *fps;
 
 	int status;
 	struct mutex lock;
@@ -365,6 +364,23 @@ static int imx378_set_exposure(struct imx378 *imx378, u32 value)
 	return ret;
 }
 
+static int imx378_set_fps(struct imx378 *imx378, u32 value)
+{
+	u32 vts = 0;
+	u8 vts_h, vts_l;
+
+	//dev_err(imx378->dev, "-imx378-value = %d\n", value);
+
+	vts = 30 * 3488 / value;
+	vts_h = (vts >> 8) & 0x7f;
+	vts_l = vts & 0xff;
+
+	imx378_write_reg(imx378, 0x3025, vts_h);
+	imx378_write_reg(imx378, 0x3024, vts_l);
+
+	return 0;
+}
+
 static int imx378_stop_streaming(struct imx378 *imx378)
 {
 	imx378->enWDRMode = WDR_MODE_NONE;
@@ -394,8 +410,8 @@ static int imx378_set_ctrl(struct v4l2_ctrl *ctrl)
 	case V4L2_CID_AML_MODE:
 		imx378->enWDRMode = ctrl->val;
 		break;
-	case V4L2_CID_AML_USER_FPS:
-		dev_err(imx378->dev, "set user fps\n");
+	case V4L2_CID_AML_ORIG_FPS:
+		ret = imx378_set_fps(imx378, ctrl->val);
 		if (ctrl->val == 60)
 			imx378->flag_60hz = 1;
 		else
@@ -784,15 +800,16 @@ static struct v4l2_ctrl_config wdr_cfg = {
 	.def = 0,
 };
 
-static struct v4l2_ctrl_config v4l2_ctrl_output_fps = {
+static struct v4l2_ctrl_config fps_cfg = {
 	.ops = &imx378_ctrl_ops,
-	.id = V4L2_CID_AML_USER_FPS,
-	.name = "Sensor output fps",
+	.id = V4L2_CID_AML_ORIG_FPS,
+	.name = "sensor fps",
 	.type = V4L2_CTRL_TYPE_INTEGER,
-	.min = 0,
-	.max = 120,
+	.flags = V4L2_CTRL_FLAG_VOLATILE | V4L2_CTRL_FLAG_EXECUTE_ON_WRITE,
+	.min = 1,
+	.max = 30,
 	.step = 1,
-	.def = 30,
+	.def = 1,
 };
 
 static int imx378_ctrls_init(struct imx378 *imx378)
@@ -823,7 +840,7 @@ static int imx378_ctrls_init(struct imx378 *imx378)
 						imx378_calc_pixel_rate(imx378));
 
 	imx378->wdr = v4l2_ctrl_new_custom(&imx378->ctrls, &wdr_cfg, NULL);
-	imx378->fps = v4l2_ctrl_new_custom(&imx378->ctrls, &v4l2_ctrl_output_fps, NULL);
+	v4l2_ctrl_new_custom(&imx378->ctrls, &fps_cfg, NULL);
 
 	imx378->sd.ctrl_handler = &imx378->ctrls;
 
