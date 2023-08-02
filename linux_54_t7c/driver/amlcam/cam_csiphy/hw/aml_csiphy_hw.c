@@ -257,9 +257,39 @@ static void csiphy_hw_stop(void *c_dev, int idx)
 	return;
 }
 
+static u32 *csiphy_hw_info(void *c_dev)
+{
+	int module = DPHY_MD;
+	static u32 debuginfo[15];
+
+	mipi_reg_read(c_dev, module, MIPI_PHY_CLK_LANE_STS, &debuginfo[0]);
+	mipi_reg_read(c_dev, module, MIPI_PHY_DATA_LANE0_STS, &debuginfo[1]);
+	mipi_reg_read(c_dev, module, MIPI_PHY_DATA_LANE1_STS, &debuginfo[2]);
+	mipi_reg_read(c_dev, module, MIPI_PHY_DATA_LANE2_STS, &debuginfo[3]);
+	mipi_reg_read(c_dev, module, MIPI_PHY_DATA_LANE3_STS, &debuginfo[4]);
+	mipi_reg_read(c_dev, module, MIPI_PHY_MUX_CTRL0, &debuginfo[5]);
+	mipi_reg_read(c_dev, module, MIPI_PHY_MUX_CTRL1, &debuginfo[6]);
+
+	module = APHY_MD;
+
+	mipi_reg_read(c_dev, module, MIPI_CSI_2M_PHY2_CNTL1, &debuginfo[7]);
+	mipi_reg_read(c_dev, module, MIPI_CSI_2M_PHY2_CNTL2, &debuginfo[8]);
+	mipi_reg_read(c_dev, module, MIPI_CSI_2M_PHY2_CNTL3, &debuginfo[9]);
+	mipi_reg_read(c_dev, module, MIPI_CSI_2M_PHY2_CNTL4, &debuginfo[10]);
+	mipi_reg_read(c_dev, module, MIPI_CSI_2M_PHY2_CNTL5, &debuginfo[11]);
+	mipi_reg_read(c_dev, module, MIPI_CSI_2M_PHY2_CNTL6, &debuginfo[12]);
+
+	module = HOST_MD;
+	mipi_reg_read(c_dev, module, CSI2_HOST_ERR1, &debuginfo[13]);
+	mipi_reg_read(c_dev, module, CSI2_HOST_ERR2, &debuginfo[14]);
+
+	return debuginfo;
+}
+
 const struct csiphy_dev_ops csiphy_dev_hw_ops = {
 	.hw_reset = csiphy_hw_reset,
 	.hw_version = csiphy_hw_version,
 	.hw_start = csiphy_hw_start,
 	.hw_stop = csiphy_hw_stop,
+	.hw_csiphy_info = csiphy_hw_info,
 };
