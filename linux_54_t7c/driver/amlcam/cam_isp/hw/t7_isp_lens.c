@@ -294,13 +294,13 @@ static void lswb_rad_cfg_base(struct isp_dev_t *isp_dev, void *base)
 	isp_hw_lut_wend(isp_dev);
 }
 
-static uint16_t aisp_sqrt32( uint32_t arg )
+uint32_t aisp_sqrt64( uint64_t arg )
 {
-	uint32_t mask = (uint32_t)1 << 15;
-	uint16_t res = 0;
+	uint64_t mask = (uint64_t)1 << 31;
+	uint32_t res = 0;
 	int32_t i = 0;
 
-	for ( i = 0; i < 16; i++ ) {
+	for ( i = 0; i < 32; i++ ) {
 		if ( ( res + ( mask >> i ) ) * ( res + ( mask >> i ) ) <= arg )
 			res = res + ( mask >> i );
 	}
@@ -313,13 +313,11 @@ static void lswb_rad_center_base(struct isp_dev_t *isp_dev, void *base)
 	aisp_setting_fixed_cfg_t *set_cfg = &base_cfg->fxset_cfg;
 	u32 center_x = set_cfg->lns_center_xy[0];
 	u32 center_y = set_cfg->lns_center_xy[1];
-	u32 txsize = isp_dev->fmt.width;
-	u32 tysize = isp_dev->fmt.height;
 
-	int32_t radius_max_x = MAX(center_x, (txsize-center_x));
-	int32_t radius_max_y = MAX(center_y, (tysize-center_y));
+	int32_t radius_max_x = MAX(center_x, (int32_t)(isp_dev->fmt.width - center_x));
+	int32_t radius_max_y = MAX(center_y, (int32_t)(isp_dev->fmt.height - center_y));
 	int32_t max_radius = MAX(radius_max_x, radius_max_y);
-	int32_t rad_mult_gain = (int)((1<<11)*max_radius/aisp_sqrt32(radius_max_x*radius_max_x+radius_max_y*radius_max_y));
+	int32_t rad_mult_gain = (int)((1ULL<<(11+8))*max_radius/aisp_sqrt64(((uint64_t)(radius_max_x*radius_max_x+radius_max_y*radius_max_y))<<16));
 	int32_t rad_scale_x = (1<<24)/(max_radius);
 	int32_t rad_scale_y = (1<<24)/(max_radius);
 

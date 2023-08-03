@@ -593,6 +593,9 @@ void isp_disp_set_csc2_fmt(struct isp_dev_t *isp_dev, u32 idx, struct aml_format
 #ifndef T7C_CHIP
 	if (idx != 0)
 		return;
+#else
+	if (idx >= DISP_CNT)
+		return;
 #endif
 
 	isp_reg_update_bits(isp_dev, DISP0_TOP_TOP_CTRL + (idx * 0x100), 0, 1, 1);
@@ -677,14 +680,21 @@ void isp_disp_disable(struct isp_dev_t *isp_dev, u32 idx)
 	isp_reg_update_bits(isp_dev, addr, 0x0, 3, 1);
 	isp_reg_update_bits(isp_dev, addr, 0x0, 2, 1);
 
+	if (g_info->mode == AML_ISP_SCAM) {
+		isp_hwreg_update_bits(isp_dev, addr, 0x0, 5, 1);
+		isp_hwreg_update_bits(isp_dev, addr, 0x0, 3, 1);
+		isp_hwreg_update_bits(isp_dev, addr, 0x0, 2, 1);
+	}
+
 	isp_reg_update_bits(isp_dev, ISP_TOP_DISPIN_SEL, 0xf, idx * 4, 4);
 
 	addr = DISP0_PPS_SCALE_EN + ((idx * 0x100) << 2);
 	isp_reg_update_bits(isp_dev, addr, 0, 20, 4);
+	if (g_info->mode == AML_ISP_SCAM)
+		isp_hwreg_update_bits(isp_dev, addr, 0, 20, 4);
 
 	addr = ISP_TOP_PATH_EN;
 	isp_reg_update_bits(isp_dev, addr, 0x0, idx, 1);
-
 	if (g_info->mode == AML_ISP_SCAM)
 		isp_hwreg_update_bits(isp_dev, addr, 0x0, idx, 1);
 }
