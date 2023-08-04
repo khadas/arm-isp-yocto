@@ -66,7 +66,7 @@ struct thread_info {
     uint32_t status;//1: run 0:stop
     sem_t p_sem;
 
-    aisp_calib_info_t calib;
+    AIspCalibrations calib;
     AML_ALG_CTX_S pstAlgCtx;
 };
 

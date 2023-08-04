@@ -184,7 +184,7 @@ static int32_t _CALIBRATION_DAYNIGHT_DETECT[14] = {
 };
 
 //aisp_af_t
-static uint32_t _CALIBRATION_AF_CTL[22] = {
+static uint32_t _CALIBRATION_AF_CTL[23] = {
     1, //af_en;
     1, //af_pos_min_down;
     1, //af_pos_min;
@@ -207,6 +207,7 @@ static uint32_t _CALIBRATION_AF_CTL[22] = {
     1, //af_caf_trigger_th;
     1, //af_caf_stable_th;
     1, //af_print_debug;
+    1,//af_mode;0:AF, 1:CAF, 2:MANUAL, 3:CLBT;
 };
 
 static uint8_t _CALIBRATION_AF_WEIGHT_H[17] = {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16};
@@ -698,9 +699,10 @@ static uint16_t _CALIBRATION_LENS_SHADING_ADJ[ISO_NUM_MAX][2] = {
     {64,   64,}, //x512 gain
 };
 
-static int32_t _CALIBRATION_LENS_SHADING_CT_CORRECT[2] = {
+static int32_t _CALIBRATION_LENS_SHADING_CT_CORRECT[4] = {
 /*    TL40 diff           |   CWF color diff */
-    0, 0
+    0, 0,
+    4000, 4000
 };
 
 //aisp_dms_t
@@ -881,7 +883,7 @@ static uint16_t _CALIBRATION_LC_SATUR_LUT[63] = {
 };
 
 //aisp_dnlp_t
-static int32_t _CALIBRATION_DNLP_CTL[21] = {
+static int32_t _CALIBRATION_DNLP_CTL[24] = {
     1,   // dnlp_auto_enable
     5,   // dnlp_cuvbld_min
     15,  // dnlp_cuvbld_max
@@ -903,6 +905,9 @@ static int32_t _CALIBRATION_DNLP_CTL[21] = {
     48,  // dnlp_scn_chg_th
     32, // dnlp_mtdbld_rate
     0,  //dnlp_str_fixed
+    0,  //dnlp_by_iso_luma 1: iso 0: luma_avg
+    1,  //dnlp_scurv_gain_mode
+    0,  //dnlp_luma_dbg
 };
 
 //CALIBRATION_DNLP_STRENGTH, 8bit, normalization: 8 as 1, {ISO100,ISO200,ISO400,ISO800,ISO1600,ISO3200,ISO6400,ISO12800,ISO25600,ISO51200}
@@ -1286,12 +1291,23 @@ static uint8_t _CALIBRATION_SHADING_LS_A_B[1024]=
 };
 
 //aisp_lsc_ctl_t
-static uint32_t _CALIBRATION_LENS_SHADING_CTL[4] =
+static uint32_t _CALIBRATION_LENS_SHADING_CTL[15] =
 {
     2, //mesh shading split mode 0:64x64 1: 32x64 2:32x32
     1, //mesh lut normalize select 0: 128 1:64 2:32 3:16
     32, //mesh hori-node numbers
     32, //mesh vert-node numbers
+    0,  //adaptive lens shading en. 1: alsc by lut 2: alsc by stats
+    256,//adaptive speed max 256
+    16, //adaptive stabilize threshold
+    16, //adaptive stabilize maximum threshold >= th
+    8, //delay frame numbers
+    0,//offset of the color shift value
+    0,//offset of the color shift value
+    200, //red color shift minimum value
+    600, //blue color shift minimum value
+    800, //red color shift maximum value
+    400, //blue color shift maximum value
 };
 
 static uint16_t _CALIBRATION_GAMMA[129]=
@@ -1410,7 +1426,7 @@ static uint16_t _CALIBRATION_NOISE_PROFILE[9][16] =
 static uint8_t _CALIBRATION_FPNR[2048*2*5] = {0};
 
 //aisp_awb_info_t
-static uint32_t _CALIBRATION_AWB_PRESET[6] =
+static uint32_t _CALIBRATION_AWB_PRESET[15] =
 {
     0,
     457,    //awb_sys_r_gain;
@@ -1418,14 +1434,20 @@ static uint32_t _CALIBRATION_AWB_PRESET[6] =
     436,    //awb_sys_b_gain;
     5563,   //awb_sys_ct;
     20,     //awb_sys_cdiff;
+    5000,
+    0 ,
+    256,
+    256,
+    1,
+    1,
 };
 
 static LookupTable calibration_top_ctl = {.ptr = _CALIBRATION_TOP_CTL, .rows = 1, .cols = sizeof( _CALIBRATION_TOP_CTL ) / sizeof( _CALIBRATION_TOP_CTL[0] ), .width = sizeof( _CALIBRATION_TOP_CTL[0] )};
 static LookupTable calibration_awb_ctl = {.ptr = _CALIBRATION_AWB_CTL, .rows = 1, .cols = sizeof( _CALIBRATION_AWB_CTL ) / sizeof( _CALIBRATION_AWB_CTL[0] ), .width = sizeof( _CALIBRATION_AWB_CTL[0] )};
 static LookupTable calibration_res_ctl = {.ptr = _CALIBRATION_RES_CTL, .rows = 1, .cols = sizeof( _CALIBRATION_RES_CTL ) / sizeof( _CALIBRATION_RES_CTL[0] ), .width = sizeof( _CALIBRATION_RES_CTL[0] )};
 static LookupTable calibration_awb_ct_pos = { .ptr = _CALIBRATION_AWB_CT_POS, .rows = 1, .cols = sizeof(_CALIBRATION_AWB_CT_POS) / sizeof(_CALIBRATION_AWB_CT_POS[0]), .width = sizeof(_CALIBRATION_AWB_CT_POS[0] ) };
-static LookupTable calibration_awb_ct_rg_compensation = { .ptr = _CALIBRATION_AWB_CT_RG_COMPENSATION, .rows = 1, .cols = sizeof( _CALIBRATION_AWB_CT_RG_COMPENSATION ) / sizeof( _CALIBRATION_AWB_CT_RG_COMPENSATION[0] ), .width = sizeof( _CALIBRATION_AWB_CT_RG_COMPENSATION[0] )};
-static LookupTable calibration_awb_ct_bg_compensation = { .ptr = _CALIBRATION_AWB_CT_BG_COMPENSATION, .rows = 1, .cols = sizeof(_CALIBRATION_AWB_CT_BG_COMPENSATION) / sizeof(_CALIBRATION_AWB_CT_BG_COMPENSATION[0]), .width = sizeof(_CALIBRATION_AWB_CT_BG_COMPENSATION[0] ) };
+static LookupTable calibration_awb_ct_rg_compensate = { .ptr = _CALIBRATION_AWB_CT_RG_COMPENSATION, .rows = 1, .cols = sizeof( _CALIBRATION_AWB_CT_RG_COMPENSATION ) / sizeof( _CALIBRATION_AWB_CT_RG_COMPENSATION[0] ), .width = sizeof( _CALIBRATION_AWB_CT_RG_COMPENSATION[0] )};
+static LookupTable calibration_awb_ct_bg_compensate = { .ptr = _CALIBRATION_AWB_CT_BG_COMPENSATION, .rows = 1, .cols = sizeof(_CALIBRATION_AWB_CT_BG_COMPENSATION) / sizeof(_CALIBRATION_AWB_CT_BG_COMPENSATION[0]), .width = sizeof(_CALIBRATION_AWB_CT_BG_COMPENSATION[0] ) };
 static LookupTable calibration_awb_ct_wgt = { .ptr = _CALIBRATION_AWB_CT_WGT, .rows = 1, .cols = sizeof( _CALIBRATION_AWB_CT_WGT ) / sizeof( _CALIBRATION_AWB_CT_WGT[0] ), .width = sizeof( _CALIBRATION_AWB_CT_WGT[0] )};
 static LookupTable calibration_awb_ct_dyn_cvrange = { .ptr = _CALIBRATION_AWB_CT_DYN_CVRANGE, .rows = sizeof(_CALIBRATION_AWB_CT_DYN_CVRANGE) / sizeof(_CALIBRATION_AWB_CT_DYN_CVRANGE[0]), .cols = sizeof(_CALIBRATION_AWB_CT_DYN_CVRANGE[0]) / sizeof(_CALIBRATION_AWB_CT_DYN_CVRANGE[0][0]), .width = sizeof(_CALIBRATION_AWB_CT_DYN_CVRANGE[0][0] ) };
 static LookupTable calibration_ae_ctl = {.ptr = _CALIBRATION_AE_CTL, .rows = 1, .cols = sizeof( _CALIBRATION_AE_CTL ) / sizeof( _CALIBRATION_AE_CTL[0] ), .width = sizeof( _CALIBRATION_AE_CTL[0] )};
@@ -1549,136 +1571,136 @@ static LookupTable calibration_lens_shading_ctl = { .ptr = _CALIBRATION_LENS_SHA
 static LookupTable calibration_fpnr = { .ptr = _CALIBRATION_FPNR, .rows = 1, .cols = sizeof(_CALIBRATION_FPNR) / sizeof(_CALIBRATION_FPNR[0]), .width = sizeof(_CALIBRATION_FPNR[0] ) };
 static LookupTable calibration_awb_preset = { .ptr = _CALIBRATION_AWB_PRESET, .rows = 1, .cols = sizeof(_CALIBRATION_AWB_PRESET) / sizeof(_CALIBRATION_AWB_PRESET[0]), .width = sizeof(_CALIBRATION_AWB_PRESET[0] ) };
 
-int dynamic_wdr_calibrations_init_ov08a10(aisp_calib_info_t *calib)
+int dynamic_wdr_calibrations_init_ov08a10(AIspCalibrations *calib)
 {
-	calib->calibrations[CALIBRATION_TOP_CTL] = &calibration_top_ctl;
-	calib->calibrations[CALIBRATION_RES_CTL] = &calibration_res_ctl;
-	calib->calibrations[CALIBRATION_AWB_CTL] = &calibration_awb_ctl;
-	calib->calibrations[CALIBRATION_AWB_CT_POS] = &calibration_awb_ct_pos;
-	calib->calibrations[CALIBRATION_AWB_CT_RG_COMPENSATION] = &calibration_awb_ct_rg_compensation;
-	calib->calibrations[CALIBRATION_AWB_CT_BG_COMPENSATION] = &calibration_awb_ct_bg_compensation;
-	calib->calibrations[CALIBRATION_AWB_CT_WGT] = &calibration_awb_ct_wgt;
-	calib->calibrations[CALIBRATION_AWB_CT_DYN_CVRANGE] = &calibration_awb_ct_dyn_cvrange;
-	calib->calibrations[CALIBRATION_AE_CTL] = &calibration_ae_ctl;
-	calib->calibrations[CALIBRATION_AE_CORR_POS_LUT] = &calibration_ae_corr_pos_lut;
-	calib->calibrations[CALIBRATION_AE_CORR_LUT] = &calibration_ae_corr_lut;
-	calib->calibrations[CALIBRATION_AE_ROUTE] = &calibration_ae_route;
-	calib->calibrations[CALIBRATION_AE_WEIGHT_H] = &calibration_ae_weight_h;
-	calib->calibrations[CALIBRATION_AE_WEIGHT_V] = &calibration_ae_weight_v;
-	calib->calibrations[CALIBRATION_DAYNIGHT_DETECT] = &calibration_daynight_detect;
-	calib->calibrations[CALIBRATION_AF_CTL] = &calibration_af_ctl;
-	calib->calibrations[CALIBRATION_AF_WEIGHT_H] = &calibration_af_weight_h;
-	calib->calibrations[CALIBRATION_AF_WEIGHT_V] = &calibration_af_weight_v;
-	calib->calibrations[CALIBRATION_FLICKER_CTL] = &calibration_flicker_ctl;
-	calib->calibrations[CALIBRATION_GTM] = &calibration_gtm;
-	calib->calibrations[CALIBRATION_GE_ADJ] = &calibration_ge_adj;
-	calib->calibrations[CALIBRATION_GE_S_ADJ] = &calibration_ge_s_adj;
-	calib->calibrations[CALIBRATION_DPC_CTL] = &calibration_dpc_ctl;
-	calib->calibrations[CALIBRATION_DPC_S_CTL] = &calibration_dpc_s_ctl;
-	calib->calibrations[CALIBRATION_DPC_ADJ] = &calibration_dpc_adj;
-	calib->calibrations[CALIBRATION_DPC_S_ADJ] = &calibration_dpc_s_adj;
-	calib->calibrations[CALIBRATION_WDR_CTL] = &calibration_wdr_ctl;
-	calib->calibrations[CALIBRATION_WDR_ADJUST] = &calibration_wdr_adjust;
-	calib->calibrations[CALIBRATION_WDR_MDETC_LOWEIGHT] = &calibration_wdr_mdetc_loweight;
-	calib->calibrations[CALIBRATION_WDR_MDETC_HIWEIGHT] = &calibration_wdr_mdetc_hiweight;
-	calib->calibrations[CALIBRATION_RAWCNR_CTL] = &calibration_rawcnr_ctl;
-	calib->calibrations[CALIBRATION_RAWCNR_ADJ] = &calibration_rawcnr_adj;
-	calib->calibrations[CALIBRATION_RAWCNR_META_GAIN_LUT] = &calibration_rawcnr_meta_gain_lut;
-	calib->calibrations[CALIBRATION_RAWCNR_SPS_CSIG_WEIGHT5X5] = &calibration_rawcnr_sps_csig_weight5x5;
-	calib->calibrations[CALIBRATION_SNR_CTL] = &calibration_snr_ctl;
-	calib->calibrations[CALIBRATION_SNR_GLB_ADJ] = &calibration_snr_glb_adj;
-	calib->calibrations[CALIBRATION_SNR_ADJ] = &calibration_snr_adj;
-	calib->calibrations[CALIBRATION_SNR_CUR_WT] = &calibration_snr_cur_wt;
-	calib->calibrations[CALIBRATION_SNR_WT_LUMA_GAIN] = &calibration_snr_wt_luma_gain;
-	calib->calibrations[CALIBRATION_SNR_SAD_META2ALP] = &calibration_snr_sad_meta2alp;
-	calib->calibrations[CALIBRATION_SNR_META_ADJ] = &calibration_snr_meta_adj;
-	calib->calibrations[CALIBRATION_SNR_PHS] = &calibration_snr_phs;
-	calib->calibrations[CALIBRATION_NR_RAD_LUT65] = &calibration_nr_rad_lut65;
-	calib->calibrations[CALIBRATION_PST_SNR_ADJ] = &calibration_pst_snr_adj;
-	calib->calibrations[CALIBRATION_TNR_CTL] = &calibration_tnr_ctl;
-	calib->calibrations[CALIBRATION_TNR_GLB_ADJ] = &calibration_tnr_glb_adj;
-	calib->calibrations[CALIBRATION_TNR_ADJ] = &calibration_tnr_adj;
-	calib->calibrations[CALIBRATION_TNR_SAD2ALPHA] = &calibration_tnr_sad2alpha;
-	calib->calibrations[CALIBRATION_MC_META2ALPHA] = &calibration_mc_meta2alpha;
-	calib->calibrations[CALIBRATION_PST_TNR_ALP_LUT] = &calibration_pst_tnr_alp_lut;
-	calib->calibrations[CALIBRATION_LENS_SHADING_CT_CORRECT] = &calibration_lens_shading_ct_correct;
-	calib->calibrations[CALIBRATION_LENS_SHADING_ADJ] = &calibration_lens_shading_adj;
-	calib->calibrations[CALIBRATION_DMS_ADJ] = &calibration_dms_adj;
-	calib->calibrations[CALIBRATION_CCM_ADJ] = &calibration_ccm_adj;
-	calib->calibrations[CALIBRATION_CNR_CTL] = &calibration_cnr_ctl;
-	calib->calibrations[CALIBRATION_CNR_ADJ] = &calibration_cnr_adj;
-	calib->calibrations[CALIBRATION_PURPLE_CTL] = &calibration_purple_ctl;
-	calib->calibrations[CALIBRATION_PURPLE_ADJ] = &calibration_purple_adj;
-	calib->calibrations[CALIBRATION_LTM_CTL] = &calibration_ltm_ctl;
-	calib->calibrations[CALIBRATION_LTM_LO_HI_GM] = &calibration_ltm_lo_hi_gm;
-	calib->calibrations[CALIBRATION_LTM_CONTRAST] = &calibration_ltm_contrast;
-	calib->calibrations[CALIBRATION_LTM_SHARP_ADJ] = &calibration_ltm_sharp_adj;
-	calib->calibrations[CALIBRATION_LTM_SATUR_LUT] = &calibration_ltm_satur_lut;
-	calib->calibrations[CALIBRATION_LC_CTL] = &calibration_lc_ctl;
-	calib->calibrations[CALIBRATION_LC_SATUR_LUT] = &calibration_lc_satur_lut;
-	calib->calibrations[CALIBRATION_LC_STRENGTH] = &calibration_lc_strength;
-	calib->calibrations[CALIBRATION_DNLP_CTL] = &calibration_dnlp_ctl;
-	calib->calibrations[CALIBRATION_DNLP_STRENGTH] = &calibration_dnlp_strength;
-	calib->calibrations[CALIBRATION_DNLP_SCURV_LOW] = &calibration_dnlp_scurv_low;
-	calib->calibrations[CALIBRATION_DNLP_SCURV_MID1] = &calibration_dnlp_scurv_mid1;
-	calib->calibrations[CALIBRATION_DNLP_SCURV_MID2] = &calibration_dnlp_scurv_mid2;
-	calib->calibrations[CALIBRATION_DNLP_SCURV_HGH1] = &calibration_dnlp_scurv_hgh1;
-	calib->calibrations[CALIBRATION_DNLP_SCURV_HGH2] = &calibration_dnlp_scurv_hgh2;
-	calib->calibrations[CALIBRATION_DHZ_CTL] = &calibration_dhz_ctl;
-	calib->calibrations[CALIBRATION_DHZ_STRENGTH] = &calibration_dhz_strength;
-	calib->calibrations[CALIBRATION_PEAKING_CTL] = &calibration_peaking_ctl;
-	calib->calibrations[CALIBRATION_PEAKING_ADJUST] = &calibration_peaking_adjust;
-	calib->calibrations[CALIBRATION_PEAKING_FLT1_MOTION_ADP_GAIN] = &calibration_peaking_flt1_motion_adp_gain;
-	calib->calibrations[CALIBRATION_PEAKING_FLT2_MOTION_ADP_GAIN] = &calibration_peaking_flt2_motion_adp_gain;
-	calib->calibrations[CALIBRATION_PEAKING_GAIN_VS_LUMA_LUT] = &calibration_peaking_gain_vs_luma_lut;
-	calib->calibrations[CALIBRATION_PEAKING_CIR_FLT1_GAIN] = &calibration_peaking_cir_flt1_gain;
-	calib->calibrations[CALIBRATION_PEAKING_CIR_FLT2_GAIN] = &calibration_peaking_cir_flt2_gain;
-	calib->calibrations[CALIBRATION_PEAKING_DRT_FLT2_GAIN] = &calibration_peaking_drt_flt2_gain;
-	calib->calibrations[CALIBRATION_PEAKING_DRT_FLT1_GAIN] = &calibration_peaking_drt_flt1_gain;
-	calib->calibrations[CALIBRATION_CM_CTL] = &calibration_cm_ctl;
-	calib->calibrations[CALIBRATION_CM_Y_VIA_HUE] = &calibration_cm_y_via_hue;
-	calib->calibrations[CALIBRATION_CM_SATGLBGAIN_VIA_Y] = &calibration_cm_satglbgain_via_y;
-	calib->calibrations[CALIBRATION_CM_SAT_VIA_HS] = &calibration_cm_sat_via_hs;
-	calib->calibrations[CALIBRATION_CM_SATGAIN_VIA_Y] = &calibration_cm_satgain_via_y;
-	calib->calibrations[CALIBRATION_CM_HUE_VIA_H] = &calibration_cm_hue_via_h;
-	calib->calibrations[CALIBRATION_CM_HUE_VIA_S] = &calibration_cm_hue_via_s;
-	calib->calibrations[CALIBRATION_CM_HUE_VIA_Y] = &calibration_cm_hue_via_y;
-	calib->calibrations[CALIBRATION_HLC_CTL] = &calibration_hlc_ctl;
+	calib->pstcalibrations[CALIBRATION_TOP_CTL] = &calibration_top_ctl;
+	calib->pstcalibrations[CALIBRATION_RES_CTL] = &calibration_res_ctl;
+	calib->pstcalibrations[CALIBRATION_AWB_CTL] = &calibration_awb_ctl;
+	calib->pstcalibrations[CALIBRATION_AWB_CT_POS] = &calibration_awb_ct_pos;
+	calib->pstcalibrations[CALIBRATION_AWB_CT_RG_COMPENSATE] = &calibration_awb_ct_rg_compensate;
+	calib->pstcalibrations[CALIBRATION_AWB_CT_BG_COMPENSATE] = &calibration_awb_ct_bg_compensate;
+	calib->pstcalibrations[CALIBRATION_AWB_CT_WGT] = &calibration_awb_ct_wgt;
+	calib->pstcalibrations[CALIBRATION_AWB_CT_DYN_CVRANGE] = &calibration_awb_ct_dyn_cvrange;
+	calib->pstcalibrations[CALIBRATION_AE_CTL] = &calibration_ae_ctl;
+	calib->pstcalibrations[CALIBRATION_AE_CORR_POS_LUT] = &calibration_ae_corr_pos_lut;
+	calib->pstcalibrations[CALIBRATION_AE_CORR_LUT] = &calibration_ae_corr_lut;
+	calib->pstcalibrations[CALIBRATION_AE_ROUTE] = &calibration_ae_route;
+	calib->pstcalibrations[CALIBRATION_AE_WEIGHT_H] = &calibration_ae_weight_h;
+	calib->pstcalibrations[CALIBRATION_AE_WEIGHT_V] = &calibration_ae_weight_v;
+	calib->pstcalibrations[CALIBRATION_DAYNIGHT_DETECT] = &calibration_daynight_detect;
+	calib->pstcalibrations[CALIBRATION_AF_CTL] = &calibration_af_ctl;
+	calib->pstcalibrations[CALIBRATION_AF_WEIGHT_H] = &calibration_af_weight_h;
+	calib->pstcalibrations[CALIBRATION_AF_WEIGHT_V] = &calibration_af_weight_v;
+	calib->pstcalibrations[CALIBRATION_FLICKER_CTL] = &calibration_flicker_ctl;
+	calib->pstcalibrations[CALIBRATION_GTM] = &calibration_gtm;
+	calib->pstcalibrations[CALIBRATION_GE_ADJ] = &calibration_ge_adj;
+	calib->pstcalibrations[CALIBRATION_GE_S_ADJ] = &calibration_ge_s_adj;
+	calib->pstcalibrations[CALIBRATION_DPC_CTL] = &calibration_dpc_ctl;
+	calib->pstcalibrations[CALIBRATION_DPC_S_CTL] = &calibration_dpc_s_ctl;
+	calib->pstcalibrations[CALIBRATION_DPC_ADJ] = &calibration_dpc_adj;
+	calib->pstcalibrations[CALIBRATION_DPC_S_ADJ] = &calibration_dpc_s_adj;
+	calib->pstcalibrations[CALIBRATION_WDR_CTL] = &calibration_wdr_ctl;
+	calib->pstcalibrations[CALIBRATION_WDR_ADJUST] = &calibration_wdr_adjust;
+	calib->pstcalibrations[CALIBRATION_WDR_MDETC_LOWEIGHT] = &calibration_wdr_mdetc_loweight;
+	calib->pstcalibrations[CALIBRATION_WDR_MDETC_HIWEIGHT] = &calibration_wdr_mdetc_hiweight;
+	calib->pstcalibrations[CALIBRATION_RAWCNR_CTL] = &calibration_rawcnr_ctl;
+	calib->pstcalibrations[CALIBRATION_RAWCNR_ADJ] = &calibration_rawcnr_adj;
+	calib->pstcalibrations[CALIBRATION_RAWCNR_META_GAIN_LUT] = &calibration_rawcnr_meta_gain_lut;
+	calib->pstcalibrations[CALIBRATION_RAWCNR_SPS_CSIG_WEIGHT5X5] = &calibration_rawcnr_sps_csig_weight5x5;
+	calib->pstcalibrations[CALIBRATION_SNR_CTL] = &calibration_snr_ctl;
+	calib->pstcalibrations[CALIBRATION_SNR_GLB_ADJ] = &calibration_snr_glb_adj;
+	calib->pstcalibrations[CALIBRATION_SNR_ADJ] = &calibration_snr_adj;
+	calib->pstcalibrations[CALIBRATION_SNR_CUR_WT] = &calibration_snr_cur_wt;
+	calib->pstcalibrations[CALIBRATION_SNR_WT_LUMA_GAIN] = &calibration_snr_wt_luma_gain;
+	calib->pstcalibrations[CALIBRATION_SNR_SAD_META2ALP] = &calibration_snr_sad_meta2alp;
+	calib->pstcalibrations[CALIBRATION_SNR_META_ADJ] = &calibration_snr_meta_adj;
+	calib->pstcalibrations[CALIBRATION_SNR_PHS] = &calibration_snr_phs;
+	calib->pstcalibrations[CALIBRATION_NR_RAD_LUT65] = &calibration_nr_rad_lut65;
+	calib->pstcalibrations[CALIBRATION_PST_SNR_ADJ] = &calibration_pst_snr_adj;
+	calib->pstcalibrations[CALIBRATION_TNR_CTL] = &calibration_tnr_ctl;
+	calib->pstcalibrations[CALIBRATION_TNR_GLB_ADJ] = &calibration_tnr_glb_adj;
+	calib->pstcalibrations[CALIBRATION_TNR_ADJ] = &calibration_tnr_adj;
+	calib->pstcalibrations[CALIBRATION_TNR_SAD2ALPHA] = &calibration_tnr_sad2alpha;
+	calib->pstcalibrations[CALIBRATION_MC_META2ALPHA] = &calibration_mc_meta2alpha;
+	calib->pstcalibrations[CALIBRATION_PST_TNR_ALP_LUT] = &calibration_pst_tnr_alp_lut;
+	calib->pstcalibrations[CALIBRATION_LENS_SHADING_CT_CORRECT] = &calibration_lens_shading_ct_correct;
+	calib->pstcalibrations[CALIBRATION_LENS_SHADING_ADJ] = &calibration_lens_shading_adj;
+	calib->pstcalibrations[CALIBRATION_DMS_ADJ] = &calibration_dms_adj;
+	calib->pstcalibrations[CALIBRATION_CCM_ADJ] = &calibration_ccm_adj;
+	calib->pstcalibrations[CALIBRATION_CNR_CTL] = &calibration_cnr_ctl;
+	calib->pstcalibrations[CALIBRATION_CNR_ADJ] = &calibration_cnr_adj;
+	calib->pstcalibrations[CALIBRATION_PURPLE_CTL] = &calibration_purple_ctl;
+	calib->pstcalibrations[CALIBRATION_PURPLE_ADJ] = &calibration_purple_adj;
+	calib->pstcalibrations[CALIBRATION_LTM_CTL] = &calibration_ltm_ctl;
+	calib->pstcalibrations[CALIBRATION_LTM_LO_HI_GM] = &calibration_ltm_lo_hi_gm;
+	calib->pstcalibrations[CALIBRATION_LTM_CONTRAST] = &calibration_ltm_contrast;
+	calib->pstcalibrations[CALIBRATION_LTM_SHARP_ADJ] = &calibration_ltm_sharp_adj;
+	calib->pstcalibrations[CALIBRATION_LTM_SATUR_LUT] = &calibration_ltm_satur_lut;
+	calib->pstcalibrations[CALIBRATION_LC_CTL] = &calibration_lc_ctl;
+	calib->pstcalibrations[CALIBRATION_LC_SATUR_LUT] = &calibration_lc_satur_lut;
+	calib->pstcalibrations[CALIBRATION_LC_STRENGTH] = &calibration_lc_strength;
+	calib->pstcalibrations[CALIBRATION_DNLP_CTL] = &calibration_dnlp_ctl;
+	calib->pstcalibrations[CALIBRATION_DNLP_STRENGTH] = &calibration_dnlp_strength;
+	calib->pstcalibrations[CALIBRATION_DNLP_SCURV_LOW] = &calibration_dnlp_scurv_low;
+	calib->pstcalibrations[CALIBRATION_DNLP_SCURV_MID1] = &calibration_dnlp_scurv_mid1;
+	calib->pstcalibrations[CALIBRATION_DNLP_SCURV_MID2] = &calibration_dnlp_scurv_mid2;
+	calib->pstcalibrations[CALIBRATION_DNLP_SCURV_HGH1] = &calibration_dnlp_scurv_hgh1;
+	calib->pstcalibrations[CALIBRATION_DNLP_SCURV_HGH2] = &calibration_dnlp_scurv_hgh2;
+	calib->pstcalibrations[CALIBRATION_DHZ_CTL] = &calibration_dhz_ctl;
+	calib->pstcalibrations[CALIBRATION_DHZ_STRENGTH] = &calibration_dhz_strength;
+	calib->pstcalibrations[CALIBRATION_PEAKING_CTL] = &calibration_peaking_ctl;
+	calib->pstcalibrations[CALIBRATION_PEAKING_ADJUST] = &calibration_peaking_adjust;
+	calib->pstcalibrations[CALIBRATION_PEAKING_FLT1_MOTION_ADP_GAIN] = &calibration_peaking_flt1_motion_adp_gain;
+	calib->pstcalibrations[CALIBRATION_PEAKING_FLT2_MOTION_ADP_GAIN] = &calibration_peaking_flt2_motion_adp_gain;
+	calib->pstcalibrations[CALIBRATION_PEAKING_GAIN_VS_LUMA_LUT] = &calibration_peaking_gain_vs_luma_lut;
+	calib->pstcalibrations[CALIBRATION_PEAKING_CIR_FLT1_GAIN] = &calibration_peaking_cir_flt1_gain;
+	calib->pstcalibrations[CALIBRATION_PEAKING_CIR_FLT2_GAIN] = &calibration_peaking_cir_flt2_gain;
+	calib->pstcalibrations[CALIBRATION_PEAKING_DRT_FLT2_GAIN] = &calibration_peaking_drt_flt2_gain;
+	calib->pstcalibrations[CALIBRATION_PEAKING_DRT_FLT1_GAIN] = &calibration_peaking_drt_flt1_gain;
+	calib->pstcalibrations[CALIBRATION_CM_CTL] = &calibration_cm_ctl;
+	calib->pstcalibrations[CALIBRATION_CM_Y_VIA_HUE] = &calibration_cm_y_via_hue;
+	calib->pstcalibrations[CALIBRATION_CM_SATGLBGAIN_VIA_Y] = &calibration_cm_satglbgain_via_y;
+	calib->pstcalibrations[CALIBRATION_CM_SAT_VIA_HS] = &calibration_cm_sat_via_hs;
+	calib->pstcalibrations[CALIBRATION_CM_SATGAIN_VIA_Y] = &calibration_cm_satgain_via_y;
+	calib->pstcalibrations[CALIBRATION_CM_HUE_VIA_H] = &calibration_cm_hue_via_h;
+	calib->pstcalibrations[CALIBRATION_CM_HUE_VIA_S] = &calibration_cm_hue_via_s;
+	calib->pstcalibrations[CALIBRATION_CM_HUE_VIA_Y] = &calibration_cm_hue_via_y;
+	calib->pstcalibrations[CALIBRATION_HLC_CTL] = &calibration_hlc_ctl;
 
-	calib->calibrations[CALIBRATION_BLACK_LEVEL] = &calibration_black_level;
-	calib->calibrations[CALIBRATION_CAC_RX] = &calibration_cac_rx;
-	calib->calibrations[CALIBRATION_CAC_RY] = &calibration_cac_ry;
-	calib->calibrations[CALIBRATION_CAC_BX] = &calibration_cac_bx;
-	calib->calibrations[CALIBRATION_CAC_BY] = &calibration_cac_by;
-	calib->calibrations[CALIBRATION_SHADING_RADIAL_R] = &calibration_shading_radial_r;
-	calib->calibrations[CALIBRATION_SHADING_RADIAL_G] = &calibration_shading_radial_g;
-	calib->calibrations[CALIBRATION_SHADING_RADIAL_B] = &calibration_shading_radial_b;
-	calib->calibrations[CALIBRATION_SHADING_LS_D65_R] = &calibration_shading_ls_d65_r;
-	calib->calibrations[CALIBRATION_SHADING_LS_D65_G] = &calibration_shading_ls_d65_g;
-	calib->calibrations[CALIBRATION_SHADING_LS_D65_B] = &calibration_shading_ls_d65_b;
-	calib->calibrations[CALIBRATION_SHADING_LS_CWF_R] = &calibration_shading_ls_cwf_r;
-	calib->calibrations[CALIBRATION_SHADING_LS_CWF_G] = &calibration_shading_ls_cwf_g;
-	calib->calibrations[CALIBRATION_SHADING_LS_CWF_B] = &calibration_shading_ls_cwf_b;
-	calib->calibrations[CALIBRATION_SHADING_LS_TL84_R] = &calibration_shading_ls_tl84_r;
-	calib->calibrations[CALIBRATION_SHADING_LS_TL84_G] = &calibration_shading_ls_tl84_g;
-	calib->calibrations[CALIBRATION_SHADING_LS_TL84_B] = &calibration_shading_ls_tl84_b;
-	calib->calibrations[CALIBRATION_SHADING_LS_A_R] = &calibration_shading_ls_a_r;
-	calib->calibrations[CALIBRATION_SHADING_LS_A_G] = &calibration_shading_ls_a_g;
-	calib->calibrations[CALIBRATION_SHADING_LS_A_B] = &calibration_shading_ls_a_b;
-	calib->calibrations[CALIBRATION_LENS_SHADING_CTL] = &calibration_lens_shading_ctl;
-	calib->calibrations[CALIBRATION_GAMMA] = &calibration_gamma;
-	calib->calibrations[CALIBRATION_CCM] = &calibration_ccm;
-	calib->calibrations[CALIBRATION_AWB_RG_POS] = &calibration_awb_rg_pos;
-	calib->calibrations[CALIBRATION_AWB_BG_POS] = &calibration_awb_bg_pos;
-	calib->calibrations[CALIBRATION_AWB_MESH_DIST_TAB] = &calibration_awb_mesh_dist_tab;
-	calib->calibrations[CALIBRATION_AWB_MESH_CT_TAB] = &calibration_awb_mesh_ct_tab;
-	calib->calibrations[CALIBRATION_AWB_CT_RG_CURVE] = &calibration_awb_ct_rg_curve;
-	calib->calibrations[CALIBRATION_AWB_CT_BG_CURVE] = &calibration_awb_ct_bg_curve;
-	calib->calibrations[CALIBRATION_AWB_WB_GOLDEN_D50] = &calibration_awb_wb_golden_d50;
-	calib->calibrations[CALIBRATION_AWB_WB_OTP_D50] = &calibration_awb_wb_otp_d50;
-	calib->calibrations[CALIBRATION_NOISE_PROFILE] = &calibration_noise_profile;
-	calib->calibrations[CALIBRATION_FPNR] = &calibration_fpnr;
-	calib->calibrations[CALIBRATION_AWB_PRESET] = &calibration_awb_preset;
+	calib->pstcalibrations[CALIBRATION_BLACK_LEVEL] = &calibration_black_level;
+	calib->pstcalibrations[CALIBRATION_CAC_RX] = &calibration_cac_rx;
+	calib->pstcalibrations[CALIBRATION_CAC_RY] = &calibration_cac_ry;
+	calib->pstcalibrations[CALIBRATION_CAC_BX] = &calibration_cac_bx;
+	calib->pstcalibrations[CALIBRATION_CAC_BY] = &calibration_cac_by;
+	calib->pstcalibrations[CALIBRATION_SHADING_RADIAL_R] = &calibration_shading_radial_r;
+	calib->pstcalibrations[CALIBRATION_SHADING_RADIAL_G] = &calibration_shading_radial_g;
+	calib->pstcalibrations[CALIBRATION_SHADING_RADIAL_B] = &calibration_shading_radial_b;
+	calib->pstcalibrations[CALIBRATION_SHADING_LS_D65_R] = &calibration_shading_ls_d65_r;
+	calib->pstcalibrations[CALIBRATION_SHADING_LS_D65_G] = &calibration_shading_ls_d65_g;
+	calib->pstcalibrations[CALIBRATION_SHADING_LS_D65_B] = &calibration_shading_ls_d65_b;
+	calib->pstcalibrations[CALIBRATION_SHADING_LS_CWF_R] = &calibration_shading_ls_cwf_r;
+	calib->pstcalibrations[CALIBRATION_SHADING_LS_CWF_G] = &calibration_shading_ls_cwf_g;
+	calib->pstcalibrations[CALIBRATION_SHADING_LS_CWF_B] = &calibration_shading_ls_cwf_b;
+	calib->pstcalibrations[CALIBRATION_SHADING_LS_TL84_R] = &calibration_shading_ls_tl84_r;
+	calib->pstcalibrations[CALIBRATION_SHADING_LS_TL84_G] = &calibration_shading_ls_tl84_g;
+	calib->pstcalibrations[CALIBRATION_SHADING_LS_TL84_B] = &calibration_shading_ls_tl84_b;
+	calib->pstcalibrations[CALIBRATION_SHADING_LS_A_R] = &calibration_shading_ls_a_r;
+	calib->pstcalibrations[CALIBRATION_SHADING_LS_A_G] = &calibration_shading_ls_a_g;
+	calib->pstcalibrations[CALIBRATION_SHADING_LS_A_B] = &calibration_shading_ls_a_b;
+	calib->pstcalibrations[CALIBRATION_LENS_SHADING_CTL] = &calibration_lens_shading_ctl;
+	calib->pstcalibrations[CALIBRATION_GAMMA] = &calibration_gamma;
+	calib->pstcalibrations[CALIBRATION_CCM] = &calibration_ccm;
+	calib->pstcalibrations[CALIBRATION_AWB_RG_POS] = &calibration_awb_rg_pos;
+	calib->pstcalibrations[CALIBRATION_AWB_BG_POS] = &calibration_awb_bg_pos;
+	calib->pstcalibrations[CALIBRATION_AWB_MESH_DIST_TAB] = &calibration_awb_mesh_dist_tab;
+	calib->pstcalibrations[CALIBRATION_AWB_MESH_CT_TAB] = &calibration_awb_mesh_ct_tab;
+	calib->pstcalibrations[CALIBRATION_AWB_CT_RG_CURVE] = &calibration_awb_ct_rg_curve;
+	calib->pstcalibrations[CALIBRATION_AWB_CT_BG_CURVE] = &calibration_awb_ct_bg_curve;
+	calib->pstcalibrations[CALIBRATION_AWB_WB_GOLDEN_D50] = &calibration_awb_wb_golden_d50;
+	calib->pstcalibrations[CALIBRATION_AWB_WB_OTP_D50] = &calibration_awb_wb_otp_d50;
+	calib->pstcalibrations[CALIBRATION_NOISE_PROFILE] = &calibration_noise_profile;
+	calib->pstcalibrations[CALIBRATION_FPNR] = &calibration_fpnr;
+	calib->pstcalibrations[CALIBRATION_AWB_PRESET] = &calibration_awb_preset;
 
     return 0;
 }

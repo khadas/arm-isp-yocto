@@ -15,13 +15,14 @@
 #define ISO_NUM_MAX     (10)
 #define RATIO_NUM_MAX     (8)
 
+
 typedef enum CALIBRATION_TYPE {
     CALIBRATION_TOP_CTL                   ,
     CALIBRATION_RES_CTL                   ,
     CALIBRATION_AWB_CTL                   ,
     CALIBRATION_AWB_CT_POS                ,
-    CALIBRATION_AWB_CT_RG_COMPENSATION       ,
-    CALIBRATION_AWB_CT_BG_COMPENSATION       ,
+    CALIBRATION_AWB_CT_RG_COMPENSATE      ,
+    CALIBRATION_AWB_CT_BG_COMPENSATE      ,
     CALIBRATION_AWB_CT_WGT                ,
     CALIBRATION_AWB_CT_DYN_CVRANGE        ,
     CALIBRATION_AE_CTL                    ,
@@ -164,6 +165,8 @@ typedef enum CALIBRATION_TYPE {
     CALIBRATION_DECMP1                    ,
     CALIBRATION_DYM_CUSTOM_SETTING        ,
     CALIBRATION_AWB_PRESET                ,
+    CALIBRATION_LENS_OTP_CENTER_OFFSET    ,
+    CALIBRATION_LENS_SHADING_ADP          ,
 
     CALIBRATION_TOTAL_SIZE                ,
 } CALIBRATION_TYPE_E;
@@ -242,12 +245,8 @@ typedef struct LookupTable {
 } LookupTable;
 
 typedef struct _AIspCalibrations {
-    LookupTable *calibrations[CALIBRATION_TOTAL_SIZE];
+    LookupTable *pstcalibrations[CALIBRATION_TOTAL_SIZE];
 } AIspCalibrations;
-
-typedef struct aisp_calib_info_s {
-    LookupTable *calibrations[CALIBRATION_TOTAL_SIZE];
-} aisp_calib_info_t;
 
 uint32_t calibrations_static_init(AIspCalibrations *c);
 uint32_t calibrations_dynamic_init(AIspCalibrations *c);

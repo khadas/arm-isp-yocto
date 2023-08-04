@@ -50,7 +50,7 @@ void cmos_set_sensor_entity_ov08a10(struct media_entity * sensor_ent, int wdr)
     sensor.enWDRMode = wdr;
 }
 
-void cmos_get_sensor_calibration_ov08a10(struct media_entity *sensor_ent, aisp_calib_info_t *calib)
+void cmos_get_sensor_calibration_ov08a10(struct media_entity *sensor_ent, AIspCalibrations *calib)
 {
     if (sensor.enWDRMode == 1)
         Ov08a10WdrCalibration::dynamic_wdr_calibrations_init_ov08a10(calib);
