@@ -24,6 +24,7 @@ all:
 	$(call module_func,ov13855)
 	$(call module_func,lt6911c)
 	$(call module_func,imx378)
+	$(call module_func,imx577)
 	$(call module_func,dw9800w)
 	$(call module_func,dw9714)
 
@@ -37,6 +38,7 @@ clean:
 	$(call module_clean,ov13855)
 	$(call module_clean,lt6911c)
 	$(call module_clean,imx378)
+	$(call module_clean,imx577)
 	$(call module_clean,dw9800w)
 	$(call module_clean,dw9714)
 
@@ -50,5 +52,6 @@ modules_install:
 	$(call module_install,ov13855)
 	$(call module_install,lt6911c)
 	$(call module_install,imx378)
+	$(call module_install,imx577)
 	$(call module_install,dw9800w)
 	$(call module_install,dw9714)
