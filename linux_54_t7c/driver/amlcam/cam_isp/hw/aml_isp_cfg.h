@@ -1103,6 +1103,8 @@ typedef struct aisp_cnr_cfg_s {
 	u32 cnr2_satur_blk[1024];
 	u32 cnr2_tdif_rng_lut[16];
 	u32 cnr2_ydif_rng_lut[16];
+	u32 cnr2_pfr_wind_h;
+	u32 cnr2_pfr_wind_v;
 	u32 cnr2_umargin_up;
 	u32 cnr2_umargin_dw;
 	u32 cnr2_vmargin_up;
