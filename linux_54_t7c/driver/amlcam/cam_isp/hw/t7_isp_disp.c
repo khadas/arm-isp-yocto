@@ -998,6 +998,14 @@ void isp_disp_pps_config(struct isp_dev_t *isp_dev, u32 idx,
 			isp_reg_write(isp_dev, addr, val);
 			isp_reg_write(isp_dev, addr, 0);
 		}
+
+		addr = DISP0_PPS_PRE_HSCALE_COEF_1 + ((idx * 0x100) << 2);
+		val = (0 << 16) | 0;
+		isp_reg_write(isp_dev, addr, val);
+
+		addr = DISP0_PPS_PRE_HSCALE_COEF_0 + ((idx * 0x100) << 2);
+		val = (0 << 16) | 256;
+		isp_reg_write(isp_dev, addr, val);
 	} else if (reg_hsc_tap_num == 4) {
 
 		addr = ISP_SCALE0_COEF_IDX_LUMA + ((idx * 0x100) << 2);
@@ -1025,7 +1033,13 @@ void isp_disp_pps_config(struct isp_dev_t *isp_dev, u32 idx,
 			val = ((pps_lut_tap4[i][2] << 16) & 0x7ff0000) | ((pps_lut_tap4[i][3] & 0x7ff) << 0);
 			isp_reg_write(isp_dev, addr, val);
 		}
+		addr = DISP0_PPS_PRE_HSCALE_COEF_1 + ((idx * 0x100) << 2);
+		val = (0 << 16) | 0;
+		isp_reg_write(isp_dev, addr, val);
 
+		addr = DISP0_PPS_PRE_HSCALE_COEF_0 + ((idx * 0x100) << 2);
+		val = (128 << 16) | 128;
+		isp_reg_write(isp_dev, addr, val);
 	} else {
 
 		addr = ISP_SCALE0_COEF_IDX_LUMA + ((idx * 0x100) << 2);
@@ -1079,15 +1093,15 @@ void isp_disp_pps_config(struct isp_dev_t *isp_dev, u32 idx,
 			val = ((pps_lut_tap8[i][6] << 16) & 0x7ff0000) | ((pps_lut_tap8[i][7] & 0x7ff) << 0);
 			isp_reg_write(isp_dev, addr, val);
 		}
+
+		addr = DISP0_PPS_PRE_HSCALE_COEF_1 + ((idx * 0x100) << 2);
+		val = (32 << 16) | 32;
+		isp_reg_write(isp_dev, addr, val);
+
+		addr = DISP0_PPS_PRE_HSCALE_COEF_0 + ((idx * 0x100) << 2);
+		val = (32 << 16) | 32;
+		isp_reg_write(isp_dev, addr, val);
 	}
-
-	addr = DISP0_PPS_PRE_HSCALE_COEF_1 + ((idx * 0x100) << 2);
-	val = (32 << 16) | 32;
-	isp_reg_write(isp_dev, addr, val);
-
-	addr = DISP0_PPS_PRE_HSCALE_COEF_0 + ((idx * 0x100) << 2);
-	val = (128 << 16) | 128;
-	isp_reg_write(isp_dev, addr, val);
 }
 
 void isp_disp_set_overlap(struct isp_dev_t *isp_dev, int ovlp)
