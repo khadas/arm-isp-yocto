@@ -434,13 +434,18 @@ static irqreturn_t adap_irq_handler_offline(int irq, void *dev)
 	int status = 0;
 	unsigned long flags;
 	struct adapter_dev_t *adap_dev = dev;
+	/**
+	* Execute the hw_interrupt_status function before detecting wstatus
+	* reason: if adap_subdev_stream_off function sets wstatus to STATUS_STOP in advance, \
+	*         the interrupt flag will always exist
+	*/
+	status = adap_dev->ops->hw_interrupt_status(adap_dev);
 
 	if (adap_dev->wstatus != STATUS_START)
 		return IRQ_HANDLED;
 
 	spin_lock_irqsave(&adap_dev->irq_lock, flags);
 
-	status = adap_dev->ops->hw_interrupt_status(adap_dev);
 	if (status & (1 << 18)) {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
 		adap_fe_done_buf(adap_dev);
