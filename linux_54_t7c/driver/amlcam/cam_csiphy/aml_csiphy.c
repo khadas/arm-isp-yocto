@@ -94,8 +94,6 @@ static void csiphy_of_parse_ports_clock_mod(struct csiphy_dev_t *csiphy_dev) {
 			continue;
 		if (!of_property_read_u32(node, "clock-continue", &clock_mode)) {
 			pr_info("clock-continue = %u \n", clock_mode);
-		} else {
-			pr_err("can not parse clock-continue \n");
 		}
 		of_node_put(node);
 	}
