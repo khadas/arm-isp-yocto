@@ -2851,7 +2851,7 @@ static const struct v4l2_ctrl_config isp_v4l2_ctrl_dcam_mode = {
     .min = 0,
     .max = 2,
     .step = 1,
-    .def = 0,
+    .def = 1,
 };
 
 static const struct v4l2_ctrl_ops isp_v4l2_ctrl_ops = {

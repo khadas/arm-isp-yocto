@@ -326,8 +326,8 @@ void sensor_set_iface(sensor_mode_t *mode, exp_offset_t offset, sensor_context_t
         else
             info.fmt = MIPI_CSI_YUV422_10BIT;
     }
-    //p_ctx->dcam_mode = 1;
 
+    //pr_err("1 dcam mode %d \n", p_ctx->dcam_mode);
     info.path = p_ctx->cam_isp_path;
     info.frontend = p_ctx->cam_fe_path;
     info.img.width = mode->resolution.width;
@@ -494,8 +494,8 @@ void sensor_set_iface2(sensor_mode_t *mode, exp_offset_t offset, sensor_context_
         else
             info.fmt = MIPI_CSI_YUV422_10BIT;
     }
-    //p_ctx->dcam_mode = 1;
 
+    //pr_err("2 dcam_mode: %d \n", p_ctx->dcam_mode);
     info.path = p_ctx->cam_isp_path;
     info.frontend = p_ctx->cam_fe_path;
     info.img.width = mode->resolution.width;
