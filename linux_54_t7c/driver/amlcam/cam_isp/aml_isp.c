@@ -522,7 +522,6 @@ int isp_subdev_ctrls_init(struct isp_dev_t *isp_dev)
 
 }
 
-//#define  IRQ_TIME_DEBUG
 static irqreturn_t isp_subdev_irq_handler(int irq, void *dev)
 {
 	int status = 0, id = 0;

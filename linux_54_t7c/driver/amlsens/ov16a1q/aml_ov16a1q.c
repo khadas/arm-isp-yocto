@@ -891,7 +891,7 @@ static struct v4l2_ctrl_config fps_cfg = {
 	.min = 1,
 	.max = 120,
 	.step = 1,
-	.def = 1,
+	.def = 30,
 };
 
 static int ov16a1q_ctrls_init(struct ov16a1q *ov16a1q)

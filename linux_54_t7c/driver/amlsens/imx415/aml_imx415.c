@@ -631,7 +631,7 @@ static struct v4l2_ctrl_config fps_cfg = {
 	.min = 1,
 	.max = 30,
 	.step = 1,
-	.def = 1,
+	.def = 30,
 };
 
 static int imx415_ctrls_init(struct imx415 *imx415)
@@ -696,7 +696,7 @@ static int imx415_register_subdev(struct imx415 *imx415)
 		goto err_return;
 	}
 
-	rtn = v4l2_async_register_subdev_sensor_common(&imx415->sd);
+	rtn = v4l2_async_register_subdev(&imx415->sd);
 	if (rtn < 0) {
 		dev_err(imx415->dev, "Could not register v4l2 device\n");
 		goto err_return;

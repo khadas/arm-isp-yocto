@@ -514,7 +514,7 @@ static int imx577_start_streaming(struct imx577 *imx577)
 	int ret;
 
 	/* Setup handler will write actual exposure and gain */
-	ret =  __v4l2_ctrl_handler_setup(imx577->sd.ctrl_handler);
+	ret =  v4l2_ctrl_handler_setup(imx577->sd.ctrl_handler);
 	if (ret) {
 		dev_err(imx577->dev, "fail to setup handler");
 		return ret;
@@ -821,7 +821,7 @@ static int imx577_register_subdev(struct imx577 *imx577)
 		goto err_return;
 	}
 
-	rtn = v4l2_async_register_subdev_sensor_common(&imx577->sd);
+	rtn = v4l2_async_register_subdev(&imx577->sd);
 	if (rtn < 0) {
 		dev_err(imx577->dev, "Could not register v4l2 device\n");
 		goto err_return;

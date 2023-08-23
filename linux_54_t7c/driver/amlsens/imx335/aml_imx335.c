@@ -203,11 +203,6 @@ static int imx335_set_ctrl(struct v4l2_ctrl *ctrl)
 		break;
 	case V4L2_CID_AML_ORIG_FPS:
 		ret = imx335_set_fps(imx335, ctrl->val);
-		if (ctrl->val == 60)
-			imx335->flag_60hz = 1;
-		else
-			imx335->flag_60hz = 0;
-
 		break;
 	default:
 		dev_err(imx335->dev, "Error ctrl->id %u, flag 0x%lx\n",
@@ -605,7 +600,7 @@ static struct v4l2_ctrl_config fps_cfg = {
 	.min = 1,
 	.max = 30,
 	.step = 1,
-	.def = 1,
+	.def = 30,
 };
 
 static int imx335_ctrls_init(struct imx335 *imx335)
@@ -668,7 +663,7 @@ static int imx335_register_subdev(struct imx335 *imx335)
 		goto err_return;
 	}
 
-	rtn = v4l2_async_register_subdev_sensor_common(&imx335->sd);
+	rtn = v4l2_async_register_subdev(&imx335->sd);
 	if (rtn < 0) {
 		dev_err(imx335->dev, "Could not register v4l2 device\n");
 		goto err_return;
