@@ -22,8 +22,7 @@ static u32 isp_wrmifx3_bits_mode(struct aml_format *fmt, int pidx)
 {
 	u32 bits_mode = 1;
 
-	switch (fmt->bpp * pidx)
-	{
+	switch (fmt->bpp * pidx) {
 	case 8:
 		bits_mode = 1;
 		break;
@@ -69,8 +68,7 @@ static u32 isp_wrmifx3_mtx_ibits(struct aml_format *fmt)
 {
 	u32 mtx_ibits = 0;
 
-	switch (fmt->bpp)
-	{
+	switch (fmt->bpp) {
 	case 8:
 		mtx_ibits = 0;
 		break;
@@ -92,8 +90,7 @@ void isp_wrmifx3_mirror_enable(struct isp_dev_t *isp_dev, u32 idx, u32 enable)
 {
 	u32 raddr = 0;
 
-	if (idx > 3)
-	{
+	if (idx > 3) {
 		pr_err("Error input wmif index\n");
 		return;
 	}
@@ -112,8 +109,7 @@ void isp_wrmifx3_flip_enable(struct isp_dev_t *isp_dev, u32 idx, u32 enable)
 {
 	u32 raddr = 0;
 
-	if (idx > 3)
-	{
+	if (idx > 3) {
 		pr_err("Error input wmif index\n");
 		return;
 	}
@@ -137,8 +133,7 @@ void isp_wrmifx3_cfg_frm_size(struct isp_dev_t *isp_dev, u32 idx,
 	u32 width, height;
 	u32 bits_node = 0;
 
-	if (idx > 3)
-	{
+	if (idx > 3) {
 		pr_err("Error input wmif index\n");
 		return;
 	}
@@ -212,8 +207,7 @@ void isp_wrmifx3_cfg_frm_size(struct isp_dev_t *isp_dev, u32 idx,
 	fmt->stride = ((width * bpp + 127) & (~(127))) / 8;
 	// pr_info("wrmifx3: width %d, bpp %d, stride %d", width, bpp, fmt->stride);
 
-	switch (fmt->nplanes)
-	{
+	switch (fmt->nplanes) {
 	case 2:
 		raddr = ISP_WRMIFX3_0_CH1_CTRL0 + ((idx * 0x40) << 2);
 		isp_reg_update_bits(isp_dev, raddr, stride, 16, 13);
@@ -226,8 +220,7 @@ void isp_wrmifx3_cfg_frm_size(struct isp_dev_t *isp_dev, u32 idx,
 		isp_reg_update_bits(isp_dev, raddr, bits_node, 27, 4);
 		isp_reg_update_bits(isp_dev, raddr, 0, 24, 3);
 
-		if (fmt->fourcc == AML_FMT_HDR_RAW)
-		{
+		if (fmt->fourcc == AML_FMT_HDR_RAW) {
 			raddr = ISP_WRMIFX3_0_WIN_CHROM_H + ((idx * 0x40) << 2);
 			val = (0 << 0) | ((width - 1) << 16);
 			isp_reg_write(isp_dev, raddr, val);
@@ -235,9 +228,7 @@ void isp_wrmifx3_cfg_frm_size(struct isp_dev_t *isp_dev, u32 idx,
 			raddr = ISP_WRMIFX3_0_WIN_CHROM_V + ((idx * 0x40) << 2);
 			val = (0 << 0) | ((height - 1) << 16);
 			isp_reg_write(isp_dev, raddr, val);
-		}
-		else
-		{
+		} else {
 			raddr = ISP_WRMIFX3_0_WIN_CHROM_H + ((idx * 0x40) << 2);
 			val = (0 << 0) | (((width >> 1) - 1) << 16);
 			isp_reg_write(isp_dev, raddr, val);
@@ -269,32 +260,30 @@ void isp_wrmifx3_cfg_frm_buff(struct isp_dev_t *isp_dev, u32 idx,
 	u32 raddr = 0;
 	struct isp_global_info *g_info = isp_global_get_info();
 
-	if (idx > 3)
-	{
+	if (idx > 3) {
 		pr_err("Error input wmif index\n");
 		return;
 	}
 
-	switch (buff->nplanes)
-	{
-	case 2:
-		paddr = buff->addr[AML_PLANE_B] >> 4;
-		raddr = ISP_WRMIFX3_0_CH1_BADDR + ((idx * 0x40) << 2);
-		if (g_info->mode == AML_ISP_SCAM)
-			isp_hwreg_write(isp_dev, raddr, paddr);
-		else
-			isp_reg_write(isp_dev, raddr, paddr);
-	case 1:
-		paddr = buff->addr[AML_PLANE_A] >> 4;
-		raddr = ISP_WRMIFX3_0_CH0_BADDR + ((idx * 0x40) << 2);
-		if (g_info->mode == AML_ISP_SCAM)
-			isp_hwreg_write(isp_dev, raddr, paddr);
-		else
-			isp_reg_write(isp_dev, raddr, paddr);
-		break;
-	default:
-		pr_err("Error input stream index\n");
-		break;
+	switch (buff->nplanes) {
+		case 2:
+			paddr = buff->addr[AML_PLANE_B] >> 4;
+			raddr = ISP_WRMIFX3_0_CH1_BADDR + ((idx * 0x40) << 2);
+			if (g_info->mode == AML_ISP_SCAM)
+				isp_hwreg_write(isp_dev, raddr, paddr);
+			else
+				isp_reg_write(isp_dev, raddr, paddr);
+		case 1:
+			paddr = buff->addr[AML_PLANE_A] >> 4;
+			raddr = ISP_WRMIFX3_0_CH0_BADDR + ((idx * 0x40) << 2);
+			if (g_info->mode == AML_ISP_SCAM)
+				isp_hwreg_write(isp_dev, raddr, paddr);
+			else
+				isp_reg_write(isp_dev, raddr, paddr);
+			break;
+		default:
+			pr_err("Error input stream index\n");
+			break;
 	}
 }
 
@@ -313,8 +302,7 @@ void isp_wrmifx3_cfg_slice(struct isp_dev_t *isp_dev, u32 idx, struct aml_slice 
 
 	isp_reg_read_bits(isp_dev, ISP_WRMIFX3_0_FMT_CTRL, &fourcc, 16, 3);
 
-	if (param->pos == 0)
-	{
+	if (param->pos == 0) {
 		left_hsize = param->left_hsize;
 		left_ovlp = param->left_ovlp;
 		addr = ISP_WRMIFX3_0_CRP_HSIZE + ((idx * 0x40) << 2);
@@ -330,13 +318,10 @@ void isp_wrmifx3_cfg_slice(struct isp_dev_t *isp_dev, u32 idx, struct aml_slice 
 		isp_hwreg_write(isp_dev, addr, val);
 
 		addr = ISP_WRMIFX3_0_WIN_CHROM_H + ((idx * 0x40) << 2);
-		if (fourcc == AML_FMT_YUV420)
-		{
+		if (fourcc == AML_FMT_YUV420) {
 			start = 0;
 			end = (left_hsize - left_ovlp) / 2 - 1;
-		}
-		else
-		{
+		} else {
 			start = 0;
 			end = left_hsize - left_ovlp - 1;
 		}
@@ -344,30 +329,22 @@ void isp_wrmifx3_cfg_slice(struct isp_dev_t *isp_dev, u32 idx, struct aml_slice 
 		isp_hwreg_write(isp_dev, addr, val);
 
 		addr = ISP_WRMIFX3_0_FMT_SIZE + ((idx * 0x40) << 2);
-		if (fourcc == AML_FMT_HDR_RAW || fourcc == AML_FMT_RAW)
-		{
+		if (fourcc == AML_FMT_HDR_RAW || fourcc == AML_FMT_RAW) {
 			isp_reg_read_bits(isp_dev, ISP_TOP_INPUT_SIZE, &val, 16, 16);
-		}
-		else
-		{
+		} else {
 			val = left_hsize;
 		}
 		isp_hwreg_update_bits(isp_dev, addr, val, 0, 16);
 
 		addr = ISP_WRMIFX3_0_CRP_CTR + ((idx * 0x40) << 2);
 		isp_hwreg_update_bits(isp_dev, addr, 1, 0, 1);
-	}
-	else if (param->pos == 1)
-	{
+	} else if (param->pos == 1) {
 		addr = ISP_WRMIFX3_0_CRP_HSIZE + ((idx * 0x40) << 2);
-		if (fourcc == AML_FMT_HDR_RAW || fourcc == AML_FMT_RAW)
-		{
+		if (fourcc == AML_FMT_HDR_RAW || fourcc == AML_FMT_RAW) {
 			isp_reg_read_bits(isp_dev, ISP_TOP_INPUT_SIZE, &val, 16, 16);
 			start = val - param->whole_frame_hcenter;
 			end = val - 1;
-		}
-		else
-		{
+		} else {
 			start = right_ovlp;
 			end = right_hsize - 1;
 		}
@@ -381,13 +358,10 @@ void isp_wrmifx3_cfg_slice(struct isp_dev_t *isp_dev, u32 idx, struct aml_slice 
 		isp_hwreg_write(isp_dev, addr, val);
 
 		addr = ISP_WRMIFX3_0_WIN_CHROM_H + ((idx * 0x40) << 2);
-		if (fourcc == AML_FMT_YUV420)
-		{
+		if (fourcc == AML_FMT_YUV420) {
 			start = (left_hsize - left_ovlp) >> 1;
 			end = right_hsize - right_ovlp - 1;
-		}
-		else
-		{
+		} else {
 			start = left_hsize - left_ovlp;
 			end = (right_hsize - right_ovlp) * 2 - 1;
 		}
@@ -395,12 +369,9 @@ void isp_wrmifx3_cfg_slice(struct isp_dev_t *isp_dev, u32 idx, struct aml_slice 
 		isp_hwreg_write(isp_dev, addr, val);
 
 		addr = ISP_WRMIFX3_0_FMT_SIZE + ((idx * 0x40) << 2);
-		if (fourcc == AML_FMT_HDR_RAW)
-		{
+		if (fourcc == AML_FMT_HDR_RAW) {
 			isp_reg_read_bits(isp_dev, ISP_TOP_INPUT_SIZE, &val, 16, 16);
-		}
-		else
-		{
+		} else {
 			val = right_hsize;
 		}
 		isp_hwreg_update_bits(isp_dev, addr, val, 0, 16);
@@ -412,8 +383,7 @@ void isp_wrmifx3_cfg_slice(struct isp_dev_t *isp_dev, u32 idx, struct aml_slice 
 
 void isp_wrmifx3_autoacc_num(struct isp_dev_t *isp_dev, u32 idx, u32 num)
 {
-	if (idx > 2)
-	{
+	if (idx > 2) {
 		pr_err("Error input wrmif index\n");
 		return;
 	}
@@ -426,8 +396,7 @@ void isp_wrmifx3_autoacc_num(struct isp_dev_t *isp_dev, u32 idx, u32 num)
 
 void isp_wrmifx3_autoacc_enable(struct isp_dev_t *isp_dev, u32 idx, u32 enable)
 {
-	if (idx > 2)
-	{
+	if (idx > 2) {
 		pr_err("Error input wrmif index\n");
 		return;
 	}
@@ -440,8 +409,7 @@ void isp_wrmifx3_autoacc_enable(struct isp_dev_t *isp_dev, u32 idx, u32 enable)
 
 void isp_wrmifx3_module_enable(struct isp_dev_t *isp_dev, u32 idx, u32 enable, u32 force)
 {
-	if (idx > 3)
-	{
+	if (idx > 3) {
 		pr_err("Error input wmif index\n");
 		return;
 	}
@@ -454,8 +422,7 @@ void isp_wrmifx3_module_enable(struct isp_dev_t *isp_dev, u32 idx, u32 enable, u
 
 void isp_wrmifx3_module_stat(struct isp_dev_t *isp_dev, u32 idx, u32 *val)
 {
-	if (idx > 3)
-	{
+	if (idx > 3) {
 		pr_err("Error input wmif index\n");
 		return;
 	}

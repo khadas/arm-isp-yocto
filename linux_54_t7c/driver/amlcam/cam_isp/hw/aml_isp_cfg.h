@@ -1195,7 +1195,7 @@ typedef union {
 		u64  aisp_dhz_enhc    : 1;
 		u64  aisp_peaking     : 1;
 		u64  aisp_misc        : 1;
-		u64  aisp_custom      : 1 ;
+		u64  aisp_custom      : 1;
 		u64  bitRsv           : 29; /* H  ; [35:63] */
 	};
 }  aisp_param_ctrl;

@@ -270,7 +270,6 @@ int aml_adap_global_create_thread(void)
 
 		return -1;
 	}
-
 	return 0;
 }
 

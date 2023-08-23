@@ -94,8 +94,6 @@ static void csiphy_of_parse_ports_clock_mod(struct csiphy_dev_t *csiphy_dev) {
 			continue;
 		if (!of_property_read_u32(node, "clock-continue", &clock_mode)) {
 			pr_info("clock-continue = %u \n", clock_mode);
-		} else {
-			pr_err("can not parse clock-continue \n");
 		}
 		of_node_put(node);
 	}
@@ -126,7 +124,6 @@ static int csiphy_of_parse_ports(struct csiphy_dev_t *csiphy_dev)
 			of_node_put(node);
 			return -EINVAL;
 		}
-
 #ifdef SENSOR_SEARCH
 		sensor_dev = of_fwnode_handle(remote)->dev;
 		if ( sensor_dev->driver && strstr(node->name, sensor_dev->driver->name) ) {
@@ -412,7 +409,6 @@ static int csiphy_subdev_stream_on(void *priv)
 	s64 link_freq = 0;
 	struct csiphy_async_subdev *casd;
 	struct csiphy_dev_t *csiphy_dev = priv;
-
 	rtn = csiphy_subdev_get_link_freq(&csiphy_dev->sd.entity, &link_freq);
 	if (rtn)
 		return rtn;
@@ -673,6 +669,7 @@ int aml_csiphy_subdev_init(void *c_dev)
 	csiphy_dev->notifier = &cam_dev->notifier;
 	csiphy_dev->index = cam_dev->index;
 	platform_set_drvdata(pdev, csiphy_dev);
+
 	csiphy_of_parse_ports_clock_mod(csiphy_dev);
 
 	rtn = csiphy_of_parse_ports(csiphy_dev);

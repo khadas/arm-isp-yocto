@@ -164,16 +164,16 @@ static int adap_alloc_raw_buffs(struct adapter_dev_t *a_dev)
 
 	switch (param->format) {
 	case ADAP_RAW10:
-		fsize = param->width * param->height * 10 / 8;
+		fsize = ((((param->width * 10 + 127 ) >> 7)  << 7 ) / 8) * param->height;
 	break;
 	case ADAP_RAW12:
-		fsize = param->width * param->height * 12 / 8;
+		fsize = ((((param->width * 12 + 127 ) >> 7)  << 7 ) / 8) * param->height;
 	break;
 	case ADAP_YUV422_8BIT:
-		fsize = param->width * param->height * 16 / 8;
+		fsize = ((((param->width * 16 + 127 ) >> 7)  << 7 ) / 8) * param->height;
 	break;
 	default:
-		fsize = param->width * param->height * 10 / 8;
+		fsize = ((((param->width * 10 + 127 ) >> 7)  << 7 ) / 8) * param->height;
 	break;
 	}
 
@@ -434,6 +434,7 @@ static irqreturn_t adap_irq_handler_offline(int irq, void *dev)
 	int status = 0;
 	unsigned long flags;
 	struct adapter_dev_t *adap_dev = dev;
+
 	/**
 	* Execute the hw_interrupt_status function before detecting wstatus
 	* reason: if adap_subdev_stream_off function sets wstatus to STATUS_STOP in advance, \
