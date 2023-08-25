@@ -200,8 +200,8 @@ static int ov13b10_set_gain(struct ov13b10 *ov13b10, u32 value)
 
 	//dev_info(ov13b10->dev, "ov13b10_set_gain = 0x%x \n", value);
 
-	value_H = (value << 1) >> 8;
-	value_L = (value << 1) & 0xFF;
+	value_H = value >> 8;
+	value_L = value & 0xFF;
 
 	if ( value_H == 1) {
 		for ( i = 0; i < 15; i++ ) {
@@ -230,10 +230,10 @@ static int ov13b10_set_gain(struct ov13b10 *ov13b10, u32 value)
 					}
 				}
 			}
-			if (value_L >  again_table_1[7]) {
-				value_L = again_table_1[7];
+			if (value_L >  again_table_2[7]) {
+				value_L = again_table_2[7];
 			}
-		} else if (((value_H == 4 || value_H > 4) && value_H < 8)) {
+		} else if (value_H >= 4 && value_H < 8) {
 				for ( i = 0; i < 3; i++ ) {
 					if ( value_L < ((again_table_3[i] + again_table_3[i + 1])/2) ) {
 						value_L = again_table_3[i];
@@ -245,17 +245,18 @@ static int ov13b10_set_gain(struct ov13b10 *ov13b10, u32 value)
 						}
 					}
 				}
-				if (value_L >  again_table_1[4]) {
-					value_L = again_table_1[4];
+				if (value_L >  again_table_3[3]) {
+					value_L = again_table_3[3];
 				}
-			} else {
+			} else if (value_H >= 8 && value_H <= 0x0F) {
 				if ( value_L < (0x80/2)) {
 						value_L = 0;
 					} else {
 						value_L = 0x80;
 			        }
-	            }
-
+	        } else {
+				dev_err(ov13b10->dev, "Wrong gain value \n");
+			}
 	ret = ov13b10_write_reg(ov13b10, OV13B10_GAIN, value_H);
 	if (ret)
 		dev_err(ov13b10->dev, "Unable to write OV13B10_GAIN_H \n");
