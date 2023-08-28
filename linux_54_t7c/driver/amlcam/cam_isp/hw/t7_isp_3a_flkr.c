@@ -72,16 +72,23 @@ static void flkr_cfg_size(struct isp_dev_t *isp_dev, struct aml_format *fmt)
 	val = (0 << 16) | (fmt->width & 0xffff);
 	isp_reg_write(isp_dev, ISP_DEFLICKER_STAT_XPOSITION, val);
 
-	if (fmt->height >= 1280)
+	val = MIN(((1 << 16) - 1), ((1 << 22) / fmt->width));
+	isp_reg_write(isp_dev, ISP_DEFLICKER_DIV_COEF, val);
+
+	if (fmt->height <= 1440)
+		isp_reg_update_bits(isp_dev, ISP_DEFLICKER_CNTL, 0, 2, 3);
+	else if (fmt->height > 1440 && fmt->height <= 2560)
+		isp_reg_update_bits(isp_dev, ISP_DEFLICKER_CNTL, 1, 2, 3);
+	else
+		isp_reg_update_bits(isp_dev, ISP_DEFLICKER_CNTL, 2, 2, 3);
+
+	if (fmt->height > 1280 && fmt->height <= 1440)
 		val = (((fmt->height - 1280) / 2) << 16) |
 			(((fmt->height - 1280) / 2 + 1280 - 1) & 0xffff);
 	else
 		val = (0 << 16) | ((fmt->height - 1) & 0xffff);
 
 	isp_reg_write(isp_dev, ISP_DEFLICKER_STAT_YPOSITION, val);
-
-	val = MIN(((1 << 16) - 1), ((1 << 22) / fmt->width));
-	isp_reg_write(isp_dev, ISP_DEFLICKER_DIV_COEF, val);
 }
 
 static void flkr_req_info(struct isp_dev_t *isp_dev, void *info)
