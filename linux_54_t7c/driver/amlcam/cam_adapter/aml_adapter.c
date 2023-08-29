@@ -287,7 +287,7 @@ static void adap_free_raw_buffs(struct adapter_dev_t *a_dev)
 
 	aml_subdev_unmap_vaddr(a_dev->param.ddr_buf[0].vaddr[AML_PLANE_A]);
 
-	if ((param->ddr_buf[0].addr != 0) && (param->ddr_buf[0].vaddr != NULL)) {
+	if ((param->ddr_buf[0].addr[AML_PLANE_A] != 0) && (param->ddr_buf[0].vaddr[AML_PLANE_A] != NULL)) {
 		for (i = 0; i < fcnt; i++) {
 			param->ddr_buf[i].addr[AML_PLANE_A] = 0;
 			param->ddr_buf[i].vaddr[AML_PLANE_A] = NULL;
