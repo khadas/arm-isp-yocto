@@ -204,11 +204,6 @@ static int imx378_set_ctrl(struct v4l2_ctrl *ctrl)
 		break;
 	case V4L2_CID_AML_ORIG_FPS:
 		ret = imx378_set_fps(imx378, ctrl->val);
-		if (ctrl->val == 60)
-			imx378->flag_60hz = 1;
-		else
-			imx378->flag_60hz = 0;
-
 		break;
 	default:
 		dev_err(imx378->dev, "Error ctrl->id %u, flag 0x%lx\n",
@@ -606,7 +601,7 @@ static struct v4l2_ctrl_config fps_cfg = {
 	.min = 1,
 	.max = 30,
 	.step = 1,
-	.def = 1,
+	.def = 30,
 };
 
 static int imx378_ctrls_init(struct imx378 *imx378)

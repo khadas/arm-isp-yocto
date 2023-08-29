@@ -718,9 +718,9 @@ static struct v4l2_ctrl_config fps_cfg = {
 	.type = V4L2_CTRL_TYPE_INTEGER,
 	.flags = V4L2_CTRL_FLAG_VOLATILE | V4L2_CTRL_FLAG_EXECUTE_ON_WRITE,
 	.min = 1,
-	.max = 30,
+	.max = 60,
 	.step = 1,
-	.def = 1,
+	.def = 30,
 };
 
 int imx290_ctrls_init(struct imx290 *imx290)
