@@ -1210,6 +1210,57 @@ static int isp_platform_remove(struct platform_device *pdev)
     return 0;
 }
 
+#ifdef CONFIG_PM
+
+static int isp_platform_suspend(struct platform_device *pdev, pm_message_t state) {
+    pr_info("%s in", __FUNCTION__);
+    if (fw_intf_is_isp_started()) {
+        system_interrupts_deinit();
+    }
+    return 0;
+}
+
+static int isp_platform_resume(struct platform_device *pdev) {
+    pr_info("%s in", __FUNCTION__);
+
+    if (fw_intf_is_isp_started()) {
+        acamera_load_isp_sequence( 0, seq_table, 1 );
+        system_interrupt_set_handler( interrupt_handler, NULL );
+        system_interrupts_init();
+    }
+    return 0;
+}
+
+
+static int isp_platform_pm_suspend(struct device *dev)
+{
+    pr_info("%s in", __FUNCTION__);
+
+    if (fw_intf_is_isp_started()) {
+        system_interrupts_deinit();
+    }
+    return 0;
+
+}
+
+static int isp_platform_pm_resume(struct device *dev)
+{
+    pr_info("%s in", __FUNCTION__);
+
+    if (fw_intf_is_isp_started()) {
+        acamera_load_isp_sequence( 0, seq_table, 1 );
+        system_interrupt_set_handler( interrupt_handler, NULL );
+        system_interrupts_init();
+    }
+    return 0;
+}
+
+static const struct dev_pm_ops isp_platform_dev_pm_ops = {
+    SET_SYSTEM_SLEEP_PM_OPS(isp_platform_pm_suspend, isp_platform_pm_resume)
+};
+
+#endif
+
 static const struct of_device_id isp_dt_match[] = {
     {.compatible = "arm, isp"},
     {}};
@@ -1219,10 +1270,17 @@ MODULE_DEVICE_TABLE( of, isp_dt_match );
 static struct platform_driver isp_platform_driver = {
     .probe = isp_platform_probe,
     .remove	= isp_platform_remove,
+#ifdef CONFIG_PM
+    .suspend = isp_platform_suspend,
+    .resume =  isp_platform_resume,
+#endif
     .driver = {
         .name = "arm_isp",
         .owner = THIS_MODULE,
         .of_match_table = isp_dt_match,
+#ifdef CONFIG_PM
+        .pm = &isp_platform_dev_pm_ops,
+#endif
     },
 };
 
