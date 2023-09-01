@@ -276,6 +276,8 @@ static int imx290_set_ctrl(struct v4l2_ctrl *ctrl)
 		break;
 	case V4L2_CID_HBLANK:
 		break;
+	case V4L2_CID_PIXEL_RATE:
+		break;
 	case V4L2_CID_AML_MODE:
 		imx290->enWDRMode = ctrl->val;
 		break;

@@ -41,7 +41,9 @@ static int aml_adap_global_get_done_buf(void)
 	struct list_head *dlist = NULL;
 	struct adapter_global_info *g_info = aml_adap_global_get_info();
 
-	if (g_info->mode != MODE_MIPI_RAW_SDR_DDR)
+	if ((g_info->mode != MODE_MIPI_RAW_SDR_DDR) &&
+		(g_info->mode != MODE_MIPI_YUV_SDR_DDR) &&
+		(g_info->mode != MODE_MIPI_RAW_HDR_DDR_DDR))
 		return -1;
 
 	spin_lock_irqsave(&g_info->list_lock, flags);
@@ -71,7 +73,9 @@ static int aml_adap_global_put_done_buf(void)
 	struct adapter_dev_param *param = NULL;
 	struct adapter_global_info *g_info = aml_adap_global_get_info();
 
-	if (g_info->mode != MODE_MIPI_RAW_SDR_DDR)
+	if ((g_info->mode != MODE_MIPI_RAW_SDR_DDR) &&
+		(g_info->mode != MODE_MIPI_YUV_SDR_DDR) &&
+		(g_info->mode != MODE_MIPI_RAW_HDR_DDR_DDR))
 		return -1;
 
 	a_dev = adap_get_dev(g_info->done_buf->devno);
@@ -112,7 +116,9 @@ static int aml_adap_global_cfg_rd_buf(int vdev)
 
 	struct adapter_global_info *g_info = aml_adap_global_get_info();
 
-	if (g_info->mode != MODE_MIPI_RAW_SDR_DDR)
+	if ((g_info->mode != MODE_MIPI_RAW_SDR_DDR) &&
+		(g_info->mode != MODE_MIPI_YUV_SDR_DDR) &&
+		(g_info->mode != MODE_MIPI_RAW_HDR_DDR_DDR))
 		return -1;
 
 	spin_lock_irqsave(&g_info->list_lock, flags);
@@ -121,7 +127,6 @@ static int aml_adap_global_cfg_rd_buf(int vdev)
 	video.priv = a_dev;
 	buff = g_info->done_buf;
 
-	buff->addr[AML_PLANE_B] = buff->addr[AML_PLANE_A];
 	a_dev->ops->hw_rd_cfg_buf(&video, buff);
 
 	spin_unlock_irqrestore(&g_info->list_lock, flags);
@@ -135,7 +140,9 @@ int aml_adap_rd_enable(int vdev)
 	struct adapter_dev_t *a_dev = adap_get_dev(vdev);
 	struct adapter_dev_param *param = &a_dev->param;
 
-	if (param->mode != MODE_MIPI_RAW_SDR_DDR)
+	if ((param->mode != MODE_MIPI_RAW_SDR_DDR) &&
+		(param->mode != MODE_MIPI_YUV_SDR_DDR) &&
+		(param->mode != MODE_MIPI_RAW_HDR_DDR_DDR))
 		return -1;
 
 	video.id = MODE_MIPI_RAW_SDR_DDR;
@@ -152,7 +159,9 @@ int aml_adap_offline_mode(int vdev)
 	struct adapter_dev_t *a_dev = adap_get_dev(vdev);
 	struct adapter_dev_param *param = &a_dev->param;
 
-	if (param->mode != MODE_MIPI_RAW_SDR_DDR)
+	if ((param->mode != MODE_MIPI_RAW_SDR_DDR) &&
+		(param->mode != MODE_MIPI_YUV_SDR_DDR) &&
+		(param->mode != MODE_MIPI_RAW_HDR_DDR_DDR))
 		return -1;
 
 	a_dev->ops->hw_offline_mode(a_dev);
@@ -254,7 +263,9 @@ int aml_adap_global_create_thread(void)
 {
 	struct adapter_global_info *g_info = aml_adap_global_get_info();
 
-	if (g_info->mode != MODE_MIPI_RAW_SDR_DDR)
+	if ((g_info->mode != MODE_MIPI_RAW_SDR_DDR) &&
+		(g_info->mode != MODE_MIPI_YUV_SDR_DDR) &&
+		(g_info->mode != MODE_MIPI_RAW_HDR_DDR_DDR))
 		return -1;
 
 	g_info->user ++;
@@ -277,7 +288,9 @@ int aml_adap_global_done_completion(void)
 {
 	struct adapter_global_info *g_info = aml_adap_global_get_info();
 
-	if (g_info->mode != MODE_MIPI_RAW_SDR_DDR)
+	if ((g_info->mode != MODE_MIPI_RAW_SDR_DDR) &&
+		(g_info->mode != MODE_MIPI_YUV_SDR_DDR) &&
+		(g_info->mode != MODE_MIPI_RAW_HDR_DDR_DDR))
 		return -1;
 
 	complete(&g_info->complete);
@@ -289,7 +302,9 @@ int aml_adap_global_get_vdev(void)
 {
 	struct adapter_global_info *g_info = aml_adap_global_get_info();
 
-	if (g_info->mode != MODE_MIPI_RAW_SDR_DDR)
+	if ((g_info->mode != MODE_MIPI_RAW_SDR_DDR) &&
+		(g_info->mode != MODE_MIPI_YUV_SDR_DDR) &&
+		(g_info->mode != MODE_MIPI_RAW_HDR_DDR_DDR))
 		return g_info->devno;
 
 	if (g_info->done_buf == NULL) {
@@ -305,7 +320,9 @@ void aml_adap_global_destroy_thread(void)
 	unsigned long flags;
 	struct adapter_global_info *g_info = aml_adap_global_get_info();
 
-	if (g_info->mode != MODE_MIPI_RAW_SDR_DDR)
+	if ((g_info->mode != MODE_MIPI_RAW_SDR_DDR) &&
+		(g_info->mode != MODE_MIPI_YUV_SDR_DDR) &&
+		(g_info->mode != MODE_MIPI_RAW_HDR_DDR_DDR))
 		return;
 
 	g_info->user --;
