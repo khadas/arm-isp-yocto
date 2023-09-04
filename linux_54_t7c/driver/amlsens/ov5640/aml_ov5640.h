@@ -85,7 +85,7 @@ static const struct regmap_config ov5640_regmap_config = {
 	.cache_type = REGCACHE_RBTREE,
 };
 
-static struct ov5640_regval setting_1920_1080_2lane_672m_30fps[] = {
+static const struct ov5640_regval setting_1920_1080_2lane_672m_30fps[] = {
 	{0x3103, 0x11},
 	{0x3008, 0x82},
 	{0x3008, 0x42},
@@ -347,7 +347,7 @@ static struct ov5640_regval setting_1920_1080_2lane_672m_30fps[] = {
 	{0x3008, 0x02},
 };
 
-static struct ov5640_regval setting_2592_1944_2lane_672m_30fps[] = {
+static const struct ov5640_regval setting_2592_1944_2lane_672m_30fps[] = {
 	{0x3103, 0x11},
 	{0x3008, 0x82},
 	{0x3008, 0x42},

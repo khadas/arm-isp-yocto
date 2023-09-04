@@ -89,7 +89,7 @@ static const struct regmap_config imx415_regmap_config = {
 	.cache_type = REGCACHE_RBTREE,
 };
 
-static struct imx415_regval linear_4k_30fps_1440Mbps_4lane_10bits[] = {
+static const struct imx415_regval linear_4k_30fps_1440Mbps_4lane_10bits[] = {
 	{0x3000, 0x01}, /* standby */
 
 	{0x3002, 0x00}, /* XTMSTA */
@@ -220,7 +220,7 @@ static struct imx415_regval linear_4k_30fps_1440Mbps_4lane_10bits[] = {
 	{0x3002, 0x00},
 };
 
-static struct imx415_regval dol_4k_30fps_1440Mbps_4lane_10bits[] = {
+static const struct imx415_regval dol_4k_30fps_1440Mbps_4lane_10bits[] = {
 	{0x3000, 0x01}, /* standby */
 
 	{0x3002, 0x00}, /* XTMSTA */

@@ -47,7 +47,7 @@
 struct ispIF ispIf;
 
 struct isp_info {
-    AIspCalibrations calib;
+    aisp_calib_info_t calib;
     AML_ALG_CTX_S pstAlgCtx;
 };
 
