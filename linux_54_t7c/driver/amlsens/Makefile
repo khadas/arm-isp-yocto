@@ -14,8 +14,6 @@ amlsens-objs := $(DRV_SRC_OBJ)
 LOCAL_INCLUDES := -I$(M_PATH)/ -I$(M_PATH)/include/
 
 EXTRA_CFLAGS += $(LOCAL_INCLUDES)
-EXTRA_CFLAGS += -Wno-unused-function
-EXTRA_CFLAGS += -Wno-unused-variable
 
 ifeq ($(O),)
 out_dir := .

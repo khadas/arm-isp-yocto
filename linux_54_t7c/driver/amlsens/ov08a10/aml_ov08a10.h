@@ -92,7 +92,7 @@ static const struct regmap_config ov08a10_regmap_config = {
 };
 
 #ifdef OV08A10_SDR_60FPS_1440M
-static struct ov08a10_regval setting_3840_2160_4lane_1440m_60fps[] = {
+static const struct ov08a10_regval setting_3840_2160_4lane_1440m_60fps[] = {
 	{0x0103, 0x01 },
 	{0x0303, 0x01 },
 	{0x0305, 0x5c },
@@ -265,7 +265,7 @@ static struct ov08a10_regval setting_3840_2160_4lane_1440m_60fps[] = {
 };
 
 #else
-static struct ov08a10_regval setting_3840_2160_4lane_800m_30fps[] = {
+static const struct ov08a10_regval setting_3840_2160_4lane_800m_30fps[] = {
 	{0x0103, 0x01},
 	{0x0303, 0x01},
 	{0x0305, 0x32},
@@ -437,7 +437,7 @@ static struct ov08a10_regval setting_3840_2160_4lane_800m_30fps[] = {
 #endif
 
 #ifdef OV08A10_HDR_30FPS_1440M
-static struct ov08a10_regval setting_hdr_3840_2160_4lane_1440m_30fps[] = {
+static const struct ov08a10_regval setting_hdr_3840_2160_4lane_1440m_30fps[] = {
 	{ 0x0100, 0x00},
 	{ 0x0103, 0x01},
 	{ 0x0303, 0x01},
@@ -623,7 +623,7 @@ static struct ov08a10_regval setting_hdr_3840_2160_4lane_1440m_30fps[] = {
 	{ 0x3833, 0x01},
 };
 #else
-static struct ov08a10_regval setting_hdr_3840_2160_4lane_848m_15fps[] = {
+static const struct ov08a10_regval setting_hdr_3840_2160_4lane_848m_15fps[] = {
 	{0x0100, 0x00},
 	{0x0103, 0x01},
 	{0x0303, 0x01},

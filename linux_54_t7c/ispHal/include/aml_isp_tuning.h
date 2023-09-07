@@ -13,8 +13,7 @@
 #include <stdint.h>
 
 #define ISO_NUM_MAX     (10)
-#define RATIO_NUM_MAX     (8)
-
+#define RATIO_NUM_MAX   (8)
 
 typedef enum CALIBRATION_TYPE {
     CALIBRATION_TOP_CTL                   ,
@@ -31,6 +30,7 @@ typedef enum CALIBRATION_TYPE {
     CALIBRATION_AE_ROUTE                  ,
     CALIBRATION_AE_WEIGHT_H               ,
     CALIBRATION_AE_WEIGHT_V               ,
+    CALIBRATION_AE_WEIGHT_T               ,
     CALIBRATION_DAYNIGHT_DETECT           ,
     CALIBRATION_AF_CTL                    ,
     CALIBRATION_AF_WEIGHT_H               ,
@@ -73,7 +73,9 @@ typedef enum CALIBRATION_TYPE {
     CALIBRATION_PST_TNR_ALP_LUT           ,
     CALIBRATION_COMPRESS_RATIO            ,
     CALIBRATION_LENS_SHADING_ADJ          ,
+    CALIBRATION_LENS_SHADING_ACTL         ,
     CALIBRATION_LENS_SHADING_CT_CORRECT   ,
+    CALIBRATION_LENS_SHADING_ADP          ,
     CALIBRATION_DMS_ADJ                   ,
     CALIBRATION_CCM_ADJ                   ,
     CALIBRATION_CNR_CTL                   ,
@@ -119,6 +121,7 @@ typedef enum CALIBRATION_TYPE {
     CALIBRATION_SHADING_RADIAL_R          ,
     CALIBRATION_SHADING_RADIAL_G          ,
     CALIBRATION_SHADING_RADIAL_B          ,
+    CALIBRATION_LENS_OTP_CENTER_OFFSET    ,
     CALIBRATION_SHADING_LS_D65_R          ,
     CALIBRATION_SHADING_LS_D65_B          ,
     CALIBRATION_SHADING_LS_D65_G          ,
@@ -165,8 +168,6 @@ typedef enum CALIBRATION_TYPE {
     CALIBRATION_DECMP1                    ,
     CALIBRATION_DYM_CUSTOM_SETTING        ,
     CALIBRATION_AWB_PRESET                ,
-    CALIBRATION_LENS_OTP_CENTER_OFFSET    ,
-    CALIBRATION_LENS_SHADING_ADP          ,
 
     CALIBRATION_TOTAL_SIZE                ,
 } CALIBRATION_TYPE_E;
@@ -247,6 +248,10 @@ typedef struct LookupTable {
 typedef struct _AIspCalibrations {
     LookupTable *pstcalibrations[CALIBRATION_TOTAL_SIZE];
 } AIspCalibrations;
+
+typedef struct aisp_calib_info_s {
+    LookupTable *calibrations[CALIBRATION_TOTAL_SIZE];
+} aisp_calib_info_t;
 
 uint32_t calibrations_static_init(AIspCalibrations *c);
 uint32_t calibrations_dynamic_init(AIspCalibrations *c);

@@ -99,8 +99,11 @@ static const u8 ov16a1q_i2c_address[2] = {
 	0x10,
 };
 
+
+
+
 #ifdef OV16A1Q_SDR_30FPS_756M
-static struct ov16a1q_regval setting_2328_1748_4lane_756m_30fps[] = {
+static const struct ov16a1q_regval setting_2328_1748_4lane_756m_30fps[] = {
 	{0x0103, 0x01},
 	{0x0102, 0x00},
 	{0x0301, 0x48},
@@ -754,7 +757,7 @@ static struct ov16a1q_regval setting_2328_1748_4lane_756m_30fps[] = {
 #endif
 
 #ifdef OV16A1Q_SDR_60FPS_1572M
-static struct ov16a1q_regval setting_2328_1748_4lane_1527m_60fps[] = {
+static const struct ov16a1q_regval setting_2328_1748_4lane_1527m_60fps[] = {
 	{0x0103, 0x01},
 	{0x0102, 0x00},
 	{0x0301, 0x48},
@@ -1408,7 +1411,7 @@ static struct ov16a1q_regval setting_2328_1748_4lane_1527m_60fps[] = {
 #endif
 
 #ifdef OV16A1Q_SDR_120FPS_1572M
-static struct ov16a1q_regval setting_2328_1748_4lane_1527m_120fps[] = {
+static const  struct ov16a1q_regval setting_2328_1748_4lane_1527m_120fps[] = {
 	{0x0103, 0x01},
 	{0x0102, 0x00},
 	{0x0301, 0x48},
@@ -2072,6 +2075,7 @@ static const struct ov16a1q_regval ov16a1q_10bit_settings[] = {
 
 static const struct ov16a1q_regval ov16a1q_12bit_settings[] = {
 };
+
 
 extern int ov16a1q_init(struct i2c_client *client, void *sdrv);
 extern int ov16a1q_deinit(struct i2c_client *client);

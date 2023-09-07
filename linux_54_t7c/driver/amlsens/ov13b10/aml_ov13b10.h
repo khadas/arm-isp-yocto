@@ -97,7 +97,7 @@ static const u8 ov13b10_i2c_address[2] = {
 	0x36,
 };
 
-static struct ov13b10_regval setting_4208_3120_4lane_1080m_30fps[] = {
+static const struct ov13b10_regval setting_4208_3120_4lane_1080m_30fps[] = {
 	{0x0103, 0x01},
 	{0x0303, 0x01},
 	{0x0305, 0x46},

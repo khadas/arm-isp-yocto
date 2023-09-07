@@ -338,7 +338,7 @@ static const struct imx290_regval imx290_global_init_settings[] = {
 
 };
 
-static struct imx290_regval dol_1080p_30fps_4lane_10bits[] = {
+static const struct imx290_regval dol_1080p_30fps_4lane_10bits[] = {
 	{0x3000, 0x01}, /* standby */
 
 	{0x3002, 0x00}, /* XTMSTA */

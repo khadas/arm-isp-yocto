@@ -94,7 +94,7 @@ static const struct regmap_config ov13855_regmap_config = {
 	.cache_type = REGCACHE_RBTREE,
 };
 
-static struct ov13855_regval setting_4224_3136_4lane_1080m_30fps[] = {
+static const struct ov13855_regval setting_4224_3136_4lane_1080m_30fps[] = {
 	{0x0103, 0x01},
 	{0x0300, 0x02},
 	{0x0301, 0x00},

@@ -39,10 +39,11 @@ enum sensorType
     sensor_yuv,
     sensor_NULL,
 };
+
 struct sensorConfig {
     ALG_SENSOR_EXP_FUNC_S expFunc;
     void (*cmos_set_sensor_entity)(struct media_entity * sensor_ent, int wdr);
-    void (*cmos_get_sensor_calibration)(struct media_entity *sensor_ent, AIspCalibrations *calib);
+    void (*cmos_get_sensor_calibration)(struct media_entity *sensor_ent, aisp_calib_info_t *calib);
     int sensorWidth;// max width
     int sensorHeight;// max height
     const char* sensorName;
@@ -54,6 +55,6 @@ struct sensorConfig *matchSensorConfig(media_stream_t *stream);
 struct sensorConfig *matchSensorConfig(const char* sensorEntityName);
 void cmos_sensor_control_cb(struct sensorConfig *cfg, ALG_SENSOR_EXP_FUNC_S *stSnsExp);
 void cmos_set_sensor_entity(struct sensorConfig *cfg, struct media_entity * sensor_ent, int wdr);
-void cmos_get_sensor_calibration(struct sensorConfig *cfg, struct media_entity *sensor_ent, AIspCalibrations *calib);
+void cmos_get_sensor_calibration(struct sensorConfig *cfg, struct media_entity *sensor_ent, aisp_calib_info_t *calib);
 
 #endif
