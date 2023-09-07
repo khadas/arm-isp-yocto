@@ -393,7 +393,9 @@ static int isp_subdev_set_format(void *priv, void *s_fmt, void *m_fmt)
 	isp_dev->fmt = p_fmt;
 
 	if (isp_dev->enWDRMode == WDR_MODE_2To1_LINE ||
-			isp_dev->enWDRMode == WDR_MODE_2To1_FRAME)
+		isp_dev->enWDRMode == WDR_MODE_2To1_FRAME ||
+		isp_dev->enWDRMode == ISP_WDR_DCAM_LMODE ||
+		isp_dev->enWDRMode == ISP_WDR_DCAM_FMODE)
 		isp_dev->ops->hw_set_wdr_mode(isp_dev, 1);
 	else
 		isp_dev->ops->hw_set_wdr_mode(isp_dev, 0);
@@ -477,7 +479,9 @@ static int isp_subdev_set_ctrl(struct v4l2_ctrl *ctrl)
 		pr_info("isp_subdev_set_ctrl:%d\n", ctrl->val);
 		isp_dev->enWDRMode = ctrl->val;
 		g_info->mode = AML_ISP_SCAM;
-		if (isp_dev->enWDRMode == ISP_SDR_DCAM_MODE)
+		if (isp_dev->enWDRMode == ISP_SDR_DCAM_MODE ||
+			isp_dev->enWDRMode == ISP_WDR_DCAM_LMODE ||
+			isp_dev->enWDRMode == ISP_WDR_DCAM_FMODE)
 			g_info->mode = AML_ISP_MCAM;
 		break;
 	default:
@@ -499,7 +503,7 @@ static struct v4l2_ctrl_config mode_cfg = {
 	.type = V4L2_CTRL_TYPE_INTEGER,
 	.flags = V4L2_CTRL_FLAG_EXECUTE_ON_WRITE,
 	.min = 0,
-	.max = 5,
+	.max = 6,
 	.step = 1,
 	.def = 0,
 };
