@@ -71,6 +71,7 @@ struct ov16a1q {
 	struct v4l2_ctrl *pixel_rate;
 	struct v4l2_ctrl *wdr;
 	struct v4l2_ctrl *address;
+	struct v4l2_ctrl *data_lanes;
 
 	int status;
 	struct mutex lock;
@@ -98,9 +99,6 @@ static const struct regmap_config ov16a1q_regmap_config = {
 static const u8 ov16a1q_i2c_address[2] = {
 	0x10,
 };
-
-
-
 
 #ifdef OV16A1Q_SDR_30FPS_756M
 static const struct ov16a1q_regval setting_2328_1748_4lane_756m_30fps[] = {
@@ -2075,7 +2073,6 @@ static const struct ov16a1q_regval ov16a1q_10bit_settings[] = {
 
 static const struct ov16a1q_regval ov16a1q_12bit_settings[] = {
 };
-
 
 extern int ov16a1q_init(struct i2c_client *client, void *sdrv);
 extern int ov16a1q_deinit(struct i2c_client *client);
