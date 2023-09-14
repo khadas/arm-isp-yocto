@@ -510,7 +510,7 @@ void isp_lens_cfg_size(struct isp_dev_t *isp_dev, struct aml_format *fmt)
 	u64 ptmp = 0;
 	u32 xsize = fmt->width;
 	u32 ysize = fmt->height;
-
+#ifdef ISP_LSWB_RS_INIT
 	val = (1 << 24) / (xsize >> 1);
 	isp_reg_update_bits(isp_dev, ISP_LSWB_RS_XSCALE, val, 0, 16);
 	val = (1 << 24) / (xsize >> 1);
@@ -526,7 +526,7 @@ void isp_lens_cfg_size(struct isp_dev_t *isp_dev, struct aml_format *fmt)
 	isp_reg_update_bits(isp_dev, ISP_LSWB_RS_CENTER, val, 16, 16);
 	val = (ysize >> 1);
 	isp_reg_update_bits(isp_dev, ISP_LSWB_RS_CENTER, val, 0, 16);
-
+#endif
 	val = isp_reg_read(isp_dev, ISP_LSWB_MS_NUM);
 	val = (((val >> 16) & 0x3f) - 1) * 4096 * 1024 / MAX(xsize, 256);
 	isp_reg_update_bits(isp_dev, ISP_LSWB_MS_XSCALE, val, 0, 20);
