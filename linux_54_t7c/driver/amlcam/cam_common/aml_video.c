@@ -339,6 +339,12 @@ static int video_buff_queue_setup(struct vb2_queue *queue,
 	*num_planes = 1;
 	sizes[0] = pix->sizeimage;
 
+	if (video->id == AML_ISP_STREAM_0 ||
+		video->id == AML_ISP_STREAM_1 ||
+		video->id == AML_ISP_STREAM_2 ||
+		video->id == AML_ISP_STREAM_3 )
+		queue->dma_attrs |= DMA_ATTR_NO_KERNEL_MAPPING;
+
 	return 0;
 }
 
