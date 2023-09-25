@@ -449,6 +449,8 @@ static void isp_subdev_stream_off(void *priv)
 	isp_dev->ops->hw_enable_ptnr_mif(isp_dev, 0);
 	isp_dev->ops->hw_enable_mcnr_mif(isp_dev, 0);
 
+	isp_subdev_start_manual_dma(isp_dev);
+
 	isp_subdev_ptnr_buf_free(isp_dev);
 	isp_subdev_mcnr_buf_free(isp_dev);
 }

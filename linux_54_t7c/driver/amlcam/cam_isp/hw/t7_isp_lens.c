@@ -274,22 +274,14 @@ static void lswb_rad_cfg_base(struct isp_dev_t *isp_dev, void *base)
 	aisp_base_cfg_t *base_cfg = base;
 	aisp_lut_fixed_cfg_t *lut_cfg = &base_cfg->fxlut_cfg;
 
+	val = ISP_ARRAY_SIZE(lut_cfg->lns_rad_lut129);
+
 	isp_hw_lut_wstart(isp_dev, LSWB_RAD_LUT_CFG);
 
 	isp_reg_write(isp_dev, ISP_LNS_RAD_LUT_ADDR, 0);
-	for (j = 0; j < 4; j++) {
-		for (i = 0; i < 64; i++) {
-			idx0 = (i * 2 + 0) * 4 + j;
-			idx1 = (i * 2 + 1) * 4 + j;
-			val = (lut_cfg->lns_rad_lut129[idx0] << 0) |
-				(lut_cfg->lns_rad_lut129[idx1] << 16);
-			isp_reg_write(isp_dev, ISP_LNS_RAD_LUT_DATA, val);
-		}
 
-		idx0 = 128 * 4 + j;
-		val = lut_cfg->lns_rad_lut129[idx0];
-		isp_reg_write(isp_dev, ISP_LNS_RAD_LUT_DATA, val);
-	}
+	for (i = 0; i < val; i++)
+		isp_reg_write(isp_dev, ISP_LNS_RAD_LUT_DATA, lut_cfg->lns_rad_lut129[i]);
 
 	isp_hw_lut_wend(isp_dev);
 }
@@ -642,6 +634,7 @@ void isp_lens_cfg_param(struct isp_dev_t *isp_dev, struct aml_buffer *buff)
 	if (param->pvalid.aisp_lns) {
 		lswb_rad_cfg_strength(isp_dev, &param->lns_cfg);
 		lswb_mesh_cfg_strength(isp_dev, &param->lns_cfg);
+		lswb_rad_cfg_base(isp_dev, &param->base_cfg);
 	}
 
 	if (param->pvalid.aisp_blc) {
