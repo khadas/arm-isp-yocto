@@ -109,10 +109,10 @@ static int aml_adap_global_cfg_rd_buf(int vdev)
 {
 	int offset = 0;
 	unsigned long flags;
-	struct aml_video video;
 	struct aml_buffer *buff;
 	struct adapter_dev_t *a_dev = adap_get_dev(vdev);
 	struct adapter_dev_param *param = &a_dev->param;
+	struct aml_video *video = a_dev->video;
 
 	struct adapter_global_info *g_info = aml_adap_global_get_info();
 
@@ -123,11 +123,11 @@ static int aml_adap_global_cfg_rd_buf(int vdev)
 
 	spin_lock_irqsave(&g_info->list_lock, flags);
 
-	video.id = MODE_MIPI_RAW_SDR_DDR;
-	video.priv = a_dev;
+	video->id = MODE_MIPI_RAW_SDR_DDR;
+	video->priv = a_dev;
 	buff = g_info->done_buf;
 
-	a_dev->ops->hw_rd_cfg_buf(&video, buff);
+	a_dev->ops->hw_rd_cfg_buf(video, buff);
 
 	spin_unlock_irqrestore(&g_info->list_lock, flags);
 
@@ -136,26 +136,25 @@ static int aml_adap_global_cfg_rd_buf(int vdev)
 
 int aml_adap_rd_enable(int vdev)
 {
-	struct aml_video video;
 	struct adapter_dev_t *a_dev = adap_get_dev(vdev);
 	struct adapter_dev_param *param = &a_dev->param;
+	struct aml_video *video = a_dev->video;
 
 	if ((param->mode != MODE_MIPI_RAW_SDR_DDR) &&
 		(param->mode != MODE_MIPI_YUV_SDR_DDR) &&
 		(param->mode != MODE_MIPI_RAW_HDR_DDR_DDR))
 		return -1;
 
-	video.id = MODE_MIPI_RAW_SDR_DDR;
-	video.priv = a_dev;
+	video->id = MODE_MIPI_RAW_SDR_DDR;
+	video->priv = a_dev;
 
-	a_dev->ops->hw_rd_enable(&video);
+	a_dev->ops->hw_rd_enable(video);
 
 	return 0;
 }
 
 int aml_adap_offline_mode(int vdev)
 {
-	struct aml_video video;
 	struct adapter_dev_t *a_dev = adap_get_dev(vdev);
 	struct adapter_dev_param *param = &a_dev->param;
 
