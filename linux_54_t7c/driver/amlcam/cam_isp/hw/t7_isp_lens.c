@@ -634,7 +634,8 @@ void isp_lens_cfg_param(struct isp_dev_t *isp_dev, struct aml_buffer *buff)
 	if (param->pvalid.aisp_lns) {
 		lswb_rad_cfg_strength(isp_dev, &param->lns_cfg);
 		lswb_mesh_cfg_strength(isp_dev, &param->lns_cfg);
-		lswb_rad_cfg_base(isp_dev, &param->base_cfg);
+		if (param->pvalid.aisp_base == 0)
+			lswb_rad_cfg_base(isp_dev, &param->base_cfg);
 	}
 
 	if (param->pvalid.aisp_blc) {
