@@ -6,7 +6,7 @@
 LOCAL_PATH := $(shell pwd)
 DIR_PATH := /mnt/fileroot2/shuanshuan.jiang/arm_5.15_1/common/common_drivers/customer
 
-CFLAGS := -I. -g -fPIE -Wall -pthread
+CFLAGS := -I. -g -fPIE -Wall -pthread -Wno-unused-parameter
 ODIR=obj
 OFILE=v4l2_test
 

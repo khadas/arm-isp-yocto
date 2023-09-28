@@ -121,7 +121,9 @@ void acamera_sbus_i2c_init( acamera_sbus_t *p_bus )
 
 void acamera_sbus_i2c_deinit( acamera_sbus_t *p_bus )
 {
+    LOG( LOG_CRIT, "sensor acamera_sbus_i2c_deinit ++" );
     system_i2c_deinit( p_bus->bus );
+    LOG( LOG_CRIT, "sensor acamera_sbus_i2c_deinit --" );
 }
 
 void i2c_init_access( void )

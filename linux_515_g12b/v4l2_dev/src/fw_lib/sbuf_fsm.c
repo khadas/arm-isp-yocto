@@ -51,11 +51,7 @@ int sbuf_fsm_set_param( void *fsm, uint32_t param_id, void *input, uint32_t inpu
     sbuf_fsm_t *p_fsm = (sbuf_fsm_t *)fsm;
     switch ( param_id ) {
     case FSM_PARAM_SET_SBUF_CALIBRATION_UPDATE: {
-        if (input || input_size == sizeof( uint32_t )) {
-            uint32_t mode = *(uint32_t *)input;
-            sbuf_update_calibration_data( p_fsm, 1, mode );
-        } else
-            sbuf_update_calibration_data( p_fsm, 0, 0 );
+        sbuf_update_calibration_data( p_fsm );
         break;
     }
     default:

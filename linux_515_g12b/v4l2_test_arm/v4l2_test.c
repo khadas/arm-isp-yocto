@@ -35,6 +35,11 @@
 #define STATIC_STREAM_COUNT (ARM_V4L2_TEST_STREAM_MAX - ARM_V4L2_TEST_HAS_RAW)
 #define NB_BUFFER 6
 #define DUMP_RAW 0
+#define ISP_V4L2_CID_BASE ( 0x00f00000 | 0xf000 )
+#define ISP_V4L2_CID_CUSTOM_DCAM_MODE (ISP_V4L2_CID_BASE + 166)
+//#define ISP_V4L2_CID_CUSTOM_DCAM_MODE (ISP_V4L2_CID_BASE + 27)
+
+
 // #define dump_forever
 #define auto_exposure
 static int sensor_bits = 10;
@@ -94,11 +99,6 @@ struct thread_param
 {
     /* video device info */
     char *devname;
-
-    /* display device info */
-    char *fbp;
-    struct fb_var_screeninfo vinfo;
-    struct fb_fix_screeninfo finfo;
 
     /* format info */
     uint32_t width;
@@ -386,9 +386,9 @@ void save_image(const char *prefix, void *buf, int length, int flag, int num)
         printf("%s:Error input param\n", __func__);
         return;
     }
-    /*if (num % 10 != 0)
-        return;*/
     dump_num++;
+    if ((num % 10 != 0))
+        return;
     sprintf(name, "/tmp/dst_%s-%d.yuv", prefix, flag);
     fp = fopen(name, "ab+");
     if (!fp)
@@ -498,6 +498,7 @@ void *video_thread(void *arg)
     struct v4l2_requestbuffers v4l2_rb;
     int v4l2_buf_length = 0;
     int dma_fd = -1;
+    int ret = 0;
 
     void *v4l2_mem[NB_BUFFER * VIDEO_MAX_PLANES];
     int v4l2_dma_fd[NB_BUFFER * VIDEO_MAX_PLANES] = {0};
@@ -567,7 +568,7 @@ void *video_thread(void *arg)
          stream_type, v4l2_cap.capabilities, v4l2_cap.device_caps);
 
     if (stream_type == ARM_V4L2_TEST_STREAM_FR)
-        // isp_lib_enable();
+        //isp_lib_enable(2);
 
         // do_sensor_preset(videofd,1);
 
@@ -593,6 +594,7 @@ void *video_thread(void *arg)
     v4l2_fmt.fmt.pix_mp.width = tparm->width;
     v4l2_fmt.fmt.pix_mp.height = tparm->height;
     v4l2_fmt.fmt.pix_mp.pixelformat = tparm->pixformat;
+    //v4l2_fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_GREY;      //V4L2_PIX_FMT_SBGGR16;
     // v4l2_fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_NV12;
     // v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage = v4l2_fmt.fmt.pix_mp.width * v4l2_fmt.fmt.pix_mp.height;
     v4l2_fmt.fmt.pix_mp.field = V4L2_FIELD_ANY;
@@ -635,7 +637,7 @@ void *video_thread(void *arg)
              stream_type, v4l2_fmt.fmt.pix_mp.num_planes);
     }
 
-    if (stream_type == ARM_V4L2_TEST_STREAM_FR ||
+    /*if (stream_type == ARM_V4L2_TEST_STREAM_FR ||
         stream_type == ARM_V4L2_TEST_STREAM_DS1)
     {
         do_crop(stream_type, videofd, tparm->c_width, tparm->c_height);
@@ -645,22 +647,8 @@ void *video_thread(void *arg)
     {
         do_fr_set_ae_zone_weight(videofd);
         do_fr_set_awb_zone_weight(videofd);
-    }
+    }*/
 
-    int fr_bitdepth;
-    // get the pixel format
-    switch (v4l2_fmt.fmt.pix.pixelformat)
-    {
-    case V4L2_PIX_FMT_RGB32:
-        fr_bitdepth = 24;
-        break;
-    case ISP_V4L2_PIX_FMT_ARGB2101010:
-        fr_bitdepth = 30;
-        break;
-    default:
-        fr_bitdepth = (v4l2_fmt.fmt.pix_mp.plane_fmt[i].bytesperline / v4l2_fmt.fmt.pix_mp.width) * 8;
-        break;
-    }
     /**************************************************
      *set manual exposure
      *************************************************/
@@ -783,6 +771,21 @@ void *video_thread(void *arg)
      *************************************************/
     /* stream on */
     // int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    //struct v4l2_control ctl;
+    //ctl.id = ISP_V4L2_CID_CUSTOM_DCAM_MODE;
+    //ctl.value = 1;
+
+    //ret = ioctl(videofd, VIDIOC_S_CTRL, &ctl);
+    //if (ret < 0) {
+        //printf("Error: ioctl dcam fail.\n");
+    //}
+    /*memset(&ctl, 0, sizeof(ctl));
+    ctl.id = V4L2_CID_COLORFX;
+    ctl.value = V4L2_COLORFX_BW;
+    ret = ioctl(videofd, VIDIOC_S_CTRL, &ctl);
+    if (ret < 0) {
+        printf("Error: ioctl colorfail.\n");
+    }*/
     int type = v4l2_enum_type;
     rc = ioctl(videofd, VIDIOC_STREAMON, &type);
     if (rc < 0)
@@ -792,50 +795,26 @@ void *video_thread(void *arg)
     }
     INFO("[T#%d] Video stream is on.\n", stream_type);
 
-    if (stream_type == fps_test_port)
+    if (1)
     {
         start = GetTimeMsec();
     }
-
     /* poll variables */
-    const int POLL_TIMEOUT = 2000;
-    struct pollfd pfds[1];
-    int pollret;
+    //const int POLL_TIMEOUT = 2000;
+    //struct pollfd pfds[1];
+    //int pollret;
 
     /* dequeue and display */
     do
     {
         struct v4l2_buffer v4l2_buf;
         // struct v4l2_plane buf_planes[v4l2_fmt.fmt.pix_mp.num_planes];
-        frame_t newframe;
         int idx = -1;
-
-        switch (stream_type)
-        {
-        case ARM_V4L2_TEST_STREAM_FR:
-            memset(displaybuf_fr, 0, tparm->width * tparm->height * 3);
-            displaybuf = displaybuf_fr;
-            break;
-#if ARM_V4L2_TEST_HAS_META
-        case ARM_V4L2_TEST_STREAM_META:
-            memset(displaybuf_meta, 0, tparm->width * tparm->height * 3);
-            displaybuf = displaybuf_meta;
-            break;
-#endif
-        case ARM_V4L2_TEST_STREAM_DS1:
-            memset(displaybuf_ds1, 0, tparm->width * tparm->height * 3);
-            displaybuf = displaybuf_ds1;
-            break;
-        case ARM_V4L2_TEST_STREAM_DS2:
-            memset(displaybuf_ds2, 0, tparm->width * tparm->height * 3);
-            displaybuf = displaybuf_ds2;
-            break;
-        }
-
+        //while (1);
         /* wait (poll) for a frame event */
         // printf ("[T#%d] Start polling (exit flag = %d, capture count = %d)\n",
         //     stream_type, v4l2_test_thread_exit, tparm->capture_count);
-        pfds[0].fd = videofd;
+        /*pfds[0].fd = videofd;
         pfds[0].events = POLLIN;
         pfds[0].revents = 0;
         pollret = poll(pfds, 1, POLL_TIMEOUT);
@@ -855,7 +834,7 @@ void *video_thread(void *arg)
         else
         {
             // DBG ("[T#%d] Frame ready (pollret = %d, results = %d)\n", stream_type, pollret, pfds[0].revents);
-        }
+        }*/
 
         // dqbuf from video node
         memset(&v4l2_buf, 0, sizeof(struct v4l2_buffer));
@@ -868,6 +847,7 @@ void *video_thread(void *arg)
             v4l2_buf.m.planes = malloc(v4l2_fmt.fmt.pix_mp.num_planes * sizeof(struct v4l2_plane));
             v4l2_buf.length = v4l2_fmt.fmt.pix_mp.num_planes;
         }
+        printf("start dq buffer \n");
         rc = ioctl(videofd, VIDIOC_DQBUF, &v4l2_buf);
         if (rc < 0)
         {
@@ -877,75 +857,20 @@ void *video_thread(void *arg)
             break;
         }
         idx = v4l2_buf.index;
-
+        printf("success dq %d buffer\n", v4l2_buf.index);
         if (stream_type == ARM_V4L2_TEST_STREAM_FR)
         {
-            save_image("fr", v4l2_mem[idx], tparm->width * tparm->height * 3 / 2, stream_type, tparm->capture_count);
+            if (strstr(tparm->devname, "/dev/video50")) {
+                save_image("fr-0", v4l2_mem[idx], tparm->width * tparm->height * 3 / 2, stream_type, tparm->capture_count);
+                //save_image("fr-0", v4l2_mem[idx], tparm->width * tparm->height * 2, stream_type, tparm->capture_count);
+                //save_image("fr-0", v4l2_mem[idx], tparm->width * tparm->height, stream_type, tparm->capture_count);
+            } else if (strstr(tparm->devname, "/dev/video51")) {
+                save_image("fr-1", v4l2_mem[idx], tparm->width * tparm->height * 3 / 2, stream_type, tparm->capture_count);
+                //save_image("fr-1", v4l2_mem[idx], tparm->width * tparm->height * 2, stream_type, tparm->capture_count);
+            }
             // save_image("fr", displaybuf, v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage * 2, tparm->capture_count);
         }
-        // fill frame_pack and do enqueue_buffer()
-        newframe.vfd = videofd;
-        newframe.vbuf = v4l2_buf;
-        newframe.pixelformat = v4l2_fmt.fmt.pix_mp.pixelformat;
-        if (v4l2_buf.type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
-        {
-            // if(stream_type != ARM_V4L2_TEST_STREAM_RAW){
-            newframe.width[0] = v4l2_fmt.fmt.pix.width;
-            newframe.height[0] = v4l2_fmt.fmt.pix.height;
-            newframe.bit_depth[0] = sensor_bits;
-            newframe.bytes_per_line[0] = (((newframe.width[0] * ((sensor_bits + 7) >> 3)) + 127) >> 7) << 7; // for padding
-            newframe.paddr[0] = v4l2_mem[idx];
-            // DBG("[T#%d] Buffer[%d] single to capture.\n", stream_type, newframe.paddr[0]);
-            newframe.num_planes = 1;
-        }
-        else if (v4l2_buf.type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
-        {
-            newframe.num_planes = v4l2_fmt.fmt.pix_mp.num_planes;
-            for (i = 0; i < newframe.num_planes; i++)
-            {
-                newframe.width[i] = v4l2_fmt.fmt.pix_mp.width;
-                newframe.height[i] = v4l2_fmt.fmt.pix_mp.height;
-#if ARM_V4L2_TEST_HAS_RAW
-                if (stream_type == ARM_V4L2_TEST_STREAM_RAW)
-                    newframe.bit_depth[i] = sensor_bits;
-                else
-#endif
-                    newframe.bit_depth[i] = fr_bitdepth;
-                /*
-                if (stream_type == ARM_V4L2_TEST_STREAM_RAW) {
-                    printf("i:%d newframe.bit_depth[i]:%d sensor_bits:%d",i,newframe.bit_depth[i],sensor_bits);
-                }
-                */
-                // newframe.bytes_per_line[i] = (((newframe.width[i] * ((sensor_bits + 7) >> 3)) + 127) >> 7 ) << 7;  // for padding
-                newframe.bytes_per_line[i] = v4l2_fmt.fmt.pix_mp.plane_fmt[i].bytesperline;
-                newframe.paddr[i] = v4l2_mem[idx * newframe.num_planes + i];
-                // DBG("[T#%d] i:%d newframe.paddr:%p to capture idx:%d.\n", stream_type,i, newframe.paddr[i],idx);
-                // newframe.paddr[i] = v4l2_mem[idx];
-            }
-        }
-
-        image_info_t src;
-        src.ptr = v4l2_mem[idx];
-        src.width = v4l2_fmt.fmt.pix.width;
-        src.height = v4l2_fmt.fmt.pix.height;
-        src.bpp = 32; // Todo: fixed to ARGB for now
-        src.fmt = v4l2_fmt.fmt.pix.pixelformat;
-
-        /*if (src.fmt == V4L2_PIX_FMT_NV12)
-        {
-            memcpy(displaybuf, v4l2_mem[idx * 2], v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage);
-            memcpy(displaybuf + v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage, v4l2_mem[idx * 2 + 1],
-                   v4l2_fmt.fmt.pix_mp.plane_fmt[1].sizeimage);
-        }
-        else
-        {
-            memcpy(displaybuf, src.ptr, v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage);
-        }*/
-        /*if (stream_type == ARM_V4L2_TEST_STREAM_FR)
-        {
-            save_image("fr", displaybuf, v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage * 2, stream_type, tparm->capture_count);
-            //save_image("fr", displaybuf, v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage * 2, tparm->capture_count);
-        }*/
+        usleep(1000*10);
         rc = ioctl(videofd, VIDIOC_QBUF, &v4l2_buf);
         if (rc < 0)
         {
@@ -974,12 +899,12 @@ void *video_thread(void *arg)
         }
 
         display_count++;
-        if ((stream_type == fps_test_port) && (display_count % 100 == 0))
+        if (display_count % 100 == 0)
         {
             end = GetTimeMsec();
             end = end - start;
-            printf("stream port %s fps is : %lld\n",
-                   (stream_type == 0) ? "FR" : ((stream_type == 1) ? "Meta" : ((stream_type == 2) ? "DS1" : ((stream_type == 3) ? "DS2" : "Other"))), (100 * 1000) / end);
+            printf("stream port %s fps is : %lld \n",
+                   (stream_type == 0) ? "FR" : ((stream_type == 1) ? "Meta" : ((stream_type == 2) ? "DS1" : ((stream_type == 3) ? "DS2" : "Other"))), (long long)((100 * 1000) / end));
             start = GetTimeMsec();
         }
 
@@ -1015,7 +940,7 @@ void *video_thread(void *arg)
 fatal:
 
     close(videofd);
-    // isp_lib_disable();
+    //isp_lib_disable();
     MSG("thread %d terminated ...\n", stream_type);
 
     return NULL;
@@ -1196,7 +1121,7 @@ int main(int argc, char *argv[])
     uint32_t ds_c_width = 0;
     uint32_t ds_c_height = 0;
     uint32_t sensor_fps = 0;
-    if (argc < 25)
+    if (argc < 3)
     {
         printf("v4l test API\n");
         printf("usage:\n");
@@ -1350,34 +1275,6 @@ int main(int argc, char *argv[])
     /**************************************************
      * Frame buffer initialize
      *************************************************/
-    struct fb_var_screeninfo vinfo;
-    struct fb_fix_screeninfo finfo;
-    long int screensize = 0;
-    char *fbp = 0;
-
-    /* Open the file for reading and writing */
-    fb_fd = open(fbdevname, O_RDWR);
-
-    MSG("The %s device was opened successfully.\n", fbdevname);
-
-    /* Get fixed screen information */
-    if (ioctl(fb_fd, FBIOGET_FSCREENINFO, &finfo) == -1)
-    {
-        printf("Error reading fixed information\n");
-    }
-
-    /* Get variable screen information */
-    if (ioctl(fb_fd, FBIOGET_VSCREENINFO, &vinfo) == -1)
-    {
-        printf("Error reading variable information\n");
-    }
-
-    MSG("%dx%d, %dbpp\n", vinfo.xres, vinfo.yres, vinfo.bits_per_pixel);
-
-    /* Figure out the size of the screen in bytes */
-    screensize = vinfo.xres * vinfo.yres * vinfo.bits_per_pixel * fb_buffer_cnt / 8; // 3 buffers
-
-    MSG("The framebuffer device was mapped to memory successfully.\n");
 
     if (fr_num <= 0 && ds_num <= 0)
     {
@@ -1402,9 +1299,6 @@ int main(int argc, char *argv[])
     {
         {
             .devname = v4ldevname,
-            .fbp = fbp,
-            .finfo = finfo,
-            .vinfo = vinfo,
 
             .width = 1920,
             .height = 1080,
@@ -1422,9 +1316,6 @@ int main(int argc, char *argv[])
 #if ARM_V4L2_TEST_HAS_META
         {
             .devname = v4ldevname,
-            .fbp = fbp,
-            .finfo = finfo,
-            .vinfo = vinfo,
 
             .width = 1 * 1024 * 1024,
             .height = 1,
@@ -1438,9 +1329,6 @@ int main(int argc, char *argv[])
 #endif
         {
             .devname = v4ldevname,
-            .fbp = fbp,
-            .finfo = finfo,
-            .vinfo = vinfo,
 
             .width = 1280,
             .height = 720,
@@ -1455,9 +1343,6 @@ int main(int argc, char *argv[])
         },
         {
             .devname = v4ldevname,
-            .fbp = fbp,
-            .finfo = finfo,
-            .vinfo = vinfo,
 
             .width = 1280,
             .height = 720,
@@ -1484,9 +1369,6 @@ int main(int argc, char *argv[])
 #if ARM_V4L2_TEST_HAS_RAW
     struct thread_param tparam_raw = {
         .devname = v4ldevname,
-        .fbp = fbp,
-        .finfo = finfo,
-        .vinfo = vinfo,
 
         .width = 1920,
         .height = 1080,
@@ -1568,6 +1450,7 @@ int main(int argc, char *argv[])
         {
         case V4L2_TEST_MENU_PREVIEW_ON_OFF:
             v4l2_test_thread_preview = (v4l2_test_thread_preview + 1) % 2;
+            printf("V4L2_TEST_MENU_PREVIEW_ON_OFF \n");
             usleep(250000);
             break;
         case V4L2_TEST_MENU_DO_CAPTURE_LEGACY:
@@ -1658,7 +1541,6 @@ int main(int argc, char *argv[])
     printf("dump_num = %d\n", dump_num);
     MSG("terminating v4l2 test app, thank you ...\n");
 
-    munmap(fbp, screensize);
     close(fb_fd);
     return 0;
 }

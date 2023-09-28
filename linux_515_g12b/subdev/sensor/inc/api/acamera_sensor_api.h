@@ -1,21 +1,21 @@
 /*
-*
-* SPDX-License-Identifier: GPL-2.0
-*
-* Copyright (C) 2011-2018 ARM or its affiliates
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; version 2.
-* This program is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-* or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
-* for more details.
-* You should have received a copy of the GNU General Public License along
-* with this program; if not, write to the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-*
-*/
+ *
+ * SPDX-License-Identifier: GPL-2.0
+ *
+ * Copyright (C) 2011-2018 ARM or its affiliates
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2.
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *
+ */
 
 #ifndef __ACAMERA_SENSOR_API_H__
 #define __ACAMERA_SENSOR_API_H__
@@ -25,43 +25,47 @@
 
 // this is the sensor bayer pattern,
 // it is used in arm isp color pattern
-typedef enum {
-	BAYER_RGGB,
-	BAYER_GRBG,
-	BAYER_GBRG,
-	BAYER_BGGR,
-}bayer_type_t;
+typedef enum
+{
+    BAYER_RGGB,
+    BAYER_GRBG,
+    BAYER_GBRG,
+    BAYER_BGGR,
+} bayer_type_t;
 
 // this structure represents image resolution
 // it is used in sensor driver to keep information
 // about the frame width and frame height
-typedef struct _image_resolution_t {
+typedef struct _image_resolution_t
+{
     uint16_t width;
     uint16_t height;
 } image_resolution_t;
 
-
 // a sensor can support several different predefined modes.
 // this structure keeps all necessary information about a mode
-typedef struct _sensor_mode_t {
+typedef struct _sensor_mode_t
+{
     uint8_t wdr_mode;              // The wdr mode.
     uint32_t fps;                  // Fps value multiplied by 256
     image_resolution_t resolution; // Resolution of the mode
     uint8_t exposures;             // How many exposures this mode supports
     uint8_t bits;                  // Bit depth of data from sensor
-    uint8_t lanes;					//Lane count
-    uint32_t bps;					//Bps of lane,unit is Mega
-    uint8_t num;					//the setting idx in seq
-    uint8_t bayer;					//the setting bayer pattern
-    uint8_t dol_type;			    //the DOL type
+    uint8_t lanes;                 // Lane count
+    uint32_t bps;                  // Bps of lane,unit is Mega
+    uint8_t num;                   // the setting idx in seq
+    uint8_t bayer;                 // the setting bayer pattern
+    uint8_t dol_type;              // the DOL type
 } sensor_mode_t;
 
-typedef struct _sensor_name_t {
+typedef struct _sensor_name_t
+{
     uint8_t name[32];
     uint32_t name_len;
-}sensor_name_t;
+} sensor_name_t;
 
-typedef struct _isp_context_seq {
+typedef struct _isp_context_seq
+{
     const acam_reg_t **sequence;
     uint32_t seq_num;
     uint32_t seq_table_max;
@@ -69,7 +73,8 @@ typedef struct _isp_context_seq {
 
 // sensor parameters structure keeps information about the current
 // sensor state.
-typedef struct _sensor_param_t {
+typedef struct _sensor_param_t
+{
     image_resolution_t total;                // Total resolution of the image with blanking
     image_resolution_t active;               // Active resolution without blanking
     uint16_t pixels_per_line;                // Actual pixels per line after scaling/binning
@@ -96,9 +101,9 @@ typedef struct _sensor_param_t {
     isp_context_seq isp_context_seq;         // isp context seq
 } sensor_param_t;
 
-
 // sensor control structure implements sensor API which is used by firmware
-typedef struct _sensor_control_t {
+typedef struct _sensor_control_t
+{
     /**
      *   Allocate analog gain
      *
@@ -112,8 +117,7 @@ typedef struct _sensor_control_t {
      *
      *   @return the real analog gain which will be applied
      */
-    int32_t ( *alloc_analog_gain )( void *ctx, int32_t gain );
-
+    int32_t (*alloc_analog_gain)(void *ctx, int32_t gain);
 
     /**
      *   Allocate digital gain
@@ -128,8 +132,7 @@ typedef struct _sensor_control_t {
      *
      *   @return the real digital gain which will be applied
      */
-    int32_t ( *alloc_digital_gain )( void *ctx, int32_t gain );
-
+    int32_t (*alloc_digital_gain)(void *ctx, int32_t gain);
 
     /**
      *   Allocate integration time
@@ -145,8 +148,7 @@ typedef struct _sensor_control_t {
      *          ctx - pointer to the sensor context
      *
      */
-    void ( *alloc_integration_time )( void *ctx, uint16_t *int_time, uint16_t *int_time_M, uint16_t *int_time_L );
-
+    void (*alloc_integration_time)(void *ctx, uint16_t *int_time, uint16_t *int_time_M, uint16_t *int_time_L);
 
     /**
      *   Update all sensor parameters
@@ -156,8 +158,7 @@ typedef struct _sensor_control_t {
      *   @param ctx - pointer to the sensor context
      *
      */
-    void ( *sensor_update )( void *ctx );
-
+    void (*sensor_update)(void *ctx);
 
     /**
      *   Set horizontal offset
@@ -168,8 +169,7 @@ typedef struct _sensor_control_t {
      *
      *   @return amount of offseted pixels
      */
-    uint32_t ( *set_xoffset )( void *ctx, uint32_t xoffset );
-
+    uint32_t (*set_xoffset)(void *ctx, uint32_t xoffset);
 
     /**
      *   Set vertical offset
@@ -180,8 +180,7 @@ typedef struct _sensor_control_t {
      *
      *   @return amount of offseted pixels
      */
-    uint32_t ( *set_yoffset )( void *ctx, uint32_t xoffset );
-
+    uint32_t (*set_yoffset)(void *ctx, uint32_t xoffset);
 
     /**
      *   Set the sensor mode
@@ -193,8 +192,7 @@ typedef struct _sensor_control_t {
      *          ctx - pointer to the sensor context
      *
      */
-    void ( *set_mode )( void *ctx, uint8_t mode );
-
+    void (*set_mode)(void *ctx, uint8_t mode);
 
     /**
      *   Start sensor data output
@@ -205,8 +203,7 @@ typedef struct _sensor_control_t {
      *   @param ctx - pointer to the sensor context
      *
      */
-    void ( *start_streaming )( void *ctx );
-
+    void (*start_streaming)(void *ctx);
 
     /**
      *   Stop sensor data output
@@ -217,8 +214,7 @@ typedef struct _sensor_control_t {
      *   @param ctx - pointer to the sensor context
      *
      */
-    void ( *stop_streaming )( void *ctx );
-
+    void (*stop_streaming)(void *ctx);
 
     /**
      *   Get sensor id
@@ -227,8 +223,7 @@ typedef struct _sensor_control_t {
      *
      *   @param ctx - pointer to the sensor context
      */
-    uint16_t ( *get_id )( void *ctx );
-
+    uint16_t (*get_id)(void *ctx);
 
     /**
      *   Get sensor parameters
@@ -237,16 +232,14 @@ typedef struct _sensor_control_t {
      *
      *   @param ctx - pointer to the sensor context
      */
-    const sensor_param_t *( *get_parameters )( void *ctx );
-
+    const sensor_param_t *(*get_parameters)(void *ctx);
 
     /**
      *   disable on-sensor isp
      *
      *   @param ctx - pointer to the sensor context
      */
-    void ( *disable_sensor_isp )( void *ctx );
-
+    void (*disable_sensor_isp)(void *ctx);
 
     /**
      *   read on-sensor register
@@ -254,8 +247,7 @@ typedef struct _sensor_control_t {
      *   @param ctx - pointer to the sensor context
      *      address - address of register
      */
-    uint32_t ( *read_sensor_register )( void *ctx, uint32_t address );
-
+    uint32_t (*read_sensor_register)(void *ctx, uint32_t address);
 
     /**
      *   write on-sensor register
@@ -264,30 +256,29 @@ typedef struct _sensor_control_t {
      *      address - address of register
      *         data - data to write to register location
      */
-    void ( *write_sensor_register )( void *ctx, uint32_t address, uint32_t data );
+    void (*write_sensor_register)(void *ctx, uint32_t address, uint32_t data);
 
-    void ( *sensor_test_pattern )( void *ctx, uint8_t mode );
+    void (*sensor_test_pattern)(void *ctx, uint8_t mode);
 
     /**
-    *	 ir_cut_set
-    *
-    *	 This function sets the sensor ir cut state.
-    *    ir_cut_state, 0: close ir cut, 1: open ir cut, 2: no operation
-    *
-    */
-    int32_t ( *ir_cut_set )( void *ctx, int32_t ir_cut_state );
-
-     /**
-     *   vmax framerate
+     *	 ir_cut_set
      *
-     *   This function get/sets the sensor framerate by vmax.
+     *	 This function sets the sensor ir cut state.
+     *    ir_cut_state, 0: close ir cut, 1: open ir cut, 2: no operation
      *
      */
-    uint32_t ( *vmax_fps )( void *ctx, uint32_t framerate );
+    int32_t (*ir_cut_set)(void *ctx, int32_t ir_cut_state);
+
+    /**
+     *   dcam_mode
+     *
+     *   This function sets the sensor dcam mode.
+     *	 ir_cut_state, 0: single, 1: dual camera
+     *
+     */
+    void (*dcam_mode)(void *ctx, int32_t mode);
 } sensor_control_t;
 
-
 typedef sensor_control_t *sensor_control_ptr_t;
-
 
 #endif /* __ACAMERA_SENSOR_API_H__ */
