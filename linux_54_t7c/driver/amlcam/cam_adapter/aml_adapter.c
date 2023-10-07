@@ -296,7 +296,7 @@ int adap_wdr_cfg_buf(struct adapter_dev_t *a_dev)
 int adap_fe_cfg_buf(struct adapter_dev_t *a_dev)
 {
 	unsigned long flags;
-	struct aml_video video;
+	struct aml_video *video = a_dev->video;
 	struct adapter_dev_param *param = &a_dev->param;
 
 	if (a_dev->wstatus != STATUS_START)
@@ -313,9 +313,9 @@ int adap_fe_cfg_buf(struct adapter_dev_t *a_dev)
 	if (param->cur_buf) {
 		list_del(&param->cur_buf->list);
 	} else {
-		video.id = MODE_MIPI_RAW_SDR_DDR;
-		video.priv = a_dev;
-		a_dev->ops->hw_fe_cfg_buf(&video, &param->rsvd_buf);
+		video->id = MODE_MIPI_RAW_SDR_DDR;
+		video->priv = a_dev;
+		a_dev->ops->hw_fe_cfg_buf(video, &param->rsvd_buf);
 
 		spin_unlock_irqrestore(&param->ddr_lock, flags);
 
@@ -324,10 +324,10 @@ int adap_fe_cfg_buf(struct adapter_dev_t *a_dev)
 		return -1;
 	}
 
-	video.id = MODE_MIPI_RAW_SDR_DDR;
-	video.priv = a_dev;
+	video->id = MODE_MIPI_RAW_SDR_DDR;
+	video->priv = a_dev;
 
-	a_dev->ops->hw_fe_cfg_buf(&video, param->cur_buf);
+	a_dev->ops->hw_fe_cfg_buf(video, param->cur_buf);
 
 	spin_unlock_irqrestore(&param->ddr_lock, flags);
 
