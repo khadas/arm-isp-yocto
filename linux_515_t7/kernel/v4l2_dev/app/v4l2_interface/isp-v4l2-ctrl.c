@@ -3299,6 +3299,7 @@ int isp_v4l2_ctrl_init( uint32_t ctx_id, isp_v4l2_ctrl_t *ctrl )
     ADD_CTRL_CST_VOLATILE( ISP_V4L2_CID_SYSTEM_DYNAMIC_GAMMA_ENABLE, &isp_v4l2_ctrl_system_dynamic_gamma_enable, NULL );
     ADD_CTRL_CST_VOLATILE( ISP_V4L2_CID_AF_MODE_ID, &isp_v4l2_ctrl_af_mode_id, NULL );
     ADD_CTRL_CST_VOLATILE( ISP_V4L2_CID_AF_MANUAL_CONTROL_ID, &isp_v4l2_ctrl_af_manual_control, NULL );
+    ADD_CTRL_CST_VOLATILE( ISP_V4L2_CID_AF_STATE_ID, &isp_v4l2_ctrl_af_state_id, NULL);
     ADD_CTRL_CST_VOLATILE( ISP_V4L2_CID_AWB_MODE_ID, &isp_v4l2_ctrl_awb_mode_id, NULL );
     ADD_CTRL_CST_VOLATILE( ISP_V4L2_CID_AWB_TEMPERATURE, &isp_v4l2_ctrl_awb_temperature, NULL );
 

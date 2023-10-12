@@ -1219,7 +1219,7 @@ static int isp_fw_do_set_af_refocus( uint32_t ctx_id, int val )
     int result;
     u32 ret_val;
 
-    result = acamera_command( ctx_id, TALGORITHMS, AF_MODE_ID, AF_AUTO_SINGLE, COMMAND_SET, &ret_val );
+    result = acamera_command( ctx_id, TALGORITHMS, AF_MODE_ID, AF_AUTO_CONTINUOUS, COMMAND_SET, &ret_val );
     if ( result ) {
         LOG( LOG_ERR, "Failed to set AF_MODE_ID to AF_AUTO_SINGLE, ret_value: %u.", ret_val );
         return result;

@@ -532,7 +532,7 @@ static void enable_isp_scale_new (
     }
 
     if ( mux_sel != 4  && wr_mif->reg_rgb_mode == 2 )
-       sc_wr_reg_bits(ISP_SCWR_TOP_CTRL, 5, 13, 3);
+        sc_wr_reg_bits(ISP_SCWR_TOP_CTRL, 5, 13, 3);
     else
         sc_wr_reg_bits(ISP_SCWR_TOP_CTRL, 0, 13, 3);
 

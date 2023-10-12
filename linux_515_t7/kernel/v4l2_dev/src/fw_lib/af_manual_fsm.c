@@ -30,6 +30,7 @@ extern void af_set_new_param( AF_fsm_ptr_t p_fsm, sbuf_af_t *p_sbuf_af );
 
 void AF_fsm_clear( AF_fsm_t *p_fsm )
 {
+
     p_fsm->frame_num = 0;
     p_fsm->mode = AF_MODE_AF;
     p_fsm->pos_manual = 0;

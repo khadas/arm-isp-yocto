@@ -50,7 +50,6 @@ static int soc_lens_log_status( struct v4l2_subdev *sd )
 static int soc_lens_init( struct v4l2_subdev *sd, u32 val )
 {
     int rc = 0;
-
     if ( val < FIRMWARE_CONTEXT_NUMBER ) {
         l_ctx[val].lens_context = NULL;
         lens_init( &( l_ctx[val].lens_context ), &( l_ctx[val].lens_control ) );
