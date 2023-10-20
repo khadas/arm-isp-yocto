@@ -130,6 +130,7 @@ static int dphy_cfg(void *c_dev, int idx, int lanes, u32 bps)
 
 	// mipi_reg_write(c_dev, module, MIPI_PHY_CTRL, 0x80000000);//soft reset bit
 	// mipi_reg_write(c_dev, module, MIPI_PHY_CTRL, 0);//release soft reset bit
+	pr_debug("%s clock mode %d \n", __func__, csiphy_dev->clock_mode);
 	if (csiphy_dev->clock_mode) {
 		mipi_reg_write(c_dev, module, MIPI_PHY_CLK_LANE_CTRL, 0x58); // MIPI_PHY_CLK_LANE_CTRL
 	} else {
