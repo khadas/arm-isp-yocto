@@ -598,6 +598,7 @@ typedef struct aisp_lut_fixed_cfg_s {
 	u32 eotf0_lut[33];
 	u32 eotf1_lut[129];
 	u32 lns_rad_lut129[65*4];
+	u32 lns_radext_lut129[65*8];
 	u32 lns_mesh_lut[32*32*4];
 	u32 pst_gamma_lut[129*4];
 	u32 rgb_gamma_lut[129]; // none
@@ -1205,9 +1206,10 @@ typedef union {
 		u64  aisp_dhz         : 1;
 		u64  aisp_dhz_enhc    : 1;
 		u64  aisp_peaking     : 1;
+		u64  aisp_radial      : 1;
 		u64  aisp_misc        : 1;
 		u64  aisp_custom      : 1;
-		u64  bitRsv           : 28; /* H  ; [36:63] */
+		u64  bitRsv           : 27; /* H  ; [37:63] */
 	};
 }  aisp_param_ctrl;
 

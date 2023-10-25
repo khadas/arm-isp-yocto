@@ -94,6 +94,14 @@ static int isp_subdrv_reg_buf_alloc(struct isp_dev_t *isp_dev)
 	isp_dev->rreg_buff.vaddr[AML_PLANE_A] = virtaddr + wsize;
 	isp_dev->rreg_buff.vmaddr[AML_PLANE_A] = vmaddr + wsize;
 
+	wsize = 4 * 1024;
+	virtaddr = dma_alloc_coherent(isp_dev->dev, wsize, &paddr, GFP_KERNEL);
+
+	isp_dev->radi_buff.nplanes = 1;
+	isp_dev->radi_buff.bsize = wsize;
+	isp_dev->radi_buff.addr[AML_PLANE_A] = paddr;
+	isp_dev->radi_buff.vaddr[AML_PLANE_A] = virtaddr;
+
 	pr_debug("reg alloc\n");
 
 	return 0;
@@ -123,6 +131,16 @@ static int isp_subdrv_reg_buf_free(struct isp_dev_t *isp_dev)
 	isp_dev->rreg_buff.addr[AML_PLANE_A] = 0x0000;
 	isp_dev->rreg_buff.vaddr[AML_PLANE_A] = NULL;
 	isp_dev->rreg_buff.vmaddr[AML_PLANE_A] = NULL;
+
+	paddr = isp_dev->radi_buff.addr[AML_PLANE_A];
+	vaddr = isp_dev->radi_buff.vaddr[AML_PLANE_A];
+	bsize = 4 * 1024;
+
+	if (vaddr)
+		dma_free_coherent(isp_dev->dev, bsize, vaddr, (dma_addr_t)paddr);
+
+	isp_dev->radi_buff.addr[AML_PLANE_A] = 0x0000;
+	isp_dev->radi_buff.vaddr[AML_PLANE_A] = NULL;
 
 	pr_debug("reg free\n");
 

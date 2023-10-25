@@ -513,7 +513,7 @@ static int csiphy_proc_show(struct seq_file *proc_entry, void *arg ) {
 
 	seq_printf(proc_entry, " ------- PubAttr Info ------- \n");
 	seq_printf(proc_entry, "LaneCnt" "\t" "LaneBps" "\t" "\n");
-	seq_printf(proc_entry, "%d \t %d \t \n\n",
+	seq_printf(proc_entry, "%d \t %ld \t \n\n",
 					c_dev->lanecnt,
 					c_dev->lanebps );
 
