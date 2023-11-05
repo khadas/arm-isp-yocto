@@ -59,7 +59,6 @@
 #define CSI2_VC_MODE2_MATCH_TO_VC_H	0x2C
 #define CSI2_VC_MODE2_MATCH_TO_IGNORE_L	0x30
 #define CSI2_VC_MODE2_MATCH_TO_IGNORE_H	0x34
-
 #elif PLATFORM_C308X || PLATFORM_C305X
 #define CSI2_VC_MODE2_MATCH_MASK_A_L	0x20
 #define CSI2_VC_MODE2_MATCH_MASK_A_H	0x24
@@ -140,6 +139,8 @@
 #define MIPI_ADAPT_ALIG_CNTL8       0xE0
 #define MIPI_ADAPT_ALIG_CNTL9       0xE4
 #define MIPI_ADAPT_ALIG_ST0         0xE8
+#define MIPI_ADAPT_ALIG_ST1         0xEC
+#define MIPI_ADAPT_ALIG_CNTL10		0xF0
 #define MIPI_ADAPT_ALIG_ST1         0xEC
 
 #define MIPI_OTHER_CNTL0           0x100
@@ -236,6 +237,7 @@ typedef struct exp_offset {
 	int long_offset;
 	int short_offset;
 	int offset_x;
+	int offset_y;
 } exp_offset_t;
 
 struct am_adap {
@@ -277,8 +279,10 @@ int am_adap_start(uint8_t channel, uint8_t dcam);
 int am_adap_reset(uint8_t channel);
 int am_adap_deinit(uint8_t channel);
 void am_adap_set_info(struct am_adap_info *info);
-int get_fte1_flag(void);
+//int get_fte1_flag(void);
 int am_adap_get_depth(uint8_t channel);
+//void mipi_adap_reg_rd_ext(int addr, adap_io_type_t io_type, uint32_t *val);
+//void adapt_set_virtcam(void);
 extern int32_t system_timer_usleep( uint32_t usec );
 extern int camera_notify( uint notification, void *arg);
 

@@ -382,7 +382,9 @@ uint8_t system_i2c_read(uint32_t bus, uint32_t phy_addr, uint8_t *data, uint32_t
 	addr_type = g_sensor_ctrl[bus]->reg_addr_type;
 	data_type = g_sensor_ctrl[bus]->reg_data_type;
 
+
 	saddr = g_sensor_ctrl[bus]->slave_addr >> 1;
+
 	struct i2c_msg msgs[] = {
 		{
 			.addr = saddr,

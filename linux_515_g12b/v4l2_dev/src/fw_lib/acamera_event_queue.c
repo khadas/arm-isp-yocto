@@ -21,7 +21,6 @@
 #include "acamera_logger.h"
 #include "system_spinlock.h"
 
-static uint32_t not_empty_count;
 static uint32_t reset_threshold = 1;
 
 static void acamera_event_queue_reset( acamera_loop_buf_ptr_t p_buf )
@@ -157,7 +156,7 @@ int32_t acamera_event_queue_check(  acamera_event_queue_ptr_t p_queue)
     flags = system_spinlock_lock( p_queue->lock );
     if ( p_buf->head == p_buf->tail ) {
         result = 0;
-        not_empty_count = 0;
+        p_buf->not_empty_count = 0;
     }
     system_spinlock_unlock( p_queue->lock, flags );
     return result;

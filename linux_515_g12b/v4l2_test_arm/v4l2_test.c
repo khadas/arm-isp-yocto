@@ -567,7 +567,7 @@ void *video_thread(void *arg)
     INFO("[T#%d] VIDIOC_QUERYCAP: capabilities=0x%x, device_caps:0x%x\n",
          stream_type, v4l2_cap.capabilities, v4l2_cap.device_caps);
 
-    if (stream_type == ARM_V4L2_TEST_STREAM_FR)
+    //if (stream_type == ARM_V4L2_TEST_STREAM_FR)
         //isp_lib_enable(2);
 
         // do_sensor_preset(videofd,1);
@@ -608,12 +608,15 @@ void *video_thread(void *arg)
          v4l2_fmt.fmt.pix.pixelformat,
          v4l2_fmt.fmt.pix.field);
 
+    printf("%s set format++ \n", tparm->devname);
     rc = ioctl(videofd, VIDIOC_S_FMT, &v4l2_fmt);
+    printf("%s set format-- \n", tparm->devname);
     if (rc < 0)
     {
         printf("Error: set format %d.\n", rc);
         goto fatal;
     }
+#if 0
     rc = ioctl(videofd, VIDIOC_G_FMT, &v4l2_fmt);
     if (rc < 0)
     {
@@ -628,7 +631,9 @@ void *video_thread(void *arg)
          v4l2_fmt.fmt.pix.pixelformat,
          v4l2_fmt.fmt.pix.field,
          v4l2_fmt.fmt.pix_mp.plane_fmt[0].sizeimage);
+#endif
 
+#if 0
     // real type and planes here
     v4l2_enum_type = v4l2_fmt.type;
     if (v4l2_fmt.type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
@@ -636,6 +641,7 @@ void *video_thread(void *arg)
         INFO("[T#%d] multiplanar support planes=%d\n",
              stream_type, v4l2_fmt.fmt.pix_mp.num_planes);
     }
+#endif
 
     /*if (stream_type == ARM_V4L2_TEST_STREAM_FR ||
         stream_type == ARM_V4L2_TEST_STREAM_DS1)
@@ -656,6 +662,7 @@ void *video_thread(void *arg)
     {
         if (tparm->wdr_mode == 2)
         {
+            printf("set wdr mode \n");
             manual_exposure_enable = 0;
             set_manual_exposure(videofd, manual_exposure_enable);
         }

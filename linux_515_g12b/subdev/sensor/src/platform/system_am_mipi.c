@@ -168,11 +168,11 @@ int am_mipi_parse_dt(struct device_node *node)
 
 	rtn = of_property_read_u32(node, "dphy0-ctrl0-cfg", &t_mipi->dphy0_ctrl0_cfg);
 	if (rtn != 0)
-		t_mipi->dphy0_ctrl0_cfg = 0x123ff; /*A: 0x123, B: 0x123ff*/
+		t_mipi->dphy0_ctrl0_cfg = 0x123; /*A: 0x123, B: 0x123ff*/
 
 	rtn = of_property_read_u32(node, "dphy0-ctrl1-cfg", &t_mipi->dphy0_ctrl1_cfg);
 	if (rtn != 0)
-		t_mipi->dphy0_ctrl1_cfg = 0x1ff01; /*A: 0x123, B: 0x1ff01*/
+		t_mipi->dphy0_ctrl1_cfg = 0x123; /*A: 0x123, B: 0x1ff01*/
 
 	t_mipi->link_node = of_parse_phandle(node, "link-device", 0);
 
@@ -551,6 +551,32 @@ void am_mipi_set_lanes(int lanes)
 /*
  *	=======================MIPI MODULE INTERFACE====================
  */
+
+int am_mipi1_init(void *info)
+{
+	int rtn = -1;
+	if (info == NULL)
+	{
+		pr_err("%s:Error input param\n", __func__);
+		return -1;
+	}
+
+	rtn = am_mipi_phy1_init(info);
+	if (rtn != 0)
+	{
+		pr_err("%s:Error mipi phy init\n", __func__);
+		return -1;
+	}
+
+	rtn = am_mipi_csi1_init(info);
+	if (rtn != 0)
+	{
+		pr_err("%s:Error mipi csi init\n", __func__);
+		return -1;
+	}
+	pr_info("Success mipi1 init\n");
+	return 0;
+}
 int am_mipi_init(void *info)
 {
 	int rtn = -1;
@@ -561,56 +587,38 @@ int am_mipi_init(void *info)
 		return -1;
 	}
 
-	if (((struct am_mipi_info *)info)->mipi_channel == MIPI0_CHAN)
+	rtn = am_mipi_phy0_init(info);
+	if (rtn != 0)
 	{
-		rtn = am_mipi_phy0_init(info);
-		if (rtn != 0)
-		{
-			pr_err("%s:Error mipi phy init\n", __func__);
-			return -1;
-		}
-
-		rtn = am_mipi_csi0_init(info);
-		if (rtn != 0)
-		{
-			pr_err("%s:Error mipi csi init\n", __func__);
-			return -1;
-		}
+		pr_err("%s:Error mipi phy init\n", __func__);
+		return -1;
 	}
-	else
+
+	rtn = am_mipi_csi0_init(info);
+	if (rtn != 0)
 	{
-		rtn = am_mipi_phy1_init(info);
-		if (rtn != 0)
-		{
-			pr_err("%s:Error mipi phy init\n", __func__);
-			return -1;
-		}
-
-		rtn = am_mipi_csi1_init(info);
-		if (rtn != 0)
-		{
-			pr_err("%s:Error mipi csi init\n", __func__);
-			return -1;
-		}
+		pr_err("%s:Error mipi csi init\n", __func__);
+		return -1;
 	}
-	pr_info("Success mipi%d init\n", ((struct am_mipi_info *)info)->mipi_channel);
+	pr_info("Success mipi0 init\n");
 
 	return 0;
 }
 
-void am_mipi_deinit(uint8_t channel)
+void am_mipi1_deinit(void)
 {
-	if (channel == MIPI0_CHAN)
-	{
-		am_mipi_phy0_reset();
-		am_mipi_csi0_reset();
-	}
-	else
-	{
-		am_mipi_phy1_reset();
-		am_mipi_csi1_reset();
-	}
+	am_mipi_phy1_reset();
+	am_mipi_csi1_reset();
 
-	pr_info("Success mipi%d deinit\n", channel);
+	pr_info("Success mipi1 deinit\n");
+}
+
+
+void am_mipi_deinit(void)
+{
+	am_mipi_phy0_reset();
+	am_mipi_csi0_reset();
+
+	pr_info("Success mipi0 deinit\n");
 }
 #endif

@@ -42,6 +42,7 @@ int acamera_event_queue_pop( acamera_event_queue_ptr_t p_queue );
 int32_t acamera_event_queue_not_empty( acamera_event_queue_ptr_t p_queue );
 int32_t acamera_event_queue_check(  acamera_event_queue_ptr_t p_queue);
 
+
 static __inline void acamera_event_queue_deinit( acamera_event_queue_ptr_t p_queue )
 {
     system_spinlock_destroy( p_queue->lock );

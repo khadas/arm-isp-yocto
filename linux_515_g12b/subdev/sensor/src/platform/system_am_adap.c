@@ -120,9 +120,7 @@ static int ceil_upper(int val, int mod)
 	return ret;
 }
 
-static inline void update_wr_reg_bits(unsigned int reg,
-									  adap_io_type_t io_type, unsigned int mask,
-									  unsigned int val)
+static inline void update_wr_reg_bits(unsigned int reg, adap_io_type_t io_type, unsigned int mask, unsigned int val)
 {
 	unsigned int tmp, orig;
 	void __iomem *base = NULL;
@@ -157,12 +155,9 @@ static inline void update_wr_reg_bits(unsigned int reg,
 	}
 }
 
-static inline void adap_wr_reg_bits(unsigned int adr,
-									adap_io_type_t io_type, unsigned int val,
-									unsigned int start, unsigned int len)
+static inline void adap_wr_reg_bits(unsigned int adr, adap_io_type_t io_type, unsigned int val, unsigned int start, unsigned int len)
 {
-	update_wr_reg_bits(adr, io_type,
-					   ((1 << len) - 1) << start, val << start);
+	update_wr_reg_bits(adr, io_type, ((1 << len) - 1) << start, val << start);
 }
 
 static inline void mipi_adap_reg_wr(int addr, adap_io_type_t io_type, uint32_t val)
@@ -473,6 +468,10 @@ int am_adap_frontend_init(uint8_t channel)
 	adap_wr_reg_bits(CSI2_X_START_END_ISP + FTE1_OFFSET * channel, FRONTEND_IO, 0xffff, 16, 16);
 	adap_wr_reg_bits(CSI2_X_START_END_MEM + FTE1_OFFSET * channel, FRONTEND_IO, adap_fsm[channel].para.offset.offset_x, 0, 16);
 	adap_wr_reg_bits(CSI2_X_START_END_MEM + FTE1_OFFSET * channel, FRONTEND_IO, 0xffff, 16, 16);
+	adap_wr_reg_bits(CSI2_Y_START_END_ISP + FTE1_OFFSET * channel, FRONTEND_IO, adap_fsm[channel].para.offset.offset_y, 0, 16);
+	adap_wr_reg_bits(CSI2_Y_START_END_ISP + FTE1_OFFSET * channel, FRONTEND_IO, 0xffff, 16, 16);
+	adap_wr_reg_bits(CSI2_Y_START_END_MEM + FTE1_OFFSET * channel, FRONTEND_IO, adap_fsm[channel].para.offset.offset_y, 0, 16);
+	adap_wr_reg_bits(CSI2_Y_START_END_MEM + FTE1_OFFSET * channel, FRONTEND_IO, 0xffff, 16, 16);
 
 	if (adap_fsm[channel].para.mode == DOL_MODE)
 	{
@@ -816,18 +815,22 @@ void am_adap_alig_start(uint8_t channel)
 	int width, height, alig_width, alig_height, val;
 	width = adap_fsm[channel].para.img.width;
 	height = adap_fsm[channel].para.img.height;
-	alig_width = width + 6000; // hblank > 32 cycles, H x V x framerate < isp clock
+	//alig_width = width + 6000; // hblank > 32 cycles, H x V x framerate < isp clock
 
-	alig_width = adap_fsm[channel].para.align_width;
-	if (channel)
-	{
-		if (adap_fsm[channel - 1].para.align_width > adap_fsm[channel].para.align_width)
-			alig_width = adap_fsm[channel - 1].para.align_width;
-	}
-	else
-	{
-		if (adap_fsm[channel + 1].para.align_width > adap_fsm[channel].para.align_width)
-			alig_width = adap_fsm[channel + 1].para.align_width;
+	if (adap_fsm[channel].para.mode == DIR_MODE) {
+		alig_width = width + 40;
+	} else {
+		alig_width = adap_fsm[channel].para.align_width;
+		if (channel)
+		{
+			if (adap_fsm[channel - 1].para.align_width > adap_fsm[channel].para.align_width)
+				alig_width = adap_fsm[channel - 1].para.align_width;
+		}
+		else
+		{
+			if (adap_fsm[channel + 1].para.align_width > adap_fsm[channel].para.align_width)
+				alig_width = adap_fsm[channel + 1].para.align_width;
+		}
 	}
 
 	alig_height = height + 60; // vblank > 48 lines
@@ -842,8 +845,8 @@ void am_adap_alig_start(uint8_t channel)
 
 		if (adap_fsm[channel].para.mode == DIR_MODE)
 		{
-			mipi_adap_reg_wr(MIPI_ADAPT_ALIG_CNTL6, ALIGN_IO, 0x00fff03D);
-			mipi_adap_reg_wr(MIPI_ADAPT_ALIG_CNTL8, ALIGN_IO, 0x05231020 | 0x200 | (3 << 10));
+			//mipi_adap_reg_wr(MIPI_ADAPT_ALIG_CNTL6, ALIGN_IO, 0x00fff03D);
+			//mipi_adap_reg_wr(MIPI_ADAPT_ALIG_CNTL8, ALIGN_IO, 0x05231020 | 0x200 | (3 << 10));
 		}
 		else if (adap_fsm[channel].para.mode == DDR_MODE)
 		{
@@ -859,8 +862,9 @@ void am_adap_alig_start(uint8_t channel)
 		}
 
 		adap_wr_reg_bits(MIPI_ADAPT_ALIG_CNTL8, ALIGN_IO, val, 16, 13);
-		if ((adap_fsm[ADAP0_PATH].cam_en + adap_fsm[ADAP1_PATH].cam_en) == CAM_EN)
+		if ((adap_fsm[ADAP0_PATH].cam_en + adap_fsm[ADAP1_PATH].cam_en) == CAM_EN) {
 			adap_wr_reg_bits(MIPI_ADAPT_ALIG_CNTL8, ALIGN_IO, 1, 31, 1);
+		}
 	}
 	else
 	{
@@ -913,9 +917,11 @@ int am_adap_alig_init(uint8_t channel)
 
 		if (adap_fsm[channel].para.mode == DIR_MODE)
 		{
-			mipi_adap_reg_wr(MIPI_ADAPT_ALIG_CNTL6, ALIGN_IO, 0x00fff033);
+			//mipi_adap_reg_wr(MIPI_ADAPT_ALIG_CNTL6, ALIGN_IO, 0x00fff033);
+			mipi_adap_reg_wr(MIPI_ADAPT_ALIG_CNTL6, ALIGN_IO, 0x00fff011);
 			mipi_adap_reg_wr(MIPI_ADAPT_ALIG_CNTL7, ALIGN_IO, 0xc350c000);
-			mipi_adap_reg_wr(MIPI_ADAPT_ALIG_CNTL8, ALIGN_IO, 0x05231020 | 0x200 | (3 << 10));
+			//mipi_adap_reg_wr(MIPI_ADAPT_ALIG_CNTL8, ALIGN_IO, 0x05231020 | 0x200 | (3 << 10));
+			mipi_adap_reg_wr(MIPI_ADAPT_ALIG_CNTL8, ALIGN_IO, 0x05231020);
 		}
 		else if (adap_fsm[channel].para.mode == DDR_MODE)
 		{
@@ -1074,7 +1080,8 @@ static void get_data_from_frontend(uint8_t fe_chan)
 	}
 }
 
-// static int fe0_count = 0;
+//static int fe0_count = 0;
+//static int fe1_count = 0;
 static irqreturn_t adpapter_isr(int irq, void *para)
 {
 
@@ -1084,12 +1091,15 @@ static irqreturn_t adpapter_isr(int irq, void *para)
 	if ((data & (1 << FRONT0_WR_DONE)))
 	{
 		get_data_from_frontend(ADAP0_PATH);
-		// if ((fe0_count++) % 100 == 0)
-		// printk("fe0 write \n");
+		//if ((fe0_count++) % 20 == 0)
+		//printk("fe0 write \n");
 	}
 
-	if (data & (1 << FRONT1_WR_DONE))
+	if (data & (1 << FRONT1_WR_DONE)) {
 		get_data_from_frontend(ADAP1_PATH);
+		//if ((fe1_count++) % 20 == 0)
+		//printk("fe1 write \n");
+	}
 
 	if ((data & (1 << READ0_RD_DONE)) || (data & (1 << READ1_RD_DONE)))
 	{
@@ -1557,6 +1567,7 @@ int am_adap_init(uint8_t channel)
 
 int am_adap_start(uint8_t channel, uint8_t dcam)
 {
+	int i = 0;
 	adap_fsm[channel].cam_en = CAM_EN;
 
 	if (dcam)
@@ -1578,7 +1589,10 @@ int am_adap_start(uint8_t channel, uint8_t dcam)
 		am_adap_pixel_start(channel);
 		am_adap_reader_start(channel);
 		am_adap_frontend_start(channel);
-		adap_fsm[DUAL_CAM_EN - 1 - channel].cam_en = CAM_DIS;
+		for (i = 0; i < DUAL_CAM_EN; i++) {
+			adap_fsm[i].cam_en = CAM_DIS;
+		}
+		adap_fsm[channel].cam_en = CAM_EN;
 	}
 
 	return 0;
