@@ -52,6 +52,7 @@ struct sensor_gpio {
 struct amlsens {
 	struct device *dev;
 	u8 nlanes;
+	u8 index;
 
 	struct i2c_client *client;
 	struct v4l2_fwnode_endpoint ep;
@@ -59,6 +60,8 @@ struct amlsens {
 	struct sensor_gpio gpio;
 
 	struct sensor_subdev *sd_sdrv;
+	struct dentry *debugfs_dir;
+	struct dentry *debugfs_file;
 };
 
 struct sensor_subdev {

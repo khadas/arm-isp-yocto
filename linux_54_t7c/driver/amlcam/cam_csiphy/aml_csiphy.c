@@ -385,7 +385,7 @@ static int csiphy_subdev_get_clock_mode(struct media_entity *entity)
 
 	ctrl = v4l2_ctrl_find(subdev->ctrl_handler, V4L2_CID_AML_CLOCK_MODE);
 	if (!ctrl) {
-		pr_err("Failed to get clock mode, using fault value\n");
+		pr_debug("Failed to get clock mode, using fault value\n");
 	} else {
 		clock_mode = ctrl->val;
 	}

@@ -1001,5 +1001,7 @@ const struct isp_dev_ops isp_hw_ops = {
 	.hw_fill_rreg_buff = isp_hw_fill_rreg_buff,
 	.hw_fill_gisp_rreg_buff = isp_hw_fill_gisp_rreg_buff,
 	.hw_status = isp_hw_status,
+	.hw_write = isp_hwreg_write,
+	.hw_read = isp_hwreg_read,
 };
 EXPORT_SYMBOL(isp_hw_ops);
