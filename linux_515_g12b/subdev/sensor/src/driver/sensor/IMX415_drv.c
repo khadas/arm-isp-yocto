@@ -549,6 +549,13 @@ static uint32_t write1_reg(unsigned long addr, uint32_t val)
 }
 #endif
 
+static void sensor_dcam_mode( void *ctx, int32_t mode )
+{
+    sensor_context_t *p_ctx = ctx;
+    LOG(LOG_CRIT, "imx415 set dcam mode:%d", mode);
+    p_ctx->dcam_mode = 0;
+}
+
 void sensor_deinit_imx415( void *ctx )
 {
     sensor_context_t *t_ctx = ctx;
@@ -663,6 +670,7 @@ void sensor_init_imx415( void **ctx, sensor_control_t *ctrl, void* sbp)
     ctrl->stop_streaming = stop_streaming;
     ctrl->sensor_test_pattern = sensor_test_pattern;
     ctrl->vmax_fps = sensor_vmax_fps;
+    ctrl->dcam_mode = sensor_dcam_mode;
 
     // Reset sensor during initialization
     sensor_hw_reset_enable();

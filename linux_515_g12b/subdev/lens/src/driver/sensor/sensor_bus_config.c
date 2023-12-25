@@ -45,7 +45,7 @@ int32_t get_next_sensor_bus_address(void) {
 
 int32_t get_next_lens_bus_address(void) {
     int32_t result = 0 ;
-    if ( lens_counter < FIRMWARE_CONTEXT_NUMBER ) {
+    if ( (lens_counter < FIRMWARE_CONTEXT_NUMBER)  && (lens_counter < sizeof(bus_addr)/sizeof(uint32_t))) {
         result = bus_addr[ lens_counter ] ;
         lens_counter ++ ;
     } else {
