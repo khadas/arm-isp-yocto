@@ -24,6 +24,7 @@ $(OFILE): $(OBJ)
 .PHONY: clean
 
 clean:
-	rm -f $(ODIR)/*.o $(OFILE)
+	@rm -rf $(LOCAL_PATH)/v4l2_test
+	@rm -rf $(LOCAL_PATH)/obj
 install:
 	find $(LOCAL_PATH) -name "v4l2_test" | xargs -i cp {} $(DIR_PATH)

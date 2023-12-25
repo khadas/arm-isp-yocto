@@ -1,7 +1,7 @@
 
 LOCAL_ARCH := arm64
 LOCAL_PATH := $(shell pwd)
-LOCAL_KDIR := $(LOCAL_PATH)/../../../../../../../build-g12b/tmp/work-shared/mesong12b-w400-5.15/kernel-source
+LOCAL_KDIR := $(LOCAL_PATH)/../../../../../../../build-t7-5.15/tmp/work-shared/mesont7-an400-5.15/kernel-source
 #LOCAL_CROSS_COMPILE := /opt/gcc-linaro-6.3.1-2017.02-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-
 #LOCAL_KDIR := /mnt/fileroot2/shuanshuan.jiang/arm_isp_5.15/out/kernel-5.15-64/dist/
 LOCAL_CROSS_COMPILE := aarch64-poky-linux-

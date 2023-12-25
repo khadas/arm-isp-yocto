@@ -50,4 +50,4 @@ modules_install:
 	cp $(OUT_DIR)/$(M)/*.ko ${OUT_DIR}/../vendor_lib/modules/
 
 clean:
-	@$(MAKE) -C $(KERNEL_SRC) M=$(M_PATH) clean
+	@$(MAKE) -C $(KERNEL_SRC) M=$(M) clean
