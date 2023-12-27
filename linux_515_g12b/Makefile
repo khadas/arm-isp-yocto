@@ -36,8 +36,6 @@ clean:
 	$(call module_clean,subdev/sensor)
 	$(call module_clean,subdev/lens)
 	$(call module_clean,subdev/iq)
-	@rm -rf $(LOCAL_PATH)/v4l2_test_arm/v4l2_test
-	@rm -rf $(LOCAL_PATH)/v4l2_test_arm/obj
 
 v4l2:
 	$(call module_func,v4l2_dev)
