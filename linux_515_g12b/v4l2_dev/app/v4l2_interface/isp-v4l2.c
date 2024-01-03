@@ -161,7 +161,6 @@ static int isp_v4l2_fop_open( struct file *file )
         goto fh_open_fail;
     }
     sp = fh_to_private( file->private_data );
-    pr_err("%s open %d path ++ \n", __func__, dev->ctx_id);
 
     LOG( LOG_INFO, "isp_v4l2: %s: called for sid:%d.", __func__, sp->stream_id );
 
@@ -169,7 +168,6 @@ static int isp_v4l2_fop_open( struct file *file )
     isp_v4l2_stream_init( &dev->pstreams[sp->stream_id], sp->stream_id, dev->ctx_id );
     if ( sp->stream_id == 0 ) {
         // stream_id 0 is a full resolution
-        pr_err("%s open %d path dma fr \n", __func__, dev->ctx_id);
         dev->stream_id_index[V4L2_STREAM_TYPE_FR] = sp->stream_id;
         acamera_api_dma_buff_queue_reset(dev->ctx_id, dma_fr);
     }
@@ -195,7 +193,6 @@ static int isp_v4l2_fop_open( struct file *file )
 
     if (sp->stream_id == V4L2_STREAM_TYPE_FR ||
         sp->stream_id == V4L2_STREAM_TYPE_DS1) {
-        pr_err("%s open %d path vb2 \n", __func__, dev->ctx_id);
 
         sp->vb2_q.dev = g_isp_v4l2_devs[dev->ctx_id]->pdev;
     }
@@ -214,7 +211,6 @@ static int isp_v4l2_fop_open( struct file *file )
         LOG( LOG_CRIT, "mutex_lock_interruptible failed.\n" );
     dev->fh_ptr[sp->stream_id] = &( sp->fh );
     mutex_unlock( &dev->notify_lock );
-    pr_err("%s open %d path -- \n", __func__, dev->ctx_id);
 
     return rc;
 
@@ -400,14 +396,11 @@ static int isp_v4l2_try_fmt_vid_cap( struct file *file, void *priv, struct v4l2_
 
 static int isp_v4l2_s_fmt_vid_cap( struct file *file, void *priv, struct v4l2_format *f )
 {
-    pr_err("%s ++ \n", __func__);
     isp_v4l2_dev_t *dev = video_drvdata( file );
     struct isp_v4l2_fh *sp = fh_to_private( file->private_data );
-    pr_err("%s +++ \n", __func__);
     isp_v4l2_stream_t *pstream = dev->pstreams[sp->stream_id];
     struct vb2_queue *q = &sp->vb2_q;
     int rc = 0;
-    pr_err("%s %d path ++ \n", __func__, dev->ctx_id);
     LOG( LOG_CRIT, "isp_v4l2_s_fmt_vid_cap sid:%d", sp->stream_id );
     if ( vb2_is_busy( q ) )
         return -EBUSY;
@@ -420,8 +413,6 @@ static int isp_v4l2_s_fmt_vid_cap( struct file *file, void *priv, struct v4l2_fo
 
     /* update stream pointer index */
     dev->stream_id_index[pstream->stream_type] = pstream->stream_id;
-    pr_err("%s %d path -- \n", __func__, dev->ctx_id);
-
     return 0;
 }
 
@@ -460,7 +451,6 @@ static int isp_v4l2_streamon( struct file *file, void *priv, enum v4l2_buf_type 
         return rc;
     }
 
-    pr_err("%s %d path stream on \n", __func__, dev->ctx_id);
     /* Start hardware */
     rc = isp_v4l2_stream_on( pstream );
     if ( rc != 0 ) {

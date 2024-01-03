@@ -1057,14 +1057,6 @@ static void get_data_from_frontend(uint8_t fe_chan)
 	else
 	{
 		spin_unlock_irqrestore(&adap_fsm[fe_chan].adap_lock, flags);
-		if (fe_chan == ADAP0_PATH)
-		{
-			adap_wr_reg_bits(CSI2_DDR_START_PIX, FRONTEND_IO, val, 0, 32);
-		}
-		else if (fe_chan == ADAP1_PATH)
-		{
-			adap_wr_reg_bits(CSI2_DDR_START_PIX + FTE1_OFFSET, FRONTEND_IO, val, 0, 32);
-		}
 		return;
 	}
 	spin_unlock_irqrestore(&adap_fsm[fe_chan].adap_lock, flags);
@@ -1078,10 +1070,11 @@ static void get_data_from_frontend(uint8_t fe_chan)
 	{
 		adap_wr_reg_bits(CSI2_DDR_START_PIX + FTE1_OFFSET, FRONTEND_IO, val, 0, 32);
 	}
+
+	g_adap->frame_state = FRAME_READY;
+	wake_up_interruptible( &g_adap->frame_wq);
 }
 
-//static int fe0_count = 0;
-//static int fe1_count = 0;
 static irqreturn_t adpapter_isr(int irq, void *para)
 {
 
@@ -1091,14 +1084,10 @@ static irqreturn_t adpapter_isr(int irq, void *para)
 	if ((data & (1 << FRONT0_WR_DONE)))
 	{
 		get_data_from_frontend(ADAP0_PATH);
-		//if ((fe0_count++) % 20 == 0)
-		//printk("fe0 write \n");
 	}
 
 	if (data & (1 << FRONT1_WR_DONE)) {
 		get_data_from_frontend(ADAP1_PATH);
-		//if ((fe1_count++) % 20 == 0)
-		//printk("fe1 write \n");
 	}
 
 	if ((data & (1 << READ0_RD_DONE)) || (data & (1 << READ1_RD_DONE)))
@@ -1128,7 +1117,7 @@ static int am_adap_isp_check_status_software(uint8_t adapt_path)
 		}
 		else
 		{
-			mdelay(1);
+			usleep_range(10000, 11000);
 		}
 	}
 	spin_lock_irqsave(&adap_fsm[adapt_path].adap_lock, flags);
@@ -1172,16 +1161,27 @@ static int adap_stream_copy_thread(void *data)
 		if (kthread_should_stop())
 			break;
 
+		frame_num = 0;
 		frame_num = kfifo_len(&adap_fsm[ADAP0_PATH].adapt_fifo) + kfifo_len(&adap_fsm[ADAP1_PATH].adapt_fifo);
+		if ( wait_event_interruptible_timeout( g_adap->frame_wq,
+			(g_adap->frame_state == FRAME_READY),
+				msecs_to_jiffies( 5 ) ) < 0 ) {
+			pr_info("Error: wait_event return < 0\n");
+			continue;
+		}
+
+		if (g_adap->frame_state == FRAME_READY)
+			g_adap->frame_state = FRAME_NOREADY;
+
 		if ((frame_num / 8) < 3)
 			continue;
+
 		for (i = 0; i < CAMS_MAX; i++)
 		{
 			frame_state = 0;
 			int64_t frameDuration = 33333333L / 2;
-			ktime_t kFrameDuration = ns_to_ktime(frameDuration);
 			ktime_t kStartRealTime = ktime_get();
-			ktime_t kFrameEndRealTime = ktime_add(kStartRealTime, kFrameDuration);
+			ktime_t kFrameEndRealTime = ktime_add_ns(kStartRealTime, frameDuration);
 			if ((kfifo_len(&adap_fsm[i].adapt_fifo) > 0) && camera_frame_fifo[g_adap->read_frame_ptr] == i)
 			{
 				frame_state = am_adap_isp_check_status_software(i);
@@ -1204,13 +1204,9 @@ static int adap_stream_copy_thread(void *data)
 					adap_wr_reg_bits(MIPI_ADAPT_DDR_RD0_CNTL0, RD_IO, 1, 31, 1);
 				}
 				ktime_t kWorkDoneRealTime = ktime_get();
-				if ((ktime_to_ms(ktime_sub(kFrameEndRealTime, kWorkDoneRealTime))) > 0)
-				{
-					mdelay(ktime_to_ms(ktime_sub(kFrameEndRealTime, kWorkDoneRealTime)));
-				}
-				else
-				{
-					// pr_info("%s: Adapt 0 time: %lld \n", __func__, ktime_to_ms(ktime_sub(kWorkDoneRealTime0, kFrameEndRealTime0)));
+				if (ktime_compare(kFrameEndRealTime, kWorkDoneRealTime) == 1) {
+					int64_t waitTime = ktime_to_us(ktime_sub(kFrameEndRealTime, kWorkDoneRealTime));
+					usleep_range(waitTime, waitTime);
 				}
 			}
 		}

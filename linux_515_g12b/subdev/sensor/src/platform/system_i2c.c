@@ -309,13 +309,10 @@ void system_i2c_init(uint32_t bus)
 
 void system_i2c_deinit(uint32_t bus)
 {
-	pr_err("%s ++ \n", __func__);
-	pr_err("%s: bus: %d\n", __func__, bus);
 	if (bus == 0)
 		i2c_del_driver(&arm_sensor_i2c_driver);
 	else
 		i2c_del_driver(&arm_sensor_i2c_driver_sub);
-	pr_err("%s --\n", __func__);
 }
 
 uint8_t system_i2c_write(uint32_t bus, uint32_t phy_addr, uint8_t *data, uint32_t size)
