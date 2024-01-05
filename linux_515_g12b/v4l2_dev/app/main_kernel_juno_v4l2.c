@@ -495,11 +495,13 @@ static ssize_t dump_frame_write(
             pr_info("use v4l2 test app dump DS1\n");
         }
     } else if (!strcmp(parm[0], "fr")) {
-        if (parm[1] != NULL)
+        if (parm[1] != NULL) {
             write_to_file(parm[1], phys_to_virt(isp_temper_paddr[0].isp_paddr) + buff_offset, buff_size);
-            pr_info("arm 5.15  linux do not support open file. \n");
-    } else
+        }
+        pr_info("arm 5.15  linux do not support open file. \n");
+    } else {
         pr_info("unsupprt cmd!\n");
+    }
 
     kfree(buf_orig);
     return ret;
