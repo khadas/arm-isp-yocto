@@ -380,7 +380,7 @@ int am_md_parse_dt(struct device_node *node);
 int param_md_init(T_MD_PRM *reg);
 int param_md_input(T_MD_PRM *reg, int hsize_i, int vsize_i, int in_sel);
 int param_md_scale(T_MD_PRM *reg, int hsize_i, int vsize_i, int hsize_s, int vsize_o, int32_t base_axi_addr);
-int param_md_detect(T_MD_PRM *reg, int md_sad_thrd, int md_1bm_thrd);
+int param_md_detect(int md_sad_thrd, int md_1bm_thrd);
 int param_md_set(T_MD_PRM *reg);
 void am_md_init(void);
 void am_md_deinit(void);

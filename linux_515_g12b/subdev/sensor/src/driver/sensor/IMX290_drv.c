@@ -50,6 +50,12 @@ static sensor_context_t sensor_ctx;
 
 static uint32_t initial_sensor = 0;
 
+// 0 - reset & power-enable
+// 1 - reset-sub & power-enable-sub
+// 2 - reset-ssub & power-enable-ssub
+static const int32_t config_sensor_idx = 0;                  // 1 2 3
+static const char * reset_dts_pin_name = "reset";             // reset-sub  reset-ssub
+
 static sensor_mode_t supported_modes[] = {
     {
         .wdr_mode = WDR_MODE_LINEAR, // 4 Lanes
@@ -355,22 +361,24 @@ static void sensor_set_mode( void *ctx, uint8_t mode )
     acamera_sbus_ptr_t p_sbus = &p_ctx->sbus;
     //mode = 1;
     uint8_t setting_num = param->modes_table[mode].num;
-
+#if 0
     if (initial_sensor ++ >= 1) {
-        reset_am_enable(p_ctx->sbp,"reset", 0);
+        pr_err("%s imx290 reset enable \n", __func__);
+        reset_am_enable(p_ctx->sbp, reset_dts_pin_name, config_sensor_idx, 0);
         sensor_hw_reset_enable();
         system_timer_usleep( 10000 );
         sensor_hw_reset_disable();
         system_timer_usleep( 10000 );
-        reset_am_enable(p_ctx->sbp,"reset", 1);
+        reset_am_enable(p_ctx->sbp, reset_dts_pin_name, config_sensor_idx, 1);
     }
+#endif
 
     if (sensor_get_id(ctx) != SENSOR_CHIP_ID) {
-        LOG(LOG_INFO, "%s: check sensor failed\n", __func__);
+        LOG(LOG_ERR, "%s: check sensor failed\n", __func__);
         return;
     }
 
-    pr_err("%s sensor mode: %d, wdr mode %d, setting num %d \n", __func__, mode, param->modes_table[mode].wdr_mode, setting_num);
+    LOG(LOG_CRIT, "sensor mode: %d, wdr mode %d, setting num %d \n", mode, param->modes_table[mode].wdr_mode, setting_num);
     switch ( param->modes_table[mode].wdr_mode ) {
     case WDR_MODE_LINEAR:
         sensor_load_sequence( p_sbus, p_ctx->seq_width, p_sensor_data, setting_num );
@@ -466,7 +474,6 @@ static void sensor_set_mode( void *ctx, uint8_t mode )
     p_ctx->vmax_fps = p_ctx->s_fps;
 
     //sensor_set_iface(&param->modes_table[mode], p_ctx->win_offset);
-
     LOG( LOG_ERR, "Output resolution from sensor: %dx%d", param->active.width, param->active.height ); // LOG_NOTICE Causes errors in some projects
 }
 
@@ -588,9 +595,9 @@ static sensor_context_t *sensor_global_parameter(void* sbp)
         //pr_info("set mclk fail\n");
     //udelay(30);
 #if PLATFORM_C305X
-    pwr_am_enable(sensor_bp,"pwdn", 0);
+    pwr_am_enable(sensor_bp, pwr_dts_pin_name, config_sensor_idx, 0);
 #endif
-    ret = reset_am_enable(sensor_bp,"reset", 1);
+    ret = reset_am_enable(sensor_bp, reset_dts_pin_name, config_sensor_idx, 1);
     if (ret < 0 )
        pr_info("set reset fail\n");
 #endif
@@ -714,10 +721,10 @@ int sensor_detect_imx290( void* sbp)
     //udelay(30);
 
 #if PLATFORM_C305X
-    pwr_am_enable(sensor_bp,"pwdn", 0);
+    pwr_am_enable(sensor_bp, pwr_dts_pin_name, config_sensor_idx, 0);
 #endif
 
-    ret = reset_am_enable(sensor_bp,"reset", 1);
+    ret = reset_am_enable(sensor_bp, reset_dts_pin_name, config_sensor_idx, 1);
     if (ret < 0 )
        pr_info("set reset fail\n");
 #endif

@@ -36,6 +36,13 @@
 
 #define NEED_CONFIG_BSP 1
 
+// 0 - reset & power-enable
+// 1 - reset-sub & power-enable-sub
+// 2 - reset-ssub & power-enable-ssub
+static const int32_t config_sensor_idx = 0;                  // 1 2 3
+static const char * reset_dts_pin_name = "reset";            // reset-sub  reset-ssub
+static const char * pwr_dts_pin_name   = "power-enable";     // power-enalbe-sub power-enable-ssub
+
 // As per IMX224 datasheet
 // Max gain is 72db
 // Analog gain is 0 - 30 dB
@@ -461,12 +468,12 @@ static sensor_context_t *sensor_global_parameter(void* sbp)
 
     sensor_bringup_t* sensor_bp = (sensor_bringup_t*) sbp;
 
-    ret = pwr_am_enable(sensor_bp, "power-enable", 0);
+    ret = pwr_am_enable(sensor_bp, pwr_dts_pin_name, config_sensor_idx, 0);
     if (ret < 0 )
         pr_err("set power fail\n");
     udelay(30);
 
-    ret = reset_am_enable(sensor_bp,"reset", 1);
+    ret = reset_am_enable(sensor_bp, reset_dts_pin_name, config_sensor_idx, 1);
     if (ret < 0 )
         pr_err("set reset fail\n");
 

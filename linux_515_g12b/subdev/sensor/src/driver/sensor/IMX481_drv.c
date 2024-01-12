@@ -59,6 +59,13 @@ static void stop_streaming( void *ctx );
 static imx481_private_t imx481_ctx;
 static sensor_context_t sensor_ctx;
 
+// 0 - reset & power-enable
+// 1 - reset-sub & power-enable-sub
+// 2 - reset-ssub & power-enable-ssub
+static const int32_t config_sensor_idx = 0;                  // 1 2 3
+static const char * reset_dts_pin_name = "reset";             // reset-sub  reset-ssub
+static const char * pwr_dts_pin_name   = "power-enable";              // pwdn-sub pwdn-ssub
+
 static sensor_mode_t supported_modes[] = {
     {
         .wdr_mode = WDR_MODE_LINEAR,
@@ -387,7 +394,7 @@ static sensor_context_t *sensor_global_parameter(void* sbp)
     sensor_bringup_t* sensor_bp = (sensor_bringup_t*) sbp;
 
 #if NEED_CONFIG_BSP
-    ret = pwr_am_enable(sensor_bp, "power-enable", 1);
+    ret = pwr_am_enable(sensor_bp,  pwr_dts_pin_name, config_sensor_idx, 1);
     if (ret < 0 )
         pr_err("set power fail\n");
     udelay(30);
@@ -404,7 +411,7 @@ static sensor_context_t *sensor_global_parameter(void* sbp)
 #endif
 
 #if NEED_CONFIG_BSP
-    reset_am_enable(sensor_bp,"reset", 1);
+    reset_am_enable(sensor_bp, reset_dts_pin_name, config_sensor_idx, 1);
     if (ret < 0 )
         pr_err("set reset fail\n");
 #endif
@@ -493,7 +500,7 @@ int sensor_detect_imx481( void* sbp)
 #endif
 
 #if NEED_CONFIG_BSP
-    ret = reset_am_enable(sensor_bp,"reset", 1);
+    ret = reset_am_enable(sensor_bp, reset_dts_pin_name, config_sensor_idx, 1);
     if (ret < 0 )
         pr_info("set reset fail\n");
 #endif
@@ -511,7 +518,7 @@ int sensor_detect_imx481( void* sbp)
         pr_info("sensor_detect_imx481:%d\n", ret);
 
     acamera_sbus_deinit(&sensor_ctx.sbus,  sbus_i2c);
-    reset_am_disable(sensor_bp);
+    reset_am_disable(sensor_bp, config_sensor_idx);
     return ret;
 }
 

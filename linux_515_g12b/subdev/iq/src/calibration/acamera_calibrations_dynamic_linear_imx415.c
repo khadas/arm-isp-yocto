@@ -330,7 +330,7 @@ static uint32_t _calibration_iridix8_strength_dk_enh_control[] = {
 
 static uint32_t _calibration_ae_control[] = {
     15,  // AE convergence
-    180, // LDR AE target -> this should match the 18% grey of teh output gamma
+    200, // LDR AE target -> this should match the 18% grey of teh output gamma
     0,   // AE tail weight
     0,   // WDR mode only: Max percentage of clipped pixels for long exposure: WDR mode only: 256 = 100% clipped pixels
     0,   // WDR mode only: Time filter for exposure ratio
@@ -395,14 +395,14 @@ static uint16_t _calibration_fs_mc_off[] = {
     8 * 256,
 };
 
-static int16_t _AWB_colour_preference[] = {7500, 6000, 4700, 3200};
+static int16_t _AWB_colour_preference[] = {7800, 6100, 4700, 3200};
 
 static uint32_t _calibration_awb_mix_light_parameters[] = {
     1,    // 1 = enable, 0 = disable
     10,  //lux low boundary for mix light lux range : range = {500: inf}
     3000, // lux high boundary for mix light range : range = {500: inf}
     1000, // contrast threshold for mix light: range = {200:2000}
-    293,  //BG threshold {255:400}
+    300,  //BG threshold {255:400}
     20,    // BG weight
     240,  // rgHigh_LUT_max
     100,  // rgHigh_LUT_min
@@ -568,10 +568,6 @@ static uint32_t _calibration_defog_control[] = {
     5, //black percentage
     995, //white percentage
     15, //avg_coeff
-    0, //reserved
-    0, //reserved
-    0, //reserved
-    0, //reserved
 };
 
 static uint32_t _calibration_3aalg_ae[] = {
@@ -749,6 +745,18 @@ static uint16_t _calibration_fc_correction[][4] = {
     {8 * 256, 150, 85, 0},
 };
 
+static uint32_t _calibration_daynight_detect[] = {
+    0,    //light_control; 1:0n, 0: off
+    0,    // hist_stat_mode; 0: average based AE, 1: weight
+    120,  // predict_day_thr;  default is 50
+    60,   // predict_night_thr; default is 50
+    8,    // dn_det_tran_ratio; default 16/128
+    240,  // dn_det_day_thr; default 60
+    240,  // dn_det_night_thr;  default 240
+    2000, // dn_det_light_ct_low;
+    5000, // dn_det_light_ct_high;
+};
+
 static LookupTable calibration_gamma_threshold = {.ptr = _calibration_gamma_threshold, .rows = 1, .cols = sizeof( _calibration_gamma_threshold ) / sizeof( _calibration_gamma_threshold[0] ), .width = sizeof( _calibration_gamma_threshold[0] )};
 static LookupTable calibration_gamma_ev1 = {.ptr = _calibration_gamma_ev1, .rows = 1, .cols = sizeof( _calibration_gamma_ev1 ) / sizeof( _calibration_gamma_ev1[0] ), .width = sizeof( _calibration_gamma_ev1[0] )};
 static LookupTable calibration_gamma_ev2 = {.ptr = _calibration_gamma_ev2, .rows = 1, .cols = sizeof( _calibration_gamma_ev2 ) / sizeof( _calibration_gamma_ev2[0] ), .width = sizeof( _calibration_gamma_ev2[0] )};
@@ -830,6 +838,7 @@ static LookupTable calibration_square_be_extension_control = {.ptr = _calibratio
 static LookupTable calibration_dp_devthreshold = {.ptr = _calibration_dp_devthreshold, .rows = sizeof(_calibration_dp_devthreshold) / sizeof(_calibration_dp_devthreshold[0]), .cols = 2, .width = sizeof(_calibration_dp_devthreshold[0][0])};
 static LookupTable calibration_pf_correction = {.ptr = _calibration_pf_correction, .rows = sizeof(_calibration_pf_correction) / sizeof(_calibration_pf_correction[0]), .cols = 6, .width = sizeof(_calibration_pf_correction[0][0])};
 static LookupTable calibration_fc_correction = {.ptr = _calibration_fc_correction, .rows = sizeof(_calibration_fc_correction) / sizeof(_calibration_fc_correction[0]), .cols = 4, .width = sizeof(_calibration_fc_correction[0][0])};
+static LookupTable calibration_daynight_detect = {.ptr = _calibration_daynight_detect, .rows = 1, .cols = sizeof(_calibration_daynight_detect) / sizeof(_calibration_daynight_detect[0]), .width = sizeof(_calibration_daynight_detect[0])};
 
 uint32_t get_calibrations_dynamic_linear_imx415( ACameraCalibrations *c )
 {
@@ -915,6 +924,7 @@ uint32_t get_calibrations_dynamic_linear_imx415( ACameraCalibrations *c )
         c->calibrations[CALIBRATION_DP_DEVTHRESHOLD] = &calibration_dp_devthreshold;
         c->calibrations[CALIBRATION_PF_CORRECTION] = &calibration_pf_correction;
         c->calibrations[CALIBRATION_FC_CORRECTION] = &calibration_fc_correction;
+        c->calibrations[CALIBRATION_DAYNIGHT_DETECT] = &calibration_daynight_detect;
     } else {
         result = -1;
     }

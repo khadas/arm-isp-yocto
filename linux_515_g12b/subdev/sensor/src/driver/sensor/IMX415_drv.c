@@ -55,6 +55,12 @@ static void stop_streaming( void *ctx );
 static imx415_private_t imx415_ctx;
 static sensor_context_t sensor_ctx;
 
+// 0 - reset & power-enable
+// 1 - reset-sub & power-enable-sub
+// 2 - reset-ssub & power-enable-ssub
+static const int32_t config_sensor_idx = 0;                  // 1 2 3
+static const char * reset_dts_pin_name = "reset";             // reset-sub  reset-ssub
+
 static sensor_mode_t supported_modes[] = {
     {
         .wdr_mode = WDR_MODE_LINEAR,
@@ -372,12 +378,12 @@ static void sensor_set_mode( void *ctx, uint8_t mode )
     acamera_sbus_ptr_t p_sbus = &p_ctx->sbus;
     uint8_t setting_num = param->modes_table[mode].num;
 
-    reset_am_enable(p_ctx->sbp,"reset", 0);
+    reset_am_enable(p_ctx->sbp, reset_dts_pin_name, config_sensor_idx, 0);
     sensor_hw_reset_enable();
     system_timer_usleep( 10000 );
     sensor_hw_reset_disable();
     system_timer_usleep( 10000 );
-    reset_am_enable(p_ctx->sbp,"reset", 1);
+    reset_am_enable(p_ctx->sbp, reset_dts_pin_name, config_sensor_idx, 1);
 
     p_ctx->again[0] = 0;
     p_ctx->int_time_S = 0;
@@ -579,7 +585,7 @@ static sensor_context_t *sensor_global_parameter(void* sbp)
     if (ret < 0 )
         pr_err("set mclk fail\n");
 #elif PLATFORM_C308X
-    ret = pwr_am_enable(sensor_bp, "power-enable", 0);
+    ret = pwr_am_enable(sensor_bp, pwr_dts_pin_name, config_sensor_idx, 0);
     if (ret < 0 )
         pr_err("set power fail\n");
     mdelay(50);
@@ -596,7 +602,7 @@ static sensor_context_t *sensor_global_parameter(void* sbp)
     udelay(30);
 
 #if NEED_CONFIG_BSP
-    ret = reset_am_enable(sensor_bp,"reset", 1);
+    ret = reset_am_enable(sensor_bp, reset_dts_pin_name, config_sensor_idx, 1);
     if (ret < 0 )
        pr_info("set reset fail\n");
 #endif
@@ -698,7 +704,7 @@ int sensor_detect_imx415( void* sbp)
     udelay(30);
 
 #if NEED_CONFIG_BSP
-    ret = reset_am_enable(sensor_bp,"reset", 1);
+    ret = reset_am_enable(sensor_bp, reset_dts_pin_name, config_sensor_idx, 1);
     if (ret < 0 )
         pr_err("set reset fail\n");
 #endif
@@ -716,7 +722,7 @@ int sensor_detect_imx415( void* sbp)
         pr_info("sensor_detect_imx415 id:%d\n", sensor_get_id(&sensor_ctx));
 
     acamera_sbus_deinit(&sensor_ctx.sbus,  sbus_i2c);
-    reset_am_disable(sensor_bp);
+    reset_am_disable(sensor_bp, config_sensor_idx);
     return ret;
 }
 

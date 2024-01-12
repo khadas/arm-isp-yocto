@@ -421,6 +421,23 @@ static uint16_t _calibration_temper_strength[][2] = {
     {6 * 256, 125},
     {7 * 256, 125}};
 
+static uint16_t _calibration_temper_md_strength[][2] = {
+    {0, 160},    //still
+    {1, 120},    //small motion
+    {2, 100},    //large motion
+};
+
+static uint32_t _calibration_temper_md_mode[] = {
+    0,    //0:disable 1:enable
+    1,    //cls mode: 0:sad  1:sad/1bm
+    10,   //thrd1 (still/small)
+    20,   //thrd2 (small/large)
+    600,  //sad thrd(0 ~ 0xffffff)
+    600,  //1bm thrd(0 ~ 0xffff)
+    1000, //log2_gain thrd
+    0,    //log enable
+};
+
 static uint32_t _calibration_af_lms[] = {
     70 << 6,  // Down_FarEnd
     70 << 6,  // Hor_FarEnd
@@ -466,6 +483,8 @@ static uint16_t _calibration_gamma_ev2[] =
 
 static uint32_t _calibration_custom_settings_context[][4] = {
     //stop sequence - address is 0x0000
+    { 0x1ab78, 0x00f, 0xfff, 4 }, // set temper bits as 16
+    { 0x1ab7c, 0x14, 0xff, 4 }, // set temper bits as 16
     {0x0000, 0x0000, 0x0000, 0x0000}};
 
 static uint32_t _calibration_defog_control[] = {
@@ -481,10 +500,6 @@ static uint32_t _calibration_defog_control[] = {
     5, //black percentage
     995, //white percentage
     15, //avg_coeff
-    0, //reserved
-    0, //reserved
-    0, //reserved
-    0, //reserved
 };
 
 static uint32_t _calibration_3aalg_ae[] = {
@@ -717,6 +732,8 @@ static LookupTable calibration_scaler_h_filter = {.ptr = _scaler_h_filter, .rows
 static LookupTable calibration_scaler_v_filter = {.ptr = _scaler_v_filter, .rows = 1, .cols = sizeof( _scaler_v_filter ) / sizeof( _scaler_v_filter[0] ), .width = sizeof( _scaler_v_filter[0] )};
 static LookupTable calibration_sharpen_ds1 = {.ptr = _calibration_sharpen_ds1, .rows = sizeof( _calibration_sharpen_ds1 ) / sizeof( _calibration_sharpen_ds1[0] ), .cols = 2, .width = sizeof( _calibration_sharpen_ds1[0][0] )};
 static LookupTable calibration_temper_strength = {.ptr = _calibration_temper_strength, .rows = sizeof( _calibration_temper_strength ) / sizeof( _calibration_temper_strength[0] ), .cols = 2, .width = sizeof( _calibration_temper_strength[0][0] )};
+static LookupTable calibration_temper_md_strength = {.ptr = _calibration_temper_md_strength, .rows = sizeof( _calibration_temper_md_strength ) / sizeof( _calibration_temper_md_strength[0] ), .cols = 2, .width = sizeof( _calibration_temper_md_strength[0][0] )};
+static LookupTable calibration_temper_md_mode = {.ptr = _calibration_temper_md_mode, .rows = 1, .cols = sizeof(_calibration_temper_md_mode) / sizeof(_calibration_temper_md_mode[0]), .width = sizeof(_calibration_temper_md_mode[0])};
 static LookupTable calibration_custom_settings_context = {.ptr = _calibration_custom_settings_context, .rows = sizeof( _calibration_custom_settings_context ) / sizeof( _calibration_custom_settings_context[0] ), .cols = 4, .width = sizeof( _calibration_custom_settings_context[0][0] )};
 static LookupTable calibration_defog_control = {.ptr = _calibration_defog_control, .rows = 1, .cols = sizeof(_calibration_defog_control) / sizeof(_calibration_defog_control[0]), .width = sizeof(_calibration_defog_control[0])};
 static LookupTable calibration_3aalg_ae = {.ptr = _calibration_3aalg_ae, .rows = 1, .cols = sizeof(_calibration_3aalg_ae) / sizeof(_calibration_3aalg_ae[0]), .width = sizeof(_calibration_3aalg_ae[0])};
@@ -799,6 +816,8 @@ uint32_t get_calibrations_dynamic_linear_imx290( ACameraCalibrations *c )
         c->calibrations[CALIBRATION_SCALER_V_FILTER] = &calibration_scaler_v_filter;
         c->calibrations[CALIBRATION_SHARPEN_DS1] = &calibration_sharpen_ds1;
         c->calibrations[CALIBRATION_TEMPER_STRENGTH] = &calibration_temper_strength;
+        c->calibrations[CALIBRATION_TEMPER_MD_STRENGTH] = &calibration_temper_md_strength;
+        c->calibrations[CALIBRATION_TEMPER_MD_MODE] = &calibration_temper_md_mode;
         c->calibrations[CALIBRATION_GAMMA_EV1] = &calibration_gamma_ev1;
         c->calibrations[CALIBRATION_GAMMA_EV2] = &calibration_gamma_ev2;
         c->calibrations[CALIBRATION_GAMMA_THRESHOLD] = &calibration_gamma_threshold;

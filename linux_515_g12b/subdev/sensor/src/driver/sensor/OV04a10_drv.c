@@ -51,6 +51,13 @@
 
 #define FS_LIN_1080P 1
 
+// 0 - reset & power-enable
+// 1 - reset-sub & power-enable-sub
+// 2 - reset-ssub & power-enable-ssub
+static const int32_t config_sensor_idx = 0;                  // 1 2 3
+static const char * reset_dts_pin_name = "reset";             // reset-sub  reset-ssub
+static const char * pwr_dts_pin_name   = "power-enable";              // pwdn-sub pwdn-ssub
+
 static void start_streaming( void *ctx );
 static void stop_streaming( void *ctx );
 
@@ -326,11 +333,11 @@ static void sensor_set_mode( void *ctx, uint8_t mode )
     acamera_sbus_ptr_t p_sbus = &p_ctx->sbus;
     uint8_t setting_num = param->modes_table[mode].num;
 
-    pwr_am_enable(p_ctx->sbp, "power-enable", 1);
+    pwr_am_enable(p_ctx->sbp, pwr_dts_pin_name, config_sensor_idx, 1);
     sensor_hw_reset_enable();
     system_timer_usleep( 10000 );
     sensor_hw_reset_disable();
-    pwr_am_enable(p_ctx->sbp, "power-enable", 0);
+    pwr_am_enable(p_ctx->sbp, pwr_dts_pin_name, config_sensor_idx, 0);
     system_timer_usleep( 10000 );
 
     setting_num = param->modes_table[mode].num;
@@ -504,7 +511,7 @@ static sensor_context_t *sensor_global_parameter(void* sbp)
     sensor_bringup_t* sensor_bp = (sensor_bringup_t*) sbp;
 #if PLATFORM_G12B
     #if NEED_CONFIG_BSP
-        ret = pwr_am_enable(sensor_bp, "power-enable", 0);
+        ret = pwr_am_enable(sensor_bp, pwr_dts_pin_name, config_sensor_idx, 0);
         if (ret < 0 )
             pr_err("set power fail\n");
         udelay(30);
@@ -515,7 +522,7 @@ static sensor_context_t *sensor_global_parameter(void* sbp)
             pr_err("set mclk fail\n");
 
 #elif PLATFORM_C308X
-    ret = pwr_am_enable(sensor_bp, "power-enable", 0);
+    ret = pwr_am_enable(sensor_bp, pwr_dts_pin_name, config_sensor_idx, 0);
     if (ret < 0 )
         pr_err("set power fail\n");
     mdelay(50);
@@ -528,7 +535,7 @@ static sensor_context_t *sensor_global_parameter(void* sbp)
     udelay(30);
 
 #if NEED_CONFIG_BSP
-    ret = reset_am_enable(sensor_bp,"reset", 1);
+    ret = reset_am_enable(sensor_bp, reset_dts_pin_name, config_sensor_idx, 1);
     if (ret < 0 )
         pr_err("set reset fail\n");
 #endif
@@ -616,7 +623,7 @@ int sensor_detect_ov04a10( void* sbp)
 #endif
 
 #if NEED_CONFIG_BSP
-    ret = reset_am_enable((sensor_bringup_t*) sbp,"reset", 1);
+    ret = reset_am_enable((sensor_bringup_t*) sbp, reset_dts_pin_name, config_sensor_idx, 1);
     if (ret < 0 )
         pr_err("set reset fail\n");
 #endif

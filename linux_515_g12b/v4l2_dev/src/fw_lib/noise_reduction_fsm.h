@@ -58,6 +58,18 @@ struct _noise_reduction_fsm_t {
     uint32_t temper_ev_previous_frame;
     uint32_t temper_diff_avg;
     uint32_t temper_diff_coeff;
+    uint32_t temper_md_enable;
+    uint32_t temper_md_mode;
+    uint32_t temper_md_thrd1;
+    uint32_t temper_md_thrd2;
+    uint32_t temper_md_sad_thrd;
+    uint32_t temper_md_1bm_thrd;
+    uint32_t temper_md_sad_cur;
+    uint32_t temper_md_1bm_cur;
+    uint32_t temper_md_gain_thrd;
+    uint32_t temper_md_level;
+    uint32_t temper_md_mtn;
+    uint32_t temper_md_log;
 
     noise_reduction_mode_t nr_mode;
 };

@@ -22,6 +22,7 @@
 #include "acamera_firmware_config.h"
 #include "noise_reduction_fsm.h"
 #include "cmos_fsm.h"
+#include "system_am_md.h"
 
 #ifdef LOG_MODULE
 #undef LOG_MODULE
@@ -49,6 +50,25 @@ static void sinter_load_radial_lut( noise_reduction_fsm_t *p_fsm )
 }
 
 #endif
+
+uint16_t calc_temper_md_offset_u16( noise_reduction_fsm_t *p_fsm, const modulation_entry_t *p_table, int table_len )
+{
+    int i;
+    int offset = 0;
+    uint16_t tmp = 0;
+    for ( i = 0; i < table_len; ++i ) {
+        if ( p_fsm->temper_md_level == p_table[i].x ) {
+            break;
+        }
+    }
+    if (i == 0)
+        offset = p_table[i].y;
+    else if (i == 1) {
+        tmp = (p_table[0].y * 1000 - p_table[1].y * 1000)/( (uint16_t)p_fsm->temper_md_thrd2 - (uint16_t)p_fsm->temper_md_thrd1);
+        offset = (p_fsm->temper_md_mtn - p_fsm->temper_md_thrd1) * tmp / 1000 + p_table[1].y;
+    }
+    return offset;
+}
 
 static void dp_devthreshold_param_update(noise_reduction_fsm_t *p_fsm)
 {
@@ -577,6 +597,23 @@ static void fc_ext_param_update(noise_reduction_fsm_t *p_fsm)
 
 void noise_reduction_update( noise_reduction_fsm_t *p_fsm )
 {
+    if (_GET_LEN(ACAMERA_FSM2CTX_PTR( p_fsm ), CALIBRATION_TEMPER_MD_MODE)) {
+        p_fsm->temper_md_enable = _GET_UINT_PTR( ACAMERA_FSM2CTX_PTR( p_fsm ), CALIBRATION_TEMPER_MD_MODE )[0];
+        p_fsm->temper_md_mode = _GET_UINT_PTR( ACAMERA_FSM2CTX_PTR( p_fsm ), CALIBRATION_TEMPER_MD_MODE )[1];
+        p_fsm->temper_md_thrd1 = _GET_UINT_PTR( ACAMERA_FSM2CTX_PTR( p_fsm ), CALIBRATION_TEMPER_MD_MODE )[2];
+        p_fsm->temper_md_thrd2 = _GET_UINT_PTR( ACAMERA_FSM2CTX_PTR( p_fsm ), CALIBRATION_TEMPER_MD_MODE )[3];
+        p_fsm->temper_md_sad_thrd = _GET_UINT_PTR( ACAMERA_FSM2CTX_PTR( p_fsm ), CALIBRATION_TEMPER_MD_MODE )[4];
+        p_fsm->temper_md_1bm_thrd = _GET_UINT_PTR( ACAMERA_FSM2CTX_PTR( p_fsm ), CALIBRATION_TEMPER_MD_MODE )[5];
+        p_fsm->temper_md_gain_thrd = _GET_UINT_PTR( ACAMERA_FSM2CTX_PTR( p_fsm ), CALIBRATION_TEMPER_MD_MODE )[6];
+        p_fsm->temper_md_log = _GET_UINT_PTR( ACAMERA_FSM2CTX_PTR( p_fsm ), CALIBRATION_TEMPER_MD_MODE )[7];
+    }
+    uint16_t temper_md_offset;
+
+    if ((p_fsm->temper_md_1bm_thrd != p_fsm->temper_md_1bm_cur) || (p_fsm->temper_md_sad_thrd != p_fsm->temper_md_sad_cur)) {
+        param_md_detect(p_fsm->temper_md_sad_thrd, p_fsm->temper_md_1bm_thrd);
+        p_fsm->temper_md_1bm_cur = p_fsm->temper_md_1bm_thrd;
+        p_fsm->temper_md_sad_cur = p_fsm->temper_md_sad_thrd;
+    }
     if (p_fsm->nr_mode == NOISE_REDUCTION_MODE_OFF) {
 
         /*
@@ -720,7 +757,15 @@ void noise_reduction_update( noise_reduction_fsm_t *p_fsm )
     dynamic_dpc_strength_calculate( p_fsm );
 
     if ( ACAMERA_FSM2CTX_PTR( p_fsm )->stab.global_manual_temper == 0 ) {
-        temper_strength_calculate( p_fsm );
-        acamera_isp_temper_noise_profile_global_offset_write( p_fsm->cmn.isp_base, ( uint8_t )( p_fsm->tnr_thresh_master > 255 ? 255 : p_fsm->tnr_thresh_master ) );
+        if (p_fsm->temper_md_enable && (p_fsm->temper_md_level < 2) && (log2_gain > p_fsm->temper_md_gain_thrd)) {
+            temper_md_offset = (uint16_t)calc_temper_md_offset_u16( p_fsm, _GET_MOD_ENTRY16_PTR( ACAMERA_FSM2CTX_PTR( p_fsm ), CALIBRATION_TEMPER_MD_STRENGTH ), _GET_ROWS( ACAMERA_FSM2CTX_PTR( p_fsm ), CALIBRATION_TEMPER_MD_STRENGTH ) );
+            if (p_fsm->temper_md_log == 2 || p_fsm->temper_md_log == 3)
+                LOG(LOG_CRIT, "noise reduction md level:%d, log2_gain:%d",p_fsm->temper_md_level, log2_gain);
+            acamera_isp_temper_noise_profile_global_offset_write( p_fsm->cmn.isp_base, ( uint8_t )( temper_md_offset > 255 ? 255 : temper_md_offset ) );
+        } else {
+            temper_strength_calculate( p_fsm );
+            acamera_isp_temper_noise_profile_global_offset_write( p_fsm->cmn.isp_base, ( uint8_t )( p_fsm->tnr_thresh_master > 255 ? 255 : p_fsm->tnr_thresh_master ) );
+        }
+        p_fsm->temper_md_level = 0;
     }
 }

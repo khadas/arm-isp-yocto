@@ -51,6 +51,13 @@
 #define DGAIN_PRECISION 8
 #define NEED_CONFIG_BSP 1   //config bsp by sensor driver owner
 
+// 0 - reset & power-enable
+// 1 - reset-sub & power-enable-sub
+// 2 - reset-ssub & power-enable-ssub
+static const int32_t config_sensor_idx = 0;                  // 1 2 3
+static const char * reset_dts_pin_name = "reset";            // reset-sub  reset-ssub
+static const char * pwr_dts_pin_name   = "power-enable";     // power-enalbe-sub power-enable-ssub
+
 #define VBLANK_30FPS 0x0644 // 1604 lines
 #define VBLANK_15FPS 0x0c88 // 3208 lines
 
@@ -353,7 +360,7 @@ static sensor_context_t *sensor_global_parameter(void* sbp)
 
     sensor_bringup_t* sensor_bp = (sensor_bringup_t*) sbp;
 
-    ret = pwr_am_enable(sensor_bp, "power-enable", 0);
+    ret = pwr_am_enable(sensor_bp, pwr_dts_pin_name, config_sensor_idx, 0);
     if (ret < 0 )
         pr_err("set power fail\n");
 #if PLATFORM_G12B
@@ -368,7 +375,7 @@ static sensor_context_t *sensor_global_parameter(void* sbp)
 
     udelay(30);
 
-    reset_am_enable(sensor_bp,"reset", 1);
+    reset_am_enable(sensor_bp, reset_dts_pin_name, config_sensor_idx, 1);
     if (ret < 0 )
         pr_err("set reset fail\n");
 
@@ -454,7 +461,7 @@ int sensor_detect_imx227( void* sbp)
         pr_info("set mclk fail\n");
 #endif
 
-    reset_am_enable(sensor_bp,"reset", 1);
+    reset_am_enable(sensor_bp, reset_dts_pin_name, config_sensor_idx, 1);
     if (ret < 0 )
         pr_err("set reset fail\n");
 

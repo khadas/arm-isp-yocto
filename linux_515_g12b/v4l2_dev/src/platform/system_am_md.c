@@ -57,6 +57,7 @@
 
 static struct am_md *g_md;
 
+T_MD_PRM am_md2_reg;
 T_MD_PRM am_md_reg;
 
 /*****************************************************************/
@@ -430,10 +431,12 @@ int param_md_scale(T_MD_PRM *reg, int hsize_i, int vsize_i, int hsize_o, int vsi
     return 0;
 }
 
-int param_md_detect(T_MD_PRM *reg, int md_sad_thrd, int md_1bm_thrd)
+int param_md_detect(int md_sad_thrd, int md_1bm_thrd)
 {
-    reg->reg_ismot_sad_thrd = md_sad_thrd;
-    reg->reg_ismot_1bm_thrd = md_1bm_thrd;
+    am_md_reg.reg_ismot_sad_thrd = md_sad_thrd;
+    am_md_reg.reg_ismot_1bm_thrd = md_1bm_thrd;
+    write_reg(MD_ISMOT_SAD_THRD, am_md_reg.reg_ismot_sad_thrd);// = 65536;
+    write_reg(MD_ISMOT_1BM_THRD, am_md_reg.reg_ismot_1bm_thrd);// = 4096;
     return 0;
 }
 
@@ -541,12 +544,14 @@ int param_md_set(T_MD_PRM *reg)
     return 0;
 }
 
+#if 0
 static irqreturn_t motion_detection_isr(int irq, void *para)
 {
     pr_err("Motion detection event\n");
 
     return IRQ_HANDLED;
 }
+#endif
 
 int am_md_parse_dt(struct device_node *node)
 {
@@ -619,15 +624,17 @@ reg_error:
 
 void am_md_init(void)
 {
-    int ret = 0;
+    //int ret = 0;
 
-    param_md_init(&am_md_reg);
-    param_md_input(&am_md_reg, 1920, 1080, 1);
-    param_md_scale(&am_md_reg, 1920, 1080, 480, 270, AM_MD_MEMORY);
-    param_md_set(&am_md_reg);
+    param_md_init(&am_md2_reg);
+    param_md_input(&am_md2_reg, 1920, 1080, 1);
+    param_md_scale(&am_md2_reg, 1920, 1080, 480, 270, AM_MD_MEMORY);
+    param_md_set(&am_md2_reg);
 
+#if 0
     ret = request_irq(g_md->irq, motion_detection_isr, IRQF_SHARED | IRQF_TRIGGER_RISING,
                       "isp-md-irq", (void *)g_md);
+#endif
 
     return;
 }
