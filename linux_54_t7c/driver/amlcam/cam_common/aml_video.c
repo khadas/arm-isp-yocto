@@ -29,7 +29,16 @@
 #include "aml_common.h"
 #include "aml_misc.h"
 #include "aml_isp.h"
+#include "aml_cam.h"
 #include <linux/delay.h>
+
+static struct cam_device * aml_video_to_cam_device(struct aml_video *video)
+{
+	struct v4l2_device *p_v4l2_dev = video->v4l2_dev;
+	struct cam_device * cam_dev = NULL;
+	cam_dev = container_of(p_v4l2_dev, struct cam_device, v4l2_dev);
+	return cam_dev;
+}
 
 static int video_verify_fmt(struct aml_video *video, struct v4l2_format *fmt)
 {
@@ -275,11 +284,21 @@ static int video_ioctl_dqbuf(struct file *file, void *priv, struct v4l2_buffer *
 	int rtn = 0;
 	struct vb2_buffer *vb;
 	struct video_device *vdev;
+	struct aml_video *aml_video = video_drvdata(file);
+
+	if (0 == aml_video->first_frame_logged) {
+		pr_info("video %d beg dq first 1 frame\n", aml_video->id);
+	}
 
 	rtn = vb2_ioctl_dqbuf(file, priv, p);
 	if (rtn) {
 		pr_err("Failed to dqubuf: %d\n", rtn);
 		return rtn;
+	}
+
+	if (0 == aml_video->first_frame_logged) {
+		pr_info("video %d end dq first 1 frame\n", aml_video->id);
+		aml_video->first_frame_logged = 1;
 	}
 
 	vdev = video_devdata(file);
@@ -439,6 +458,8 @@ static int video_start_streaming(struct vb2_queue *queue, unsigned int count)
 	struct v4l2_subdev *subdev = NULL;
 	struct aml_video *video = vb2_get_drv_priv(queue);
 	struct media_entity *entity = &video->vdev.entity;
+	struct cam_device * cam_dev;
+	cam_dev = aml_video_to_cam_device(video);
 
 	if (strstr(entity->name, "isp-stats") || strstr(entity->name, "isp-param")) {
 		if (video->ops->cap_stream_on)
@@ -479,6 +500,16 @@ static int video_start_streaming(struct vb2_queue *queue, unsigned int count)
 			media_pipeline_stop(entity);
 			goto error_return;
 		}
+	}
+
+	video->first_frame_logged = 0;
+
+	pr_info("stream on vid %d, pipeline streaming_count %d ", video->id, video->pipe->streaming_count);
+
+	if (video->pipe->streaming_count == 1) {
+		pr_info("start dq check timer on vid %d", video->id);
+		mod_timer(&cam_dev->dq_check_timer, jiffies + msecs_to_jiffies(500));
+		video->dq_check_timer_working = 1;
 	}
 
 error_return:

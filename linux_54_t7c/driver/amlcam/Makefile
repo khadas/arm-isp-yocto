@@ -24,6 +24,11 @@ ccflags-y += -Wno-unused-variable
 ccflags-y += $(LOCAL_INCLUDES)
 ccflags-y += -Wno-declaration-after-statement -Idrivers/staging/android/ \
 		-Wno-error
+
+#
+#ccflags-y += -DDEBUG_TEST_MIPI_RESET=1
+#
+
 EXTRA_CFLAGS += $(LOCAL_INCLUDES)
 
 all:
