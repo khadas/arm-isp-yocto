@@ -116,7 +116,7 @@ static int imx335_write_buffered_reg(struct imx335 *imx335, u16 address_low,
 	}
 
 	for (i = 0; i < nr_regs; i++) {
-		val = (u8)(value >> ((nr_regs - 1 - i) * 8));
+		val = (u8)(value >> (i * 8));
 		ret = imx335_write_reg(imx335, address_low + i, val);
 		if (ret) {
 			dev_err(imx335->dev, "Error writing buffered registers\n");
@@ -150,7 +150,7 @@ static int imx335_set_exposure(struct imx335 *imx335, u32 value)
 
 	ret = imx335_write_buffered_reg(imx335, IMX335_EXPOSURE, 2, value & 0xFFFF);
 	if (ret)
-		dev_err(imx335->dev, "Unable to write gain\n");
+		dev_err(imx335->dev, "Unable to write expo\n");
 
 	return ret;
 }
