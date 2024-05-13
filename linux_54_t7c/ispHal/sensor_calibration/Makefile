@@ -1,11 +1,14 @@
+OUT_DIR ?= .
+$(info "OUT_DIR : $(OUT_DIR)")
+
 TUNING_SUBDIR := $(shell dirname $(lastword $(MAKEFILE_LIST)))
 TUNING_SUBDIR_DTS := $(TUNING_SUBDIR)/imx290
 TUNING_SUBDIR_DTS_1 := $(TUNING_SUBDIR)/ov08a10
 TUNING_SUBDIR_DTS_2 := $(TUNING_SUBDIR)/imx415
 TUNING_SUBDIR_DTS_3 := $(TUNING_SUBDIR)/ov13b10
 TUNING_SUBDIR_DTS_4 := $(TUNING_SUBDIR)/ov13855
-TUNING_SRC = $(shell find $(TUNING_SUBDIR) -name '*.cpp')
-LIBTUNING_OBJ = $(patsubst %.cpp,%.o,$(TUNING_SRC))
+SRCS = $(shell find $(TUNING_SUBDIR) -name '*.cpp')
+OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
 #LOCAL_PATH := $(shell dirname $(lastword $(MAKEFILE_LIST)))
 
@@ -31,11 +34,13 @@ all: $(LIBTUNING)
 
 %.o: %.cpp
 #%.o: $(TUNING_SUBDIR) %.cpp
-	$(CC) -c -fPIC  $(CFLAGS) $^ -o $@
+	$(CC) -c -fPIC  $(CFLAGS) $^ -o $(OUT_DIR)/$@
 
-$(LIBTUNING): $(LIBTUNING_OBJ)
-	$(CXX) -shared  -Wl,-soname,$(LIBTUNING) -fPIC $(CFLAGS) $^ -o $(LIBTUNING)
+$(LIBTUNING): $(OBJS)
+	$(CXX) -shared  -Wl,-soname,$(LIBTUNING) -fPIC $(CFLAGS) $(patsubst %,$(OUT_DIR)/%,$^) -o $(OUT_DIR)/$(LIBTUNING)
 
 clean:
-	rm -f $(LIBTUNING_OBJ) $(LIBTUNING)
+	rm -f $(patsubst %,$(OUT_DIR)/%,$(OBJS)) $(OUT_DIR)/$(LIBTUNING)
 
+$(shell mkdir -p $(OUT_DIR))
+$(shell mkdir -p $(patsubst %,$(OUT_DIR)/%,$(dir $(SRCS))))

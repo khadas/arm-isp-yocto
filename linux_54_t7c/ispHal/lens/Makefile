@@ -1,7 +1,10 @@
+OUT_DIR ?= .
+$(info "OUT_DIR : $(OUT_DIR)")
+
 LENS_SUBDIR := $(shell dirname $(lastword $(MAKEFILE_LIST)))
 LENS_SUBDIR_DTS := $(LENS_SUBDIR)/dw9714
-LENS_SRC = $(shell find $(LENS_SUBDIR) -name '*.cpp')
-LIBLENS_OBJ = $(patsubst %.cpp,%.o,$(LENS_SRC))
+SRCS = $(shell find $(LENS_SUBDIR) -name '*.cpp')
+OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
 #LOCAL_PATH := $(shell dirname $(lastword $(MAKEFILE_LIST)))
 
@@ -23,11 +26,13 @@ all: $(LIBLENS)
 
 %.o: %.cpp
 #%.o: $(TUNING_SUBDIR) %.cpp
-	$(CC) -c -fPIC  $(CFLAGS) $^ -o $@
+	$(CC) -c -fPIC  $(CFLAGS) $^ -o $(OUT_DIR)/$@
 
-$(LIBLENS): $(LIBLENS_OBJ)
-	$(CXX) -shared  -Wl,-soname,$(LIBLENS) -fPIC $(CFLAGS) $^ -o $(LIBLENS)
+$(LIBLENS): $(OBJS)
+	$(CXX) -shared  -Wl,-soname,$(LIBLENS) -fPIC $(CFLAGS) $(patsubst %,$(OUT_DIR)/%,$^) -o $(OUT_DIR)/$(LIBLENS)
 
 clean:
-	rm -f $(LIBLENS_OBJ) $(LIBLENS)
+	rm -f $(patsubst %,$(OUT_DIR)/%,$(OBJS)) $(OUT_DIR)/$(LIBLENS)
 
+$(shell mkdir -p $(OUT_DIR))
+$(shell mkdir -p $(patsubst %,$(OUT_DIR)/%,$(dir $(SRCS))))

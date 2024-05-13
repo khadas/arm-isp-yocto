@@ -1,6 +1,9 @@
+OUT_DIR ?= .
+$(info "OUT_DIR : $(OUT_DIR)")
+
 MEDIA_API_LOCAL_PATH := $(shell dirname $(lastword $(MAKEFILE_LIST)))
-MEDIA_API_SRC = $(shell find $(MEDIA_API_LOCAL_PATH) -name '*.cpp')
-MEDIA_API_OBJ = $(patsubst %.cpp,%.o,$(MEDIA_API_SRC))
+SRCS = $(shell find $(MEDIA_API_LOCAL_PATH) -name '*.cpp')
+OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
 
 ISP_ROOT_DIR := $(MEDIA_API_LOCAL_PATH)/..
@@ -25,11 +28,13 @@ LIBMEDIA_API = libmediaAPI.so
 all: $(LIBMEDIA_API)
 
 %.o: %.cpp
-	$(CC) -c -fPIC  $(CFLAGS) $^ -o $@
+	$(CC) -c -fPIC  $(CFLAGS) $^ -o $(OUT_DIR)/$@
 
-$(LIBMEDIA_API): $(MEDIA_API_OBJ)
-	$(CXX) -shared  -Wl,-soname,$(LIBMEDIA_API) -fPIC $(CFLAGS) $^ -o $(LIBMEDIA_API)
+$(LIBMEDIA_API): $(OBJS)
+	$(CXX) -shared  -Wl,-soname,$(LIBMEDIA_API) -fPIC $(CFLAGS) $(patsubst %,$(OUT_DIR)/%,$^) -o $(OUT_DIR)/$(LIBMEDIA_API)
 
 clean:
-	rm -f $(MEDIA_API_OBJ) $(LIBMEDIA_API)
+	rm -f $(patsubst %,$(OUT_DIR)/%,$(OBJS)) $(OUT_DIR)/$(LIBMEDIA_API)
 
+$(shell mkdir -p $(OUT_DIR))
+$(shell mkdir -p $(patsubst %,$(OUT_DIR)/%,$(dir $(SRCS))))
