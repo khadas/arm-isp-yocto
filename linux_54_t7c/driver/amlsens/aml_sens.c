@@ -97,6 +97,7 @@ static const struct dev_pm_ops sensor_pm_ops = {
 static int sensor_parse_power(struct amlsens *sensor)
 {
 	int rtn = 0;
+	struct gpio_desc *ircut;
 
 	sensor->gpio.rst_gpio = devm_gpiod_get_optional(sensor->dev,
 												"reset",
@@ -108,23 +109,15 @@ static int sensor_parse_power(struct amlsens *sensor)
 		goto err_return;
 	}
 
-	sensor->gpio.pwdn_gpio = devm_gpiod_get_optional(sensor->dev,
-												"pwdn",
-												GPIOD_OUT_LOW);
-	if (IS_ERR(sensor->gpio.pwdn_gpio)) {
-		rtn = PTR_ERR(sensor->gpio.pwdn_gpio);
-		dev_err(sensor->dev, "Cannot get pwdn gpio: %d\n", rtn);
-		return 0;
+	// IRCUT
+	ircut = devm_gpiod_get_optional(sensor->dev, "ircut", GPIOD_OUT_LOW);
+	if (IS_ERR(ircut)) {
+		rtn = PTR_ERR(ircut);
+		dev_err(sensor->dev, "Cannot get ircut gpio: %d\n", rtn);
+		goto err_return;
 	}
-
-	sensor->gpio.power_gpio = devm_gpiod_get_optional(sensor->dev,
-												"pwr",
-												GPIOD_OUT_LOW);
-	if (IS_ERR(sensor->gpio.power_gpio)) {
-		rtn = PTR_ERR(sensor->gpio.power_gpio);
-		dev_info(sensor->dev, "Cannot get power gpio: %d\n", rtn);
-		return 0;
-	}
+	gpiod_set_value(ircut, 1);
+	pr_info("ircut init\n");
 
 err_return:
 
