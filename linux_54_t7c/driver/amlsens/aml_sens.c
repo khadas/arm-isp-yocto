@@ -109,13 +109,17 @@ static int sensor_parse_power(struct amlsens *sensor)
 		goto err_return;
 	}
 
+	sensor->gpio.pwdn_gpio = devm_gpiod_get_optional(sensor->dev,
+												"pwdn",
+												GPIOD_OUT_LOW);
+
 	// IRCUT
 	ircut = devm_gpiod_get_optional(sensor->dev, "ircut", GPIOD_OUT_LOW);
 	if (IS_ERR(ircut)) {
 		rtn = PTR_ERR(ircut);
 		dev_err(sensor->dev, "Cannot get ircut gpio: %d\n", rtn);
 		goto err_return;
-	}
+ 	}
 	gpiod_set_value(ircut, 1);
 	pr_info("ircut init\n");
 
