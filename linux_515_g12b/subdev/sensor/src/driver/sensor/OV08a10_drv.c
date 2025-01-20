@@ -317,18 +317,18 @@ static int32_t sensor_ir_cut_set( void *ctx, int32_t ir_cut_state )
     LOG( LOG_ERR, "ir_cut_state = %d", ir_cut_state);
     LOG( LOG_INFO, "entry ir cut" );
 
-    //ir_cut_GPIOZ_11, 0: open ir cut, 1: colse ir cut, 2: no operation
+    //ir_cut, 0: close ir cut, 1: open ir cut, 2: no operation
 
    if (sensor_bp->ir_gname[0] <= 0) {
        pr_err("get gpio id fail\n");
        return 0;
     }
 
-    if (ir_cut_state == 1) {
+    if (ir_cut_state == 0) {
         ret = pwr_ir_cut_enable(sensor_bp, sensor_bp->ir_gname[0], 0);
         if (ret < 0 )
             pr_err("set power fail\n");
-    } else if(ir_cut_state == 0) {
+    } else if(ir_cut_state == 1) {
         ret = pwr_ir_cut_enable(sensor_bp, sensor_bp->ir_gname[0], 1);
         if (ret < 0 )
             pr_err("set power fail\n");
@@ -646,7 +646,7 @@ static sensor_context_t *sensor_global_parameter(void* sbp)
     udelay(30);
 #endif
 
-    ret = clk_am_enable(sensor_bp, "24m");
+    ret = clk_am_enable(sensor_bp, "gen_clk");
     if (ret < 0 )
         pr_err("set mclk fail\n");
 
@@ -746,6 +746,8 @@ void sensor_init_ov08a10( void **ctx, sensor_control_t *ctrl, void *sbp )
     sensor_hw_reset_disable();
     system_timer_usleep( 1000 );
 
+    sensor_ir_cut_set(*ctx, 1);
+
     LOG(LOG_ERR, "%s: Success subdev init\n", __func__);
 }
 
@@ -755,7 +757,7 @@ int sensor_detect_ov08a10( void* sbp)
     sensor_ctx.sbp = sbp;
     sensor_bringup_t* sensor_bp = (sensor_bringup_t*) sbp;
 #if PLATFORM_G12B
-    ret = clk_am_enable(sensor_bp, "24m");
+    ret = clk_am_enable(sensor_bp, "gen_clk");
     if (ret < 0 )
         pr_err("set mclk fail\n");
 #elif PLATFORM_C308X
