@@ -223,13 +223,15 @@ void save_img(const char* prefix, void *buff, unsigned int size, int flag, int n
     if (num > 1000)
         return;
 
+#if 0
     if (num % 10 != 0)
         return;
+#endif
 
     #ifdef ANDROID
     sprintf(name, "/sdcard/DCIM/ca_%s-%d_dump-%d-%dx%d.yuv", prefix, flag, num, width, height);
     #else
-    sprintf(name, "/tmp/ca_%s-%d_dump-%d-%dx%d.yuv", prefix, flag, num, width, height);
+    sprintf(name, "/tmp/ca_%s-%d_dump-%d-%dx%d.raw", prefix, flag, num, width, height);
     #endif
 
     fd = open(name, O_RDWR | O_CREAT, 0666);
@@ -664,7 +666,7 @@ void * video_thread(void *arg)
         //INFO("[T#%d] dq buf ok, idx %d, mem 0x%p \n",stream_type, idx, v4l2_mem[idx]);
         //save_img("mif",v4l2_mem[idx], tparm->width * tparm->height *2, stream_type, display_count);
         if (strstr(tparm->mediadevname, "/dev/media0")) {
-            save_img("mif_0",v4l2_mem[idx], tparm->width * tparm->height*3/2, stream_type, display_count, tparm->width, tparm->height);
+            save_img("mif_0",v4l2_mem[idx], v4l2_buf.length, stream_type, display_count, tparm->width, tparm->height);
         }
         if (strstr(tparm->mediadevname, "/dev/media1")) {
             save_img("mif_1",v4l2_mem[idx], tparm->width * tparm->height*3/2, stream_type, display_count, tparm->width, tparm->height);
@@ -769,14 +771,17 @@ void * stats_thread(void *arg)
             attr->stManual.enExpTimeOpType = OP_TYPE_MANUAL;
             attr->stManual.u32ExpTime = manual_sensor_integration_time;
         } else {
-                attr->stManual.enExpTimeOpType = OP_TYPE_AUTO;
+            attr->stManual.enExpTimeOpType = OP_TYPE_AUTO;
         }
+
         if (manual_sensor_analog_gain > 0) {
             attr->stManual.enAGainOpType  = OP_TYPE_MANUAL;
             attr->stManual.u32AGain = manual_sensor_analog_gain;
+            attr->stAuto.s32SysMaxTotalGain = 1600;
         } else {
             attr->stManual.enAGainOpType = OP_TYPE_AUTO;
         }
+
         if (manual_sensor_digital_gain > 0) {
             attr->stManual.enDGainOpType  = OP_TYPE_MANUAL;
             attr->stManual.u32DGain = manual_sensor_digital_gain;
@@ -793,6 +798,8 @@ void * stats_thread(void *arg)
         ispIf.algFwInterface(0, api_type);
     }
 
+
+    ERR ("Error: dq buffer begin.\n");
     /* dequeue and display */
     do {
         struct v4l2_buffer v4l2_buf;
@@ -1116,9 +1123,9 @@ int main(int argc, char *argv[])
         .devname    = v4ldevname,
         .fbp        = 0,
 
-        .width      = 1920,
-        .height     = 1080,
-        .pixformat  = V4L2_PIX_FMT_NV12,//V4L2_PIX_FMT_SBGGR10, //V4L2_PIX_FMT_Y12,//V4L2_PIX_FMT_NV12,//V4L2_PIX_FMT_SRGGB12,//
+        .width      = 3840,
+        .height     = 2160,
+        .pixformat  = V4L2_PIX_FMT_SRGGB12,//V4L2_PIX_FMT_SBGGR10, //V4L2_PIX_FMT_Y12,//V4L2_PIX_FMT_NV12,//V4L2_PIX_FMT_SRGGB12,//
 
 #if defined (DUAL_CAMERA)
         .fmt_code   = MEDIA_BUS_FMT_SRGGB12_1X12,

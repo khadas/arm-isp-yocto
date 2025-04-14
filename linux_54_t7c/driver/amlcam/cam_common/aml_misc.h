@@ -21,13 +21,7 @@
 #define __AML_P1_MISC_H__
 
 #ifdef ANDROID_OS
-
-#if IS_ENABLED(CONFIG_AMLOGIC_FREERTOS)
-#define VIDEO_NODE    62
-#else
 #define VIDEO_NODE    60
-#endif
-
 #else
 #define VIDEO_NODE    -1
 #endif
@@ -42,6 +36,7 @@
 #define V4L2_CID_AML_ADAP_OFFSET     (V4L2_CID_AML_BASE + 0x006)
 #define V4L2_CID_AML_CSI_LANES       (V4L2_CID_AML_BASE + 0x007)
 #define V4L2_CID_AML_CLOCK_MODE      (V4L2_CID_AML_BASE + 0x008)
+#define V4L2_CID_AML_VTS             (V4L2_CID_AML_BASE + 0x009)
 
 struct emb_ops_t {
 	void (*emb_cfg_buf)(void *edev, u32 eaddr);

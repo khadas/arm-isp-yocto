@@ -109,10 +109,6 @@ static int sensor_parse_power(struct amlsens *sensor)
 		goto err_return;
 	}
 
-	sensor->gpio.pwdn_gpio = devm_gpiod_get_optional(sensor->dev,
-												"pwdn",
-												GPIOD_OUT_LOW);
-
 	// IRCUT
 	ircut = devm_gpiod_get_optional(sensor->dev, "ircut", GPIOD_OUT_LOW);
 	if (IS_ERR(ircut)) {

@@ -185,6 +185,7 @@ int v4l2_video_q_buf(struct media_entity *entity,
     }
 
     return ret;
+
 }
 
 
@@ -206,6 +207,7 @@ int v4l2_video_dq_buf(struct media_entity *entity,
     }
 
     return ret;
+
 }
 
 

@@ -161,7 +161,6 @@ struct aml_sub_ops {
 	int (*stream_on)(void *priv);
 	void (*stream_off)(void *priv);
 	void (*log_status)(void *priv);
-	int (*pad_link_validate)(void *priv, void *link, void *source_fmt, void * sink_fmt);
 };
 
 struct aml_subdev {
@@ -209,10 +208,7 @@ struct aml_video {
 	struct list_head head;
 	struct aml_control actrl;
 	void *priv;
-	int first_frame_logged;
-	int dq_check_timer_working;
 };
-
 int aml_subdev_register(struct aml_subdev *subdev);
 void aml_subdev_unregister(struct aml_subdev *subdev);
 
